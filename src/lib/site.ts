@@ -1,0 +1,13 @@
+/** Canonical production URL. Override per environment with NEXT_PUBLIC_SITE_URL. */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://within.id";
+
+/** Brand name used across metadata and structured data. */
+export const SITE_NAME = "WITHIN";
+
+/** Default meta description — honest, keyword-bearing, on-brand. */
+export const SITE_DESCRIPTION =
+  "WITHIN is an Indonesian electrolyte sachet: 1000mg sodium, 250mg potassium, 50mg magnesium. Essential recovery nutrients, no additives, no sugar added. Made in Indonesia. Launching soon.";
+
+/** Instagram — the only live channel before launch. */
+export const INSTAGRAM_HANDLE = "@within__id";
+export const INSTAGRAM_URL = "https://instagram.com/within__id";

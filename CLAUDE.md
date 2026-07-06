@@ -129,9 +129,9 @@ src/
 - Icons: `lucide-react` only. **Data viz:** Recharts (wrapped with shadcn `<ChartContainer>`) · Mapbox via `react-map-gl`. (Neither is installed yet — install when first needed.)
 
 **Styling**
-- Tailwind utilities directly in JSX. No inline `style={}` unless the value is dynamic (transforms, Mapbox sizing, `touchAction`, etc.).
+- **Tailwind utilities only — never `style={}` for a static value.** This holds even when porting a design authored in inline styles: translate every static value to a Tailwind class, using arbitrary values for anything off-scale (`text-[17px]`, `tracking-[0.14em]`, `max-w-[420px]`, `min-h-[calc(100vh-66px)]`, `bg-linear-to-b from-black/[0.38] via-black/[0.30] to-black/[0.72]`). `style={}` is allowed ONLY for values that change at runtime — driven by state, refs, or render-computed props (an animated width from state, a `transform` toggled open/closed). If the value is fixed at author time, it is a Tailwind class, not a style. "The design came in inline styles" is not an exception. (Next `opengraph-image`/`icon`/`apple-icon` ImageResponse files are the one exemption — Satori renders inline styles only, never Tailwind.)
 - Use `cn()` from [src/lib/utils.ts](src/lib/utils.ts) for conditional classes.
-- Extract a component for repeated multi-class patterns — never extract a CSS class.
+- Extract a component for repeated multi-class patterns — never extract a CSS class. Do not extract a CSS class for styling either; component or utilities only.
 
 ## WITHIN Design System
 

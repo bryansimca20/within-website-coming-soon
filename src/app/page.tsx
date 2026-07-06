@@ -1,21 +1,71 @@
-import { WiEyebrow } from "@/components/brand/WiEyebrow";
-import { WiHero } from "@/components/brand/WiHero";
-import { WithinLogo } from "@/components/brand/WithinLogo";
+import { Compare } from "@/components/coming-soon/Compare";
+import { Faq } from "@/components/coming-soon/Faq";
+import { Footer } from "@/components/coming-soon/Footer";
+import { Formula } from "@/components/coming-soon/Formula";
+import { Header } from "@/components/coming-soon/Header";
+import { Hero } from "@/components/coming-soon/Hero";
+import { Marquee } from "@/components/coming-soon/Marquee";
+import { Story } from "@/components/coming-soon/Story";
+import { WhyWithin } from "@/components/coming-soon/WhyWithin";
+import { FAQS } from "@/components/coming-soon/utils/faqs";
+import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-/** Coming-soon placeholder — foundation smoke test, not the final design. */
+/** Organization + WebSite + FAQ structured data for search engines. */
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      logo: `${SITE_URL}/brand/within-logotype.png`,
+      sameAs: [INSTAGRAM_URL],
+      areaServed: "ID",
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      inLanguage: "en",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${SITE_URL}/#faq`,
+      mainEntity: FAQS.map(([question, answer]) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: { "@type": "Answer", text: answer },
+      })),
+    },
+  ],
+};
+
+/** WITHIN coming-soon landing page. */
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 bg-background px-6 py-24 text-center">
-      <WithinLogo kind="logotype" height={28} priority />
-      <div className="flex flex-col items-center gap-4">
-        <WiEyebrow>Essential recovery nutrients</WiEyebrow>
-        <WiHero as="h1" size="display-lg" className="max-w-[16ch]">
-          Everything you need. Nothing you don&apos;t.
-        </WiHero>
-        <p className="max-w-[46ch] leading-normal text-wi-ink-700">
-          A new electrolyte, made in Indonesia. Coming soon.
-        </p>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="min-h-screen bg-wi-paper-dim">
+        <Header />
+        <main>
+          <Hero />
+          <Marquee />
+          <WhyWithin />
+          <Compare />
+          <Formula />
+          <Story />
+          <Faq />
+        </main>
+        <Footer />
       </div>
-    </main>
+    </>
   );
 }

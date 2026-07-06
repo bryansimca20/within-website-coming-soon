@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const inter = localFont({
   src: "./fonts/Inter-Variable.ttf",
@@ -9,10 +11,61 @@ const inter = localFont({
   weight: "100 900",
 });
 
+const TITLE = "WITHIN — Coming soon";
+
 export const metadata: Metadata = {
-  title: "WITHIN — Coming soon",
-  description:
-    "Essential recovery nutrients. No additives. A new electrolyte, made in Indonesia.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: TITLE, template: "%s · WITHIN" },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "WITHIN",
+    "electrolytes",
+    "electrolyte sachet",
+    "hydration",
+    "recovery",
+    "sodium",
+    "potassium",
+    "magnesium",
+    "zero sugar",
+    "sports supplement",
+    "Indonesia",
+    "made in Indonesia",
+  ],
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  category: "health",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
