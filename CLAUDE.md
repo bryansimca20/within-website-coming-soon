@@ -157,7 +157,7 @@ thousands). **No emoji, no exclamation marks, no hype words** ("revolutionary", 
 **Form.** Near-square corners: `--wi-radius-control` (6px) for controls, `rounded-lg` /
 `--wi-radius-card` (10px) for cards. Hairline `#d6d6d6` borders; emphasis borders full black at
 1.5–2px. Low, tight, neutral shadows (`--wi-shadow-sm/md/lg`) — no colored glows, no gradients,
-no textures, no decorative illustration. Full-bleed black panels are the primary graphic device.
+no textures, no decorative illustration. Full-bleed black panels are the primary graphic device. Controls use `--wi-radius-control`, never `rounded-sm` (which coincidentally also computes to 6px).
 
 **Motion.** Quick, precise, no bounce (120–320ms on `--wi-ease-standard` / `--wi-ease-out`).
 Fades and short slides. No infinite decorative loops.
