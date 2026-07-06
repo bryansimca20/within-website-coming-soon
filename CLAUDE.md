@@ -64,7 +64,7 @@ src/
 │   ├── globals.css   # Tailwind v4 import + @theme tokens (shadcn colors)
 │   └── favicon.ico
 ├── components/
-│   └── ui/           # shadcn/ui primitives — CLI-managed, do not hand-edit
+│   └── ui/           # shadcn/ui primitives — WITHIN-restyled, owned in-repo (see UI and Design Rules)
 └── lib/
     └── utils.ts      # cn() and other app infrastructure
 ```
