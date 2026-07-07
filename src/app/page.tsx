@@ -6,6 +6,7 @@ import { Header } from "@/components/coming-soon/Header";
 import { Hero } from "@/components/coming-soon/Hero";
 import { Marquee } from "@/components/coming-soon/Marquee";
 import { Story } from "@/components/coming-soon/Story";
+import { MotionProvider } from "@/components/coming-soon/MotionProvider";
 import { WhyWithin } from "@/components/coming-soon/WhyWithin";
 import { FAQS } from "@/components/coming-soon/utils/faqs";
 import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -53,19 +54,21 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-screen bg-wi-paper-dim">
-        <Header />
-        <main>
-          <Hero />
-          <Marquee />
-          <WhyWithin />
-          <Compare />
-          <Formula />
-          <Story />
-          <Faq />
-        </main>
-        <Footer />
-      </div>
+      <MotionProvider>
+        <div className="min-h-screen bg-wi-paper-dim">
+          <Header />
+          <main>
+            <Hero />
+            <Marquee />
+            <WhyWithin />
+            <Compare />
+            <Formula />
+            <Story />
+            <Faq />
+          </main>
+          <Footer />
+        </div>
+      </MotionProvider>
     </>
   );
 }

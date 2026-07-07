@@ -1,12 +1,13 @@
 import { WithinLogo } from "@/components/brand/WithinLogo";
 
 import { Eyebrow } from "./Eyebrow";
+import { Reveal } from "./Reveal";
 
 /** Centered mission statement, anchored by the logomark. */
 export function Story() {
   return (
     <section className="bg-wi-paper border-t border-wi-line border-b border-wi-line">
-      <div className="max-w-[720px] mx-auto px-7 py-[84px] text-center">
+      <Reveal className="max-w-[720px] mx-auto px-7 py-[84px] text-center">
         <div className="flex justify-center mb-[26px] opacity-90">
           <WithinLogo kind="logomark" height={34} alt="" />
         </div>
@@ -22,7 +23,7 @@ export function Story() {
           Built for the solo performer and the real Indonesian environment. Made in Indonesia.
           Launching once approvals are complete.
         </p>
-      </div>
+      </Reveal>
     </section>
   );
 }

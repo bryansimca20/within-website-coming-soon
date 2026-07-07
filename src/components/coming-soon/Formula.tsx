@@ -3,10 +3,12 @@
 import type { ComponentType } from "react";
 import { useRef } from "react";
 import Image from "next/image";
+import { motion } from "motion/react";
 import { Candy, Cookie, FlaskConical, Palette, X } from "lucide-react";
 
-import { Eyebrow } from "./Eyebrow";
 import { DisplayHeading } from "./DisplayHeading";
+import { Eyebrow } from "./Eyebrow";
+import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
 
 /** name, description, image src — the ingredient carousel cards. */
 const ITEMS: [string, string, string][] = [
@@ -77,7 +79,7 @@ export function Formula() {
   return (
     <section className="bg-wi-paper text-wi-black">
       <div className="max-w-[1200px] mx-auto pt-24 px-7">
-        <div className="flex items-end justify-between gap-8 flex-wrap">
+        <Reveal className="flex items-end justify-between gap-8 flex-wrap">
           <div>
             <Eyebrow>The formula</Eyebrow>
             <DisplayHeading as="h2" className="mt-3 max-w-[700px] text-[54px]">
@@ -89,7 +91,7 @@ export function Formula() {
           <p className="max-w-[340px] text-[15px] leading-[1.55] text-wi-ink-500 m-0">
             What your body loses, dosed for real output and printed in full on the front.
           </p>
-        </div>
+        </Reveal>
       </div>
 
       <div
@@ -106,14 +108,20 @@ export function Formula() {
             className="shrink-0 grow-0 basis-auto w-[clamp(250px,27vw,330px)] snap-start"
           >
             <div className="relative w-full aspect-square overflow-hidden">
-              <Image
-                src={src}
-                alt={name}
-                fill
-                sizes="(max-width: 860px) 90vw, 330px"
-                draggable={false}
-                className="object-cover"
-              />
+              <motion.div
+                className="absolute inset-0"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.5, ease: EASE }}
+              >
+                <Image
+                  src={src}
+                  alt={name}
+                  fill
+                  sizes="(max-width: 860px) 90vw, 330px"
+                  draggable={false}
+                  className="object-cover"
+                />
+              </motion.div>
             </div>
             <div className="mt-[18px] flex items-baseline justify-between gap-3 border-t border-wi-black pt-[14px]">
               <div className="font-bold text-base uppercase tracking-[0.02em]">
@@ -130,11 +138,9 @@ export function Formula() {
       <div className="max-w-[1200px] mx-auto py-14 px-7 pb-[88px]">
         <div className="border-t-2 border-wi-black pt-10">
           <Eyebrow>What&apos;s not in it</Eyebrow>
-          <div
-            className="wi-notins2 mt-7 grid grid-cols-4 gap-6"
-          >
+          <RevealGroup className="wi-notins2 mt-7 grid grid-cols-4 gap-6">
             {NOTINS.map(([label, Icon], i) => (
-              <div
+              <RevealItem
                 key={label}
                 className={`flex flex-col gap-4 p-[4px_24px_4px_0]${i < NOTINS.length - 1 ? " border-r border-wi-line" : ""}`}
               >
@@ -145,9 +151,9 @@ export function Formula() {
                   </span>
                 </span>
                 <span className="font-bold text-base tracking-[-0.01em]">{label}</span>
-              </div>
+              </RevealItem>
             ))}
-          </div>
+          </RevealGroup>
         </div>
       </div>
     </section>

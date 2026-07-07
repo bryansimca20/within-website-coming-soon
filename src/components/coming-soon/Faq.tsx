@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-
 import { DisplayHeading } from "./DisplayHeading";
+import { EASE, Reveal } from "./Reveal";
 import { FAQS } from "./utils/faqs";
 
 /** One expandable question row. */
@@ -27,23 +27,31 @@ function FaqItem({
         aria-expanded={open}
         className="w-full flex items-center justify-between gap-4 py-[22px] bg-transparent border-none cursor-pointer text-left"
       >
-        <span className="font-bold text-base tracking-[0.02em] uppercase text-wi-black">
+        <span className="font-bold text-base tracking-[0.02em] uppercase text-wi-black transition-opacity duration-200 hover:opacity-60">
           {q}
         </span>
-        <span
-          className={cn(
-            "inline-flex shrink-0 text-wi-ink-500 transition-transform duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)]",
-            open && "rotate-180"
-          )}
+        <motion.span
+          className="inline-flex shrink-0 text-wi-ink-500"
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.25, ease: EASE }}
         >
           <ChevronDown size={20} strokeWidth={2.2} />
-        </span>
+        </motion.span>
       </button>
-      {open && (
-        <p className="m-0 pb-6 max-w-[640px] text-[15px] leading-[1.6] text-wi-ink-500">
-          {a}
-        </p>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="overflow-hidden"
+          >
+            <p className="m-0 pb-6 max-w-[640px] text-[15px] leading-[1.6] text-wi-ink-500">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -54,12 +62,12 @@ export function Faq() {
   return (
     <section className="bg-wi-paper-dim">
       <div className="wi-faq max-w-[1200px] mx-auto grid grid-cols-[0.7fr_1.3fr] gap-12 px-7 py-20">
-        <div>
+        <Reveal>
           <DisplayHeading as="h2" className="mt-3 text-[40px]">
             Frequently asked questions
           </DisplayHeading>
-        </div>
-        <div className="border-b border-wi-line">
+        </Reveal>
+        <Reveal className="border-b border-wi-line" delay={100}>
           {FAQS.map(([q, a], i) => (
             <FaqItem
               key={q}
@@ -69,7 +77,7 @@ export function Faq() {
               onToggle={() => setOpen(open === i ? -1 : i)}
             />
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -216,6 +216,7 @@
     transform: translateX(-33.33%);
   }
 }
+
 .wi-marquee-track {
   display: flex;
   width: max-content;

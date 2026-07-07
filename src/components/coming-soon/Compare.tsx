@@ -4,8 +4,9 @@ import { Check, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WithinLogo } from "@/components/brand/WithinLogo";
 
-import { Eyebrow } from "./Eyebrow";
 import { DisplayHeading } from "./DisplayHeading";
+import { Eyebrow } from "./Eyebrow";
+import { Reveal } from "./Reveal";
 
 /** One comparison cell: a verdict plus an optional qualifying note. */
 type CellState = "yes" | "no" | "part";
@@ -110,7 +111,7 @@ export function Compare() {
   return (
     <section className="bg-wi-paper-dim border-t border-wi-line">
       <div className="max-w-[1200px] mx-auto pt-24 px-7 pb-[88px]">
-        <div className="flex items-end justify-between gap-8 flex-wrap">
+        <Reveal className="flex items-end justify-between gap-8 flex-wrap">
           <div>
             <Eyebrow>Side by side</Eyebrow>
             <DisplayHeading as="h2" className="mt-3 max-w-[640px] text-[54px]">
@@ -121,10 +122,10 @@ export function Compare() {
             Hydration is fluid plus minerals. Most of what&apos;s sold gets the minerals wrong:
             too little, or buried in sugar.
           </p>
-        </div>
-        <div className="wi-compare-wrap mt-12">
+        </Reveal>
+        <Reveal className="wi-compare-wrap mt-12" delay={100}>
           <CompareTable />
-        </div>
+        </Reveal>
       </div>
     </section>
   );

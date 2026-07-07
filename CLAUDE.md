@@ -159,8 +159,18 @@ thousands). **No emoji, no exclamation marks, no hype words** ("revolutionary", 
 1.5–2px. Low, tight, neutral shadows (`--wi-shadow-sm/md/lg`) — no colored glows, no gradients,
 no textures, no decorative illustration. Full-bleed black panels are the primary graphic device. Controls use `--wi-radius-control`, never `rounded-sm` (which coincidentally also computes to 6px).
 
-**Motion.** Quick, precise, no bounce (120–320ms on `--wi-ease-standard` / `--wi-ease-out`).
-Fades and short slides. No infinite decorative loops.
+**Motion.** Animate with **Motion** (`motion/react`, the `motion` package) — not hand-rolled CSS
+keyframes or `IntersectionObserver`. Quick, precise, **no visible bounce** (WITHIN is introverted);
+fades and short slides only, no infinite decorative loops.
+- Reuse the shared primitives in [src/components/coming-soon/Reveal.tsx](src/components/coming-soon/Reveal.tsx):
+  `Reveal` (scroll fade+lift, once), `RevealGroup` + `RevealItem` (staggered children, 30–80ms apart),
+  and the exported `EASE` curve `[0.16, 1, 0.3, 1]` (= `--wi-ease-out`). Use `EASE` for every tween.
+- Wrap animated trees in [MotionProvider](src/components/coming-soon/MotionProvider.tsx)
+  (`<MotionConfig reducedMotion="user">`) so motion honors `prefers-reduced-motion` (drops movement, keeps fades).
+- Only animate `transform` and `opacity` (GPU); avoid animating layout props except the few
+  deliberate cases (bar `width`, accordion `height` via `AnimatePresence`).
+- Durations: micro-interactions 120–250ms; scroll reveals ~500–900ms. Springs are allowed only
+  with `bounce` ≈ 0. Don't animate anything a user triggers dozens of times a day.
 
 **Icons.** Lucide only (`lucide-react`) — stroke, ~2px, `currentColor`. **Never emoji.** The
 logomark is a brand mark, not an icon.

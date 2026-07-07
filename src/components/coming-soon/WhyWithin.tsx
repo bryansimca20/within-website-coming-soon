@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
 
-import { Eyebrow } from "./Eyebrow";
 import { DisplayHeading } from "./DisplayHeading";
+import { Eyebrow } from "./Eyebrow";
+import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
 
 const REASONS: [string, string, string][] = [
   ["01", "Not just water", "Water puts the fluid back. Not the minerals it left with."],
@@ -17,49 +18,16 @@ const STATS: [string, number, number, string, string, number][] = [
   ["Potassium", 125, 200, "125", "200", 400],
 ];
 
-/**
- * Reveals bars on scroll-in for motion-OK users. Defaults to revealed, so SSR,
- * no-JS, and reduced-motion all render the bars at full width with no animation.
- */
-function useInView() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(true);
-  useEffect(() => {
-    const el = ref.current;
-    const prefersMotion = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
-    if (!prefersMotion || !el || !("IntersectionObserver" in window)) return;
-    // Prime to hidden (off-screen, so no visible flash), then grow on scroll-in.
-    const primer = window.setTimeout(() => setInView(false), 0);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-    observer.observe(el);
-    return () => {
-      window.clearTimeout(primer);
-      observer.disconnect();
-    };
-  }, []);
-  return { ref, inView };
-}
-
-/** A horizontal range band (min–max) plotted against a per-stat mg scale. */
+/** A horizontal range band (min–max) that grows against a per-stat mg scale when scrolled to. */
 function RangeBar({
   min,
   max,
   scale,
-  inView,
   delay = 0,
 }: {
   min: number;
   max: number;
   scale: number;
-  inView: boolean;
   delay?: number;
 }) {
   const left = (min / scale) * 100;
@@ -75,9 +43,13 @@ function RangeBar({
             className="absolute top-0 bottom-0 w-px bg-wi-line"
           />
         ))}
-        <div
-          style={{ left: `${left}%`, width: inView ? `${width}%` : "0%", transition: `width 800ms var(--ease-out, ease-out) ${delay}ms` }}
+        <motion.div
           className="absolute top-[2px] bottom-[2px] bg-wi-black rounded-[2px]"
+          style={{ left: `${left}%` }}
+          initial={{ width: 0 }}
+          whileInView={{ width: `${width}%` }}
+          viewport={{ once: true, margin: "0px 0px -60px 0px" }}
+          transition={{ duration: 0.9, ease: EASE, delay: delay / 1000 }}
         />
       </div>
       <div className="flex justify-between mt-[7px] text-[10.5px] font-bold tracking-[0.08em] text-wi-ink-300">
@@ -92,13 +64,12 @@ function RangeBar({
   );
 }
 
-/** "Why WITHIN" — the heat/humidity case, three reasons beside animated loss bars. */
+/** "Why WITHIN" — the heat/humidity case, three reasons beside loss bars that grow in. */
 export function WhyWithin() {
-  const { ref, inView } = useInView();
   return (
     <section className="bg-wi-paper border-t border-wi-line">
       <div className="max-w-[1200px] mx-auto pt-24 px-7 pb-[88px] min-h-screen box-border flex flex-col justify-center">
-        <div>
+        <Reveal>
           <Eyebrow>Why WITHIN</Eyebrow>
           <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
             Built for the heat and humidity.
@@ -109,28 +80,22 @@ export function WhyWithin() {
             mostly sodium and potassium. It&apos;s not that tropical sweat is saltier. You simply
             lose a lot more of it.
           </p>
-        </div>
-        <div
-          className="wi-science mt-14 grid grid-cols-2 gap-16 border-t-2 border-wi-black items-start"
-        >
-          <div>
+        </Reveal>
+        <div className="wi-science mt-14 grid grid-cols-2 gap-16 border-t-2 border-wi-black items-start">
+          <RevealGroup>
             {REASONS.map(([n, title, body]) => (
-              <div key={n} className="py-[26px] border-b border-wi-line">
+              <RevealItem key={n} className="py-[26px] border-b border-wi-line">
                 <div className="flex gap-4 items-baseline">
-                  <span className="text-[13px] font-bold tracking-[0.1em] text-wi-ink-300">
-                    {n}
-                  </span>
+                  <span className="text-[13px] font-bold tracking-[0.1em] text-wi-ink-300">{n}</span>
                   <span className="font-bold text-[22px] tracking-[-0.015em] uppercase text-wi-black">
                     {title}
                   </span>
                 </div>
-                <p className="mt-[10px] mb-0 text-[15px] leading-[1.6] text-wi-ink-500">
-                  {body}
-                </p>
-              </div>
+                <p className="mt-[10px] mb-0 text-[15px] leading-[1.6] text-wi-ink-500">{body}</p>
+              </RevealItem>
             ))}
-          </div>
-          <div ref={ref} className="pt-[26px]">
+          </RevealGroup>
+          <div className="pt-[26px]">
             <Eyebrow className="mb-[26px]">Lost per hour of training</Eyebrow>
             {STATS.map(([name, min, max, lo, hi, scale], i) => (
               <div key={name} className="mb-[30px]">
@@ -139,21 +104,13 @@ export function WhyWithin() {
                     {name}
                   </span>
                   <span className="whitespace-nowrap">
-                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">
-                      {lo}
-                    </span>
-                    <span className="font-bold text-[15px] text-wi-ink-300 mx-[6px]">
-                      to
-                    </span>
-                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">
-                      {hi}
-                    </span>
-                    <span className="font-bold text-sm text-wi-ink-500 ml-[5px]">
-                      mg
-                    </span>
+                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">{lo}</span>
+                    <span className="font-bold text-[15px] text-wi-ink-300 mx-[6px]">to</span>
+                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">{hi}</span>
+                    <span className="font-bold text-sm text-wi-ink-500 ml-[5px]">mg</span>
                   </span>
                 </div>
-                <RangeBar min={min} max={max} scale={scale} inView={inView} delay={i * 160} />
+                <RangeBar min={min} max={max} scale={scale} delay={i * 160} />
               </div>
             ))}
             <p className="mt-[22px] mb-0 text-[11.5px] leading-[1.55] text-wi-ink-300 max-w-[420px]">
