@@ -263,7 +263,7 @@
     display: none;
   }
   /* Cap oversized fixed-px hero/section headings on phones */
-  .wi-h9 {
+  .wi-display {
     font-size: clamp(32px, 9vw, 40px) !important;
     line-height: 0.98 !important;
   }

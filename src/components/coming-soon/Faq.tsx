@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { Hero909 } from "./Hero909";
+import { DisplayHeading } from "./DisplayHeading";
 import { FAQS } from "./utils/faqs";
 
 /** One expandable question row. */
@@ -55,9 +55,9 @@ export function Faq() {
     <section className="bg-wi-paper-dim">
       <div className="wi-faq max-w-[1200px] mx-auto grid grid-cols-[0.7fr_1.3fr] gap-12 px-7 py-20">
         <div>
-          <Hero909 as="h2" className="mt-3 text-[40px]">
+          <DisplayHeading as="h2" className="mt-3 text-[40px]">
             Frequently asked questions
-          </Hero909>
+          </DisplayHeading>
         </div>
         <div className="border-b border-wi-line">
           {FAQS.map(([q, a], i) => (

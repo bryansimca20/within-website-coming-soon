@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Eyebrow } from "./Eyebrow";
-import { Hero909 } from "./Hero909";
+import { DisplayHeading } from "./DisplayHeading";
 
 const REASONS: [string, string, string][] = [
   ["01", "Not just water", "Water puts the fluid back. Not the minerals it left with."],
@@ -11,10 +11,10 @@ const REASONS: [string, string, string][] = [
   ["03", "Dosed to your loss", "1000mg sodium, not a trace. Nothing you don't need."],
 ];
 
-/** name, low value, high value, low label, high label — sweat loss per hour of training. */
-const STATS: [string, number, number, string, string][] = [
-  ["Sodium", 900, 1250, "900", "1,250"],
-  ["Potassium", 125, 200, "125", "200"],
+/** name, low value, high value, low label, high label, axis max (mg) — sweat loss per hour. */
+const STATS: [string, number, number, string, string, number][] = [
+  ["Sodium", 900, 1250, "900", "1,250", 1600],
+  ["Potassium", 125, 200, "125", "200", 400],
 ];
 
 /**
@@ -48,20 +48,23 @@ function useInView() {
   return { ref, inView };
 }
 
-/** A horizontal range band (min–max) plotted against a fixed 0–1600mg scale. */
+/** A horizontal range band (min–max) plotted against a per-stat mg scale. */
 function RangeBar({
   min,
   max,
+  scale,
   inView,
   delay = 0,
 }: {
   min: number;
   max: number;
+  scale: number;
   inView: boolean;
   delay?: number;
 }) {
-  const left = (min / 1600) * 100;
-  const width = ((max - min) / 1600) * 100;
+  const left = (min / scale) * 100;
+  const width = ((max - min) / scale) * 100;
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => Math.round(scale * fraction));
   return (
     <div className="mt-3">
       <div className="relative h-4 bg-wi-paper-dim border border-wi-line rounded-[3px]">
@@ -78,11 +81,12 @@ function RangeBar({
         />
       </div>
       <div className="flex justify-between mt-[7px] text-[10.5px] font-bold tracking-[0.08em] text-wi-ink-300">
-        <span>0</span>
-        <span>400</span>
-        <span>800</span>
-        <span>1,200</span>
-        <span>1,600 MG</span>
+        {ticks.map((tick, i) => (
+          <span key={tick}>
+            {tick.toLocaleString("en-US")}
+            {i === ticks.length - 1 ? " MG" : ""}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -96,9 +100,9 @@ export function WhyWithin() {
       <div className="max-w-[1200px] mx-auto pt-24 px-7 pb-[88px] min-h-screen box-border flex flex-col justify-center">
         <div>
           <Eyebrow>Why WITHIN</Eyebrow>
-          <Hero909 as="h2" className="mt-3 max-w-[560px] text-[56px]">
+          <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
             Built for the heat and humidity.
-          </Hero909>
+          </DisplayHeading>
           <p className="max-w-[820px] text-base leading-[1.6] text-wi-ink-500 mt-[22px]">
             In Indonesia&apos;s heat and humidity, sweat can&apos;t evaporate efficiently, so your
             body produces more of it to stay cool. Every drop carries electrolytes out with it,
@@ -128,7 +132,7 @@ export function WhyWithin() {
           </div>
           <div ref={ref} className="pt-[26px]">
             <Eyebrow className="mb-[26px]">Lost per hour of training</Eyebrow>
-            {STATS.map(([name, min, max, lo, hi], i) => (
+            {STATS.map(([name, min, max, lo, hi, scale], i) => (
               <div key={name} className="mb-[30px]">
                 <div className="flex items-baseline justify-between gap-4">
                   <span className="text-[13px] font-bold tracking-[0.12em] uppercase text-wi-black">
@@ -149,7 +153,7 @@ export function WhyWithin() {
                     </span>
                   </span>
                 </div>
-                <RangeBar min={min} max={max} inView={inView} delay={i * 160} />
+                <RangeBar min={min} max={max} scale={scale} inView={inView} delay={i * 160} />
               </div>
             ))}
             <p className="mt-[22px] mb-0 text-[11.5px] leading-[1.55] text-wi-ink-300 max-w-[420px]">

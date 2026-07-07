@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { WithinLogo } from "@/components/brand/WithinLogo";
 
 import { Eyebrow } from "./Eyebrow";
-import { Hero909 } from "./Hero909";
+import { DisplayHeading } from "./DisplayHeading";
 
 /** One comparison cell: a verdict plus an optional qualifying note. */
 type CellState = "yes" | "no" | "part";
@@ -113,9 +113,9 @@ export function Compare() {
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div>
             <Eyebrow>Side by side</Eyebrow>
-            <Hero909 as="h2" className="mt-3 max-w-[640px] text-[54px]">
+            <DisplayHeading as="h2" className="mt-3 max-w-[640px] text-[54px]">
               How WITHIN compares.
-            </Hero909>
+            </DisplayHeading>
           </div>
           <p className="max-w-[360px] text-[15px] leading-[1.55] text-wi-ink-500 mb-0">
             Hydration is fluid plus minerals. Most of what&apos;s sold gets the minerals wrong:

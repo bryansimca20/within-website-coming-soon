@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Candy, Cookie, FlaskConical, Palette, X } from "lucide-react";
 
 import { Eyebrow } from "./Eyebrow";
-import { Hero909 } from "./Hero909";
+import { DisplayHeading } from "./DisplayHeading";
 
 /** name, description, image src — the ingredient carousel cards. */
 const ITEMS: [string, string, string][] = [
@@ -80,11 +80,11 @@ export function Formula() {
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div>
             <Eyebrow>The formula</Eyebrow>
-            <Hero909 as="h2" className="mt-3 max-w-[700px] text-[54px]">
+            <DisplayHeading as="h2" className="mt-3 max-w-[700px] text-[54px]">
               Less than 8 ingredients.
               <br />
               Nothing hidden.
-            </Hero909>
+            </DisplayHeading>
           </div>
           <p className="max-w-[340px] text-[15px] leading-[1.55] text-wi-ink-500 m-0">
             What your body loses, dosed for real output and printed in full on the front.

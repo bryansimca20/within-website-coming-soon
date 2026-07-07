@@ -1,4 +1,4 @@
-import { Hero909 } from "./Hero909";
+import { DisplayHeading } from "./DisplayHeading";
 
 /** Hero content; the headline is editorially set and defaults to the launch line. */
 interface HeroProps {
@@ -19,9 +19,9 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
       />
       <div className="relative max-w-[1200px] mx-auto pt-16 px-7 pb-[88px] min-h-[calc(100vh-66px)] box-border flex items-end">
         <div className="max-w-[640px]">
-          <Hero909 as="h1" dark className="text-[clamp(38px,4.8vw,62px)]">
+          <DisplayHeading as="h1" dark className="text-[clamp(38px,4.8vw,62px)]">
             {headline}
-          </Hero909>
+          </DisplayHeading>
           <p className="mt-[18px] mb-0 max-w-[420px] text-wi-on-dark-2 text-[17px] leading-[1.55]">
             Essential recovery nutrients in a single-serve sachet. No additives. Launching
             soon, made in Indonesia.
