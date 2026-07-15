@@ -5,6 +5,7 @@ import { Formula } from "@/components/coming-soon/Formula";
 import { Header } from "@/components/coming-soon/Header";
 import { Hero } from "@/components/coming-soon/Hero";
 import { Marquee } from "@/components/coming-soon/Marquee";
+import { SachetCallouts } from "@/components/coming-soon/SachetCallouts";
 import { Story } from "@/components/coming-soon/Story";
 import { MotionProvider } from "@/components/coming-soon/MotionProvider";
 import { WhyWithin } from "@/components/coming-soon/WhyWithin";
@@ -60,6 +61,7 @@ export default function Home() {
           <main>
             <Hero />
             <Marquee />
+            <SachetCallouts />
             <WhyWithin />
             <Compare />
             <Formula />
