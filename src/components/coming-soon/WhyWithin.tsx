@@ -7,9 +7,9 @@ import { Eyebrow } from "./Eyebrow";
 import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
 
 const REASONS: [string, string, string][] = [
-  ["01", "Not just water", "Water puts the fluid back. Not the minerals it left with."],
-  ["02", "The right minerals", "Sodium holds it. Potassium moves it. Magnesium fires the muscle."],
-  ["03", "Dosed to your loss", "1000mg sodium, not a trace. Nothing you don't need."],
+  ["01", "Not just water", "Water puts the fluid back but not the minerals that left with it."],
+  ["02", "The three that matter", "Sodium holds it, Potassium moves it, and Magnesium helps regulate muscle contractions."],
+  ["03", "Dosed to your loss", "1000mg sodium + 250mg potassium. Enough to replace an hour of hard sweat, not a pinch for taste."],
 ];
 
 /** name, low value, high value, low label, high label, axis max (mg) — sweat loss per hour. */
@@ -68,17 +68,17 @@ function RangeBar({
 export function WhyWithin() {
   return (
     <section className="bg-wi-paper border-t border-wi-line">
-      <div className="max-w-[1200px] mx-auto pt-24 px-7 pb-[88px] min-h-screen box-border flex flex-col justify-center">
+      <div className="max-w-[1200px] mx-auto pt-14 px-7 pb-[88px] min-h-screen box-border flex flex-col justify-center">
         <Reveal>
           <Eyebrow>Why WITHIN</Eyebrow>
           <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
             Built for the heat and humidity.
           </DisplayHeading>
           <p className="max-w-[820px] text-base leading-[1.6] text-wi-ink-500 mt-[22px]">
-            In Indonesia&apos;s heat and humidity, sweat can&apos;t evaporate efficiently, so your
-            body produces more of it to stay cool. Every drop carries electrolytes out with it,
-            mostly sodium and potassium. It&apos;s not that tropical sweat is saltier. You simply
-            lose a lot more of it.
+            Train in Indonesia&apos;s heat and your sweat can&apos;t evaporate fast enough to cool
+            you, so your body just makes more of it. Every drop carries minerals out with it,
+            mostly sodium, some potassium. Tropical sweat isn&apos;t saltier. You just lose far
+            more of it.
           </p>
         </Reveal>
         <div className="wi-science mt-14 grid grid-cols-2 gap-16 border-t-2 border-wi-black items-start">

@@ -1,7 +1,5 @@
 import Image from "next/image"
 
-import { cn } from "@/lib/utils"
-
 /** Props for the WITHIN brand mark. */
 interface WithinLogoProps {
   /** Which mark: the full wordmark or the angular "W". */
@@ -17,10 +15,18 @@ interface WithinLogoProps {
   priority?: boolean
 }
 
-/** Intrinsic aspect ratios (width / height) of the shipped PNGs — measured, see plan Task 4 Step 3. */
+/** Shipped PNGs per mark and ink, plus intrinsic aspect ratio (width / height) — measured from source. */
 const SOURCES = {
-  logotype: { src: "/brand/within-logotype.png", ratio: 5.54 },
-  logomark: { src: "/brand/within-logomark.png", ratio: 1.68 },
+  logotype: {
+    black: "/brand/within-logotype.png",
+    white: "/brand/within-logotype-white.png",
+    ratio: 5.54,
+  },
+  logomark: {
+    black: "/brand/within-logomark.png",
+    white: "/brand/within-logomark-white.png",
+    ratio: 1.68,
+  },
 } as const
 
 /** The WITHIN logotype/logomark, drawn from the official assets. Never redraw the mark. */
@@ -32,15 +38,15 @@ export function WithinLogo({
   className,
   priority = false,
 }: WithinLogoProps) {
-  const { src, ratio } = SOURCES[kind]
+  const { ratio } = SOURCES[kind]
   return (
     <Image
-      src={src}
+      src={SOURCES[kind][color]}
       alt={alt}
       height={height}
       width={Math.round(height * ratio)}
       priority={priority}
-      className={cn(color === "white" && "invert", className)}
+      className={className}
     />
   )
 }

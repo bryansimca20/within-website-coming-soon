@@ -1,10 +1,10 @@
 const ITEMS = [
-  "LESS THAN 8 INGREDIENTS",
+  "UNDER 8 INGREDIENTS",
   "NO ADDITIVES",
   "1000MG SODIUM",
-  "ZERO SUGAR ADDED",
+  "NO SUGAR ADDED",
   "MADE IN INDONESIA",
-  "OPTIMIZED FOR PERFORMANCE",
+  "BUILT FOR THE HEAT",
 ];
 
 /** Infinite-scrolling black band of product claims (paused under reduced-motion). */

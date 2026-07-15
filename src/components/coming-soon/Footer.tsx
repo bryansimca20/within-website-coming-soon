@@ -16,7 +16,7 @@ export function Footer() {
           <p
             className="mt-4 text-sm text-wi-on-dark-2 max-w-[280px] leading-normal"
           >
-            Essential recovery electrolytes. No additives. Made in Indonesia.
+            The electrolytes you sweat out, and nothing you don&apos;t. Made in Indonesia.
           </p>
         </div>
         <a

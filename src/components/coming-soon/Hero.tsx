@@ -44,8 +44,8 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.35 }}
           >
-            Essential recovery nutrients in a single-serve sachet. No additives. Launching
-            soon, made in Indonesia.
+            The stuff your body actually loses when you sweat, in a single sachet. No sugar,
+            no additives, no artificial stuff. Made in Indonesia.
           </motion.p>
         </div>
       </div>

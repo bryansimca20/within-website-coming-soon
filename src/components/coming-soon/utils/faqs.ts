@@ -5,30 +5,30 @@
 export const FAQS: [string, string][] = [
   [
     "What electrolytes does WITHIN contain?",
-    "Each sachet carries 1000mg sodium, 250mg potassium and 50mg magnesium. Less than 8 ingredients, no additives, no sugar added.",
+    "Each sachet has 1000mg sodium, 250mg potassium and 50mg magnesium. Under 8 ingredients, no additives, no added sugar.",
   ],
   [
-    "How quickly can I rehydrate with WITHIN?",
-    "Faster than with water alone. The sodium-led formula helps your body hold and route fluid where it's needed instead of passing it straight through. Most people feel level again within the first bottle.",
+    "How fast does WITHIN rehydrate me?",
+    "Faster than water on its own. The sodium helps your body hold onto the fluid instead of passing it straight through, so most people feel level again before they finish the bottle.",
   ],
   [
-    "Why is WITHIN better than drinking plain water?",
-    "Sweat carries minerals out, mostly sodium and potassium. Plain water replaces the fluid but dilutes what's left. WITHIN puts back both: the fluid and the electrolytes it left with.",
+    "Why not just drink water?",
+    "Sweat takes minerals out with the fluid, mostly sodium and potassium. Water tops the fluid back up but dilutes what's left. WITHIN puts back both: the water and the minerals that left with it.",
   ],
   [
-    "How should I take WITHIN?",
-    "Mix one sachet into about 500ml of water and drink during or after training. On heavy sweat days, start earlier: half before, half after.",
+    "How do I take it?",
+    "Mix one sachet into about 500ml of water and drink it during or after training. On heavy sweat days, split it: half before, half after.",
   ],
   [
-    "How many servings can I have in a day?",
-    "One sachet per hour of hard training is a good baseline. Most people need no more than two a day. Drink to thirst and adjust to your sweat rate.",
+    "How many can I have in a day?",
+    "One sachet per hour of hard training is a fair guide. Most days, two is plenty. Drink to thirst and adjust to how much you sweat.",
   ],
   [
-    "When is it launching?",
-    "Soon. We're completing the final steps before release. The best way to know the moment it's live is to follow us on Instagram.",
+    "When does it launch?",
+    "Soon. We're finishing the last steps before release. Follow us on Instagram and you'll catch the day it goes live.",
   ],
   [
-    "Where will I be able to buy it?",
-    "Online at launch, direct from WITHIN, with delivery across Indonesia. Details will be shared here and on our Instagram.",
+    "Where can I buy it?",
+    "Online first, direct from us, shipping across Indonesia. We'll post the details here and on Instagram.",
   ],
 ];

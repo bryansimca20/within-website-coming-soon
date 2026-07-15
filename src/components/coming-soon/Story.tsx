@@ -15,13 +15,13 @@ export function Story() {
         <p
           className="mt-5 text-[24px] leading-normal tracking-[-0.01em] text-wi-black text-pretty"
         >
-          Recovery has been overcomplicated. Buried under sugar, dyes and claims. We stripped it
-          back to what performance actually asks for: the essential minerals, correctly dosed, and
-          nothing else.
+          Somewhere along the line, hydration got complicated. More sugar, more dye, more claims
+          on the label than minerals in the drink. We went the other way. The minerals you lose,
+          at the dose you lose them, and nothing to read past.
         </p>
         <p className="mt-5 text-base leading-[1.6] text-wi-ink-500">
-          Built for the solo performer and the real Indonesian environment. Made in Indonesia.
-          Launching once approvals are complete.
+          Made in Indonesia, for the way people train here. We&apos;ll launch the moment our
+          approvals clear.
         </p>
       </Reveal>
     </section>

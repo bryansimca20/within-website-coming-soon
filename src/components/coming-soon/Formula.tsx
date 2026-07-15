@@ -14,27 +14,27 @@ import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
 const ITEMS: [string, string, string][] = [
   [
     "Sodium chloride",
-    "The primary electrolyte lost in sweat. Restores fluid balance and keeps output high.",
+    "The mineral you lose most when you sweat. Holds water in the body instead of letting it run straight through.",
     "/coming-soon/mineral-sodium.webp",
   ],
   [
     "Potassium chloride",
-    "Works with sodium to move water into cells and steady muscle function.",
+    "Works with sodium to pull water into your cells and keep muscles steady.",
     "/coming-soon/mineral-potassium.avif",
   ],
   [
     "Magnesium carbonate",
-    "Supports energy metabolism and helps muscles recover after the grind.",
+    "Backs energy production and helps muscles settle after a hard session.",
     "/coming-soon/mineral-magnesium.webp",
   ],
   [
     "Natural flavoring",
-    "Flavor from real fruit. Nothing synthetic, nothing artificial.",
+    "Flavor from real fruit. Nothing synthetic.",
     "/coming-soon/flavoring-orange.avif",
   ],
   [
     "Natural sweetener",
-    "Stevia leaf. Zero sugar, zero calories. Sweetness without the crash.",
+    "Stevia leaf. No sugar, no calories, no crash.",
     "/coming-soon/sweetener-stevia.jpg",
   ],
 ];
@@ -78,18 +78,19 @@ export function Formula() {
 
   return (
     <section className="bg-wi-paper text-wi-black">
-      <div className="max-w-[1200px] mx-auto pt-24 px-7">
+      <div className="max-w-[1200px] mx-auto pt-14 px-7">
         <Reveal className="flex items-end justify-between gap-8 flex-wrap">
           <div>
             <Eyebrow>The formula</Eyebrow>
             <DisplayHeading as="h2" className="mt-3 max-w-[700px] text-[54px]">
-              Less than 8 ingredients.
+              Under 8 ingredients.
               <br />
               Nothing hidden.
             </DisplayHeading>
           </div>
           <p className="max-w-[340px] text-[15px] leading-[1.55] text-wi-ink-500 m-0">
-            What your body loses, dosed for real output and printed in full on the front.
+            Just what your sweat takes out, in the amounts it takes. Every gram printed on the
+            front of the pack.
           </p>
         </Reveal>
       </div>
