@@ -8,12 +8,15 @@ Static "coming soon" landing page for **WITHIN**, an Indonesian sports-supplemen
 (BPOM / Halal certified). Single-page marketing placeholder shown ahead of the full
 storefront launch.
 
-- **No backend.** No API routes, no database, no auth, no server actions, no form persistence.
-- Everything is statically prerendered and served as a plain static site.
+- **Almost no backend.** No API routes, no database, no auth. The single exception is the
+  pre-launch email capture: one Server Action that writes signups into Shopify as customers
+  (see Data Fetching & Services).
+- The route `/` is still statically prerendered; only the Server Action runs server-side.
 - Deploys to **Vercel** (auto-detected, zero config).
 
-The production storefront lives separately (`../within-website`, a Shopify Hydrogen app);
-this repo is unrelated to it beyond shared branding.
+The production storefront lives separately (`../within-website`, a Shopify Hydrogen app).
+It shares branding, and — since email capture landed — the same Shopify store: signups here
+become customers there, tagged `prelaunch`.
 
 ## 2. Commands
 
@@ -23,6 +26,8 @@ this repo is unrelated to it beyond shared branding.
 | `npm run build` | Production build (Turbopack) |
 | `npm run start` | Serve the built app locally |
 | `npm run lint` | Run ESLint (flat config, `eslint-config-next`) |
+| `npm run test` | Run the Vitest suite once |
+| `npm run test:watch` | Vitest in watch mode |
 | `npx shadcn@latest add <component>` | Add a shadcn/ui component |
 
 Package manager is **npm** (`package-lock.json` is the source of truth). Do not introduce
@@ -31,9 +36,21 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 ## 3. Environment
 
 - **Node.js** `>= 20.9` (Next.js 16 requirement). Dev machine runs Node 22.
-- **No environment variables.** There is no `.env`; the site has no runtime config or secrets.
-  If one becomes necessary, add it to `.env.local`, mirror the key in this section, and
-  surface it to the user first (see When in Doubt).
+- Secrets live in `.env.local` (gitignored) locally and in Vercel project settings for
+  Production + Preview. Adding a new key means mirroring it in this section and surfacing it
+  to the user first (see When in Doubt).
+
+| Key | Purpose |
+| --- | --- |
+| `SHOPIFY_STORE_DOMAIN` | `xxx.myshopify.com`. Which store signups are written to |
+| `SHOPIFY_ADMIN_API_TOKEN` | `shpat_…` Admin API token, **`write_customers` scope only** |
+
+- **Never** prefix either with `NEXT_PUBLIC_`, and never import
+  [shopify-customer.service.ts](src/services/shopify-customer.service.ts) from a client
+  component. It imports `server-only`, so doing so is a build error rather than a leaked token.
+- The Admin API version is a code constant in that service, not an environment variable.
+- Shopify also needs a customer metafield definition (`custom.instagram_handle`, single line
+  text). Without it the value still writes but stays invisible in the admin UI.
 
 ## 4. Tech Stack
 
@@ -51,6 +68,14 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 - **lucide-react** — icons.
 - Utilities: `tw-animate-css`, `class-variance-authority`, `clsx`, `tailwind-merge`
   (composed by `cn()` in [src/lib/utils.ts](src/lib/utils.ts)).
+- **`botid`** — Vercel bot protection for the signup Server Action. `next.config.ts` is wrapped
+  in `withBotId()`, protected paths are declared in
+  [src/instrumentation-client.ts](src/instrumentation-client.ts), and the server calls
+  `checkBotId()`. A path missing from `initBotId({ protect })` makes `checkBotId()` fail, so the
+  two must stay in sync. Locally `checkBotId()` always returns `isBot: false`.
+- **`server-only`** — import guard on modules that hold secrets.
+- **Vitest** (dev) — unit tests for pure logic, colocated as `*.test.ts`. `server-only` is
+  aliased to a stub in [vitest.config.ts](vitest.config.ts) so services stay testable.
 
 ## 5. Architecture
 
@@ -58,22 +83,31 @@ App Router project under [src/](src/) with the `@/*` → `./src/*` path alias.
 
 ```
 src/
+├── instrumentation-client.ts  # BotID protected-path declaration (runs on the client)
 ├── app/              # Routes. layout.tsx + page.tsx are the only entry points.
 │   ├── layout.tsx    # Root layout (fonts, <html>/<body>, globals import)
 │   ├── page.tsx      # "/" — the coming-soon page
 │   ├── globals.css   # Tailwind v4 import + @theme tokens (shadcn colors)
+│   ├── actions/      # Server Actions ("use server"), one file per action
+│   ├── utils/        # Route-local pure helpers (validation, honeypot, action state)
 │   └── favicon.ico
 ├── components/
 │   └── ui/           # shadcn/ui primitives — WITHIN-restyled, owned in-repo (see UI and Design Rules)
+├── services/
+│   └── shopify-customer.service.ts   # Shopify Admin API writes
 └── lib/
     └── utils.ts      # cn() and other app infrastructure
 ```
 
 - **Server Components by default** (RSC). Client interactivity is opt-in via `"use client"`,
   pushed as deep into the tree as possible.
-- **Single static route** (`/`). Everything prerenders to static content at build time.
-- Folders `src/utils/`, `src/hooks/`, `src/services/` do not exist yet; create them per the
-  Rules below when the code that belongs in them appears.
+- **Single route** (`/`), still statically prerendered. The one dynamic path is the signup
+  Server Action.
+- A `"use server"` file may export **only async functions**. Types, enums and constants that
+  the action's callers need live in `src/app/utils/` (e.g. `subscribe-state.ts`), never in the
+  action file itself.
+- `src/hooks/` does not exist yet; create it per the Rules below when the code that belongs in
+  it appears.
 
 ---
 
@@ -180,15 +214,37 @@ approximate the mark.**
 
 ## Data Fetching & Services
 
-This site is fully static and has **no data fetching** today — there is no backend, no API
-route, and no `services/` layer. This section exists so the cross-references above resolve.
+The site reads no server-side data. It **writes** in exactly one place: pre-launch email capture.
 
-When server-side data first becomes necessary:
-- Fetch inside the relevant async `page.tsx` / `layout.tsx` Server Component (or a Server
-  Component it renders), then pass plain data down to presentational components as props.
-- Presentational components never fetch. Extract non-trivial transforms into a
-  `<noun>.service.ts` (static methods) or a `utils/` helper.
-- Introduce `src/services/` only when the first service module appears, and update this section.
+**The signup path**
+
+```
+SignupForm ("use client", mounted twice: Hero and Footer, both tone="inverse")
+  └─ useActionState → subscribeAction ("use server")
+       ├─ checkBotId()                       → isBot ? generic error
+       ├─ isHoneypotTripped()                → tripped ? report success, write nothing
+       ├─ parseSubscriberInput()             → field-level error
+       └─ ShopifyCustomerService.createPrelaunchSubscriber()
+            └─ Admin GraphQL customerCreate  → customer tagged `prelaunch`, SUBSCRIBED
+```
+
+**Rules this path establishes**
+
+- Server Actions live in `src/app/actions/` as `<verb>.action.ts` and hold orchestration only.
+  Validation goes in `src/app/utils/`, the network call in a service.
+- Services are `<noun>.service.ts` with static methods, and any service touching a secret
+  imports `server-only` on its first line.
+- Pure logic (validators, normalizers, error mappers) is unit-tested. Network and framework
+  glue is not — do not add mock-heavy tests for the action itself.
+- A Server Action is reachable by direct POST, not only through the UI. Re-validate everything
+  server-side regardless of what the form already checked.
+- Never surface a Shopify error message to the browser. A duplicate email reports **success**
+  (saying otherwise leaks who is registered); everything else reports one generic message.
+  Real errors go to `console.error` only.
+
+When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /
+`layout.tsx` Server Component, then pass plain data down as props. Presentational components
+never fetch.
 
 ## When in Doubt
 

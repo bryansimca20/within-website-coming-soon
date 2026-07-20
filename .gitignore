@@ -43,4 +43,7 @@ next-env.d.ts
 # superpowers implementation plans (local scratch, not committed)
 docs/superpowers/plans/
 
+# PRDs (local product docs, not committed)
+docs/PRD/
+
 *.agents
