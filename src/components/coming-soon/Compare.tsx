@@ -89,7 +89,7 @@ function CmpMark({ cell, onDark = false }: { cell: Cell; onDark?: boolean }) {
 /** The four-column water / sports drink / WITHIN comparison grid. */
 function CompareTable() {
   return (
-    <div className="grid grid-cols-[1.35fr_1.1fr_1fr] overflow-hidden rounded-lg border border-wi-line bg-wi-paper md:grid-cols-[1.25fr_1.1fr_1fr_1fr]">
+    <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-wi-line bg-wi-paper md:grid-cols-4">
       {HEAD.map((h, c) => (
         <div
           key={c}
