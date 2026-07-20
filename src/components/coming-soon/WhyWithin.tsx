@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { DisplayHeading } from "./DisplayHeading";
 import { Eyebrow } from "./Eyebrow";
 import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
+import { Section } from "./Section";
 
 const REASONS: [string, string, string][] = [
   ["01", "Not just water", "Water puts the fluid back but not the minerals that left with it."],
@@ -67,67 +68,65 @@ function RangeBar({
 /** "Why WITHIN" — the heat/humidity case, three reasons beside loss bars that grow in. */
 export function WhyWithin() {
   return (
-    <section className="bg-wi-paper border-t border-wi-line">
-      <div className="max-w-[1200px] mx-auto pt-14 px-7 pb-[88px] min-h-screen box-border flex flex-col justify-center">
-        <Reveal>
-          <Eyebrow>Why WITHIN</Eyebrow>
-          <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
-            Built for the heat and humidity.
-          </DisplayHeading>
-          <p className="max-w-[820px] text-base leading-[1.6] text-wi-ink-500 mt-[22px]">
-            Train in Indonesia&apos;s heat and your sweat can&apos;t evaporate fast enough to cool
-            you, so your body just makes more of it. Every drop carries minerals out with it,
-            mostly sodium, some potassium. Tropical sweat isn&apos;t saltier. You just lose far
-            more of it.
-          </p>
-        </Reveal>
-        <div className="wi-science mt-14 grid grid-cols-2 gap-16 border-t-2 border-wi-black items-start">
-          <RevealGroup>
-            {REASONS.map(([n, title, body]) => (
-              <RevealItem key={n} className="py-[26px] border-b border-wi-line">
-                <div className="flex gap-4 items-baseline">
-                  <span className="text-[13px] font-bold tracking-[0.1em] text-wi-ink-300">{n}</span>
-                  <span className="font-bold text-[22px] tracking-[-0.015em] uppercase text-wi-black">
-                    {title}
-                  </span>
-                </div>
-                <p className="mt-[10px] mb-0 text-[15px] leading-[1.6] text-wi-ink-500">{body}</p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-          <div className="pt-[26px]">
-            <Eyebrow className="mb-[26px]">Lost per hour of training</Eyebrow>
-            {STATS.map(([name, min, max, lo, hi, scale], i) => (
-              <div key={name} className="mb-[30px]">
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="text-[13px] font-bold tracking-[0.12em] uppercase text-wi-black">
-                    {name}
-                  </span>
-                  <span className="whitespace-nowrap">
-                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">{lo}</span>
-                    <span className="font-bold text-[15px] text-wi-ink-300 mx-[6px]">to</span>
-                    <span className="font-bold text-[32px] tracking-[-0.03em] text-wi-black">{hi}</span>
-                    <span className="font-bold text-sm text-wi-ink-500 ml-[5px]">mg</span>
-                  </span>
-                </div>
-                <RangeBar min={min} max={max} scale={scale} delay={i * 160} />
+    <Section surface="paper" borderTop fullHeight>
+      <Reveal>
+        <Eyebrow>Why WITHIN</Eyebrow>
+        <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
+          Built for the heat and humidity.
+        </DisplayHeading>
+        <p className="mt-[22px] max-w-[820px] text-base leading-[1.6] text-wi-ink-500">
+          Train in Indonesia&apos;s heat and your sweat can&apos;t evaporate fast enough to cool
+          you, so your body just makes more of it. Every drop carries minerals out with it,
+          mostly sodium, some potassium. Tropical sweat isn&apos;t saltier. You just lose far
+          more of it.
+        </p>
+      </Reveal>
+      <div className="mt-14 grid grid-cols-1 items-start gap-10 border-t-2 border-wi-black min-[860px]:grid-cols-2 min-[860px]:gap-16">
+        <RevealGroup>
+          {REASONS.map(([n, title, body]) => (
+            <RevealItem key={n} className="border-b border-wi-line py-[26px]">
+              <div className="flex items-baseline gap-4">
+                <span className="text-[13px] font-bold tracking-[0.1em] text-wi-ink-300">{n}</span>
+                <span className="text-[22px] font-bold uppercase tracking-[-0.015em] text-wi-black">
+                  {title}
+                </span>
               </div>
-            ))}
-            <p className="mt-[22px] mb-0 text-[11.5px] leading-[1.55] text-wi-ink-300 max-w-[420px]">
-              Sweat loss measured in runners at ~30°C / 70% humidity.{" "}
-              <a
-                href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8072971/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-inherit"
-              >
-                Surapongchai et al., Nutrients (2021)
-              </a>
-              .
-            </p>
-          </div>
+              <p className="mb-0 mt-[10px] text-[15px] leading-[1.6] text-wi-ink-500">{body}</p>
+            </RevealItem>
+          ))}
+        </RevealGroup>
+        <div className="pt-[26px]">
+          <Eyebrow className="mb-[26px]">Lost per hour of training</Eyebrow>
+          {STATS.map(([name, min, max, lo, hi, scale], i) => (
+            <div key={name} className="mb-[30px]">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-[13px] font-bold uppercase tracking-[0.12em] text-wi-black">
+                  {name}
+                </span>
+                <span className="whitespace-nowrap">
+                  <span className="text-[32px] font-bold tracking-[-0.03em] text-wi-black">{lo}</span>
+                  <span className="mx-[6px] text-[15px] font-bold text-wi-ink-300">to</span>
+                  <span className="text-[32px] font-bold tracking-[-0.03em] text-wi-black">{hi}</span>
+                  <span className="ml-[5px] text-sm font-bold text-wi-ink-500">mg</span>
+                </span>
+              </div>
+              <RangeBar min={min} max={max} scale={scale} delay={i * 160} />
+            </div>
+          ))}
+          <p className="mb-0 mt-[22px] max-w-[420px] text-[11.5px] leading-[1.55] text-wi-ink-300">
+            Sweat loss measured in runners at ~30°C / 70% humidity.{" "}
+            <a
+              href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8072971/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-inherit"
+            >
+              Surapongchai et al., Nutrients (2021)
+            </a>
+            .
+          </p>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
