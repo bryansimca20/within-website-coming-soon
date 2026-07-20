@@ -7,6 +7,7 @@ import { WithinLogo } from "@/components/brand/WithinLogo";
 import { DisplayHeading } from "./DisplayHeading";
 import { Eyebrow } from "./Eyebrow";
 import { Reveal } from "./Reveal";
+import { Section } from "./Section";
 
 /** One comparison cell: a verdict plus an optional qualifying note. */
 type CellState = "yes" | "no" | "part";
@@ -28,7 +29,13 @@ const ROWS: [string, Cell, Cell, Cell][] = [
   ["No colors, flavors, sweeteners", yes(), no(), yes()],
 ];
 
-const CELL = "py-5 px-[14px] border-t border-wi-line flex items-center justify-center";
+// A fixed row height is what makes the grid read as tidy: markers land on one baseline
+// whether or not a cell's note wraps to a second line.
+const CELL =
+  "flex min-h-[86px] items-center justify-center border-t border-wi-line px-2 py-4 md:min-h-[96px] md:px-[14px] md:py-5";
+
+/** The baseline column (`Water`) is dropped below `md` so phones need no sideways scroll. */
+const DESKTOP_ONLY_COLUMN = "hidden md:flex";
 
 /** A single verdict marker — filled black/paper for a strong yes, hairline otherwise. */
 function CmpMark({ cell, onDark = false }: { cell: Cell; onDark?: boolean }) {
@@ -82,16 +89,15 @@ function CmpMark({ cell, onDark = false }: { cell: Cell; onDark?: boolean }) {
 /** The four-column water / sports drink / WITHIN comparison grid. */
 function CompareTable() {
   return (
-    <div
-      className="wi-compare grid [grid-template-columns:1.25fr_1.1fr_1fr_1fr] border border-wi-line rounded-lg overflow-hidden bg-wi-paper"
-    >
+    <div className="grid grid-cols-[1.35fr_1.1fr_1fr] overflow-hidden rounded-lg border border-wi-line bg-wi-paper md:grid-cols-[1.25fr_1.1fr_1fr_1fr]">
       {HEAD.map((h, c) => (
         <div
           key={c}
           className={cn(
-            "p-4 px-[14px] flex items-center font-bold text-xs tracking-[0.13em] uppercase",
-            c === 0 ? "justify-start" : "justify-center",
-            c === 1 ? "text-wi-paper bg-wi-black" : "text-wi-ink-500 bg-transparent"
+            "flex items-center p-3 text-[11px] font-bold uppercase tracking-[0.13em] md:p-4 md:px-[14px] md:text-xs",
+            c === 0 ? "justify-start" : "justify-center text-center",
+            c === 1 ? "bg-wi-black text-wi-paper" : "bg-transparent text-wi-ink-500",
+            c === 3 && DESKTOP_ONLY_COLUMN
           )}
         >
           {c === 1 ? <WithinLogo kind="logotype" color="white" height={12} /> : h}
@@ -100,17 +106,22 @@ function CompareTable() {
       {ROWS.map(([label, water, sports, within]) => (
         <Fragment key={label}>
           <div
-            className={cn(CELL, "justify-start font-bold text-[14.5px] tracking-[-0.01em] text-wi-black text-left")}
+            className={cn(
+              CELL,
+              "justify-start text-left text-[13.5px] font-bold tracking-[-0.01em] text-wi-black md:text-[14.5px]"
+            )}
           >
             {label}
           </div>
-          <div className={cn(CELL, "bg-wi-black border-t border-wi-on-dark-line")}>
+          {/* The dark column keeps a light rule so every row separator reads as one
+              continuous hairline across the table rather than stepping at the seam. */}
+          <div className={cn(CELL, "bg-wi-black")}>
             <CmpMark cell={within} onDark />
           </div>
           <div className={CELL}>
             <CmpMark cell={sports} />
           </div>
-          <div className={CELL}>
+          <div className={cn(CELL, DESKTOP_ONLY_COLUMN)}>
             <CmpMark cell={water} />
           </div>
         </Fragment>
@@ -122,24 +133,22 @@ function CompareTable() {
 /** "How WITHIN compares" — intro copy over the comparison table. */
 export function Compare() {
   return (
-    <section className="bg-wi-paper-dim border-t border-wi-line">
-      <div className="max-w-[1200px] mx-auto pt-14 px-7 pb-[88px]">
-        <Reveal className="flex items-end justify-between gap-8 flex-wrap">
-          <div>
-            <Eyebrow>Side by side</Eyebrow>
-            <DisplayHeading as="h2" className="mt-3 max-w-[640px] text-[54px]">
-              How WITHIN compares.
-            </DisplayHeading>
-          </div>
-          <p className="max-w-[360px] text-[15px] leading-[1.55] text-wi-ink-500 mb-0">
-            Hydration is fluid plus minerals. Most of what&apos;s sold gets the minerals wrong:
-            too little, or buried under sugar.
-          </p>
-        </Reveal>
-        <Reveal className="wi-compare-wrap mt-12" delay={100}>
-          <CompareTable />
-        </Reveal>
-      </div>
-    </section>
+    <Section surface="paperDim" borderTop>
+      <Reveal className="flex flex-wrap items-end justify-between gap-8">
+        <div>
+          <Eyebrow>Side by side</Eyebrow>
+          <DisplayHeading as="h2" className="mt-3 max-w-[640px] text-[54px]">
+            How WITHIN compares.
+          </DisplayHeading>
+        </div>
+        <p className="mb-0 max-w-[360px] text-[15px] leading-[1.55] text-wi-ink-500">
+          Hydration is fluid plus minerals. Most of what&apos;s sold gets the minerals wrong:
+          too little, or buried under sugar.
+        </p>
+      </Reveal>
+      <Reveal className="mt-10 md:mt-12" delay={100}>
+        <CompareTable />
+      </Reveal>
+    </Section>
   );
 }
