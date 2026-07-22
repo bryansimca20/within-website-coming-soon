@@ -8,6 +8,7 @@ import { Atom, Ban, Droplet, Leaf, Zap, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DisplayHeading } from "./DisplayHeading";
 import { Eyebrow } from "./Eyebrow";
+import { Section } from "./Section";
 
 /** A Lucide glyph key, or the `flag` sentinel for the Indonesia mark. */
 type CalloutIcon = "droplet" | "zap" | "atom" | "ban" | "leaf" | "flag";
@@ -182,53 +183,55 @@ export function SachetCallouts() {
   };
 
   return (
-    <section className="box-border flex min-h-svh items-center overflow-hidden bg-wi-paper px-7 py-[clamp(24px,4vh,72px)]">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="mx-auto mb-3 max-w-[620px] text-center">
-          <Eyebrow>What&apos;s Within</Eyebrow>
-          <DisplayHeading as="h2" className="mt-[14px] text-[min(clamp(28px,4.5vw,52px),6.5vh)]">
-            Three minerals in. The rest, left out.
-          </DisplayHeading>
-          <p className="mx-auto mt-3 max-w-[460px] leading-[1.5] text-wi-ink-500 text-[min(15px,2.4vh)]">
-            One sachet. Only the minerals your body sweats out, at the dose it loses them. Nothing
-            added to pad the label.
-          </p>
+    <Section surface="paper" size="snug" fullHeight className="overflow-hidden">
+      <div className="mx-auto mb-3 max-w-[620px] text-center">
+        <Eyebrow>What&apos;s Within</Eyebrow>
+        <DisplayHeading as="h2" className="mt-[14px] text-[clamp(28px,4.5vw,52px)]">
+          Three minerals in. The rest, left out.
+        </DisplayHeading>
+        <p className="mx-auto mt-3 max-w-[460px] text-[15px] leading-[1.5] text-wi-ink-500">
+          One sachet. Only the minerals your body sweats out, at the dose it loses them. Nothing
+          added to pad the label.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-[1fr_minmax(min(260px,40vh),min(400px,44vh))_1fr] items-center gap-x-2 gap-y-6 max-[760px]:grid-cols-2 max-[760px]:gap-x-8 max-[760px]:gap-y-0">
+        <div className="relative z-1 grid justify-items-end gap-[min(110px,14vh)] max-[760px]:row-start-2 max-[760px]:mt-2 max-[760px]:content-start max-[760px]:justify-items-start max-[760px]:gap-4">
+          {callout(0, "left", true)}
+          {callout(1, "left", false)}
+          {callout(2, "left", true)}
         </div>
 
-        <div className="grid grid-cols-[1fr_minmax(min(260px,40vh),min(400px,44vh))_1fr] items-center gap-x-2 gap-y-6 max-[760px]:grid-cols-2 max-[760px]:gap-x-8 max-[760px]:gap-y-0">
-          <div className="grid justify-items-end gap-[min(110px,14vh)] max-[760px]:row-start-2 max-[760px]:mt-5 max-[760px]:content-start max-[760px]:gap-4 max-[760px]:justify-items-start">
-            {callout(0, "left", true)}
-            {callout(1, "left", false)}
-            {callout(2, "left", true)}
+        {/* The sachet is 1:2.16 and rotated, so its bounding box is ~1.36x this cell's
+            width — taller than the 1/1.12 cell. On desktop that spills harmlessly into the
+            sibling columns' gutters, but on mobile the callouts sit in the row directly
+            below, so the cell has to be tall enough to contain the sachet outright. */}
+        <div className="relative grid aspect-[1/1.12] place-items-center max-[760px]:order-first max-[760px]:col-span-2 max-[760px]:row-start-1 max-[760px]:mx-auto max-[760px]:aspect-[1/1.45] max-[760px]:w-full max-[760px]:max-w-[min(300px,72vw)]">
+          <DottedRing />
+          <div className="w-[58%] rotate-[14deg]">
+            <motion.div
+              animate={{ y: [-8, 10, -8] }}
+              transition={{ duration: 5, ease: "easeInOut", repeat: Infinity }}
+            >
+              <Image
+                src="/coming-soon/sachet-single.png"
+                alt="WITHIN electrolyte sachet"
+                width={1632}
+                height={3526}
+                sizes="(max-width: 760px) 300px, 240px"
+                draggable={false}
+                className="h-auto w-full drop-shadow-[0_24px_40px_rgba(0,0,0,0.22)]"
+              />
+            </motion.div>
           </div>
+        </div>
 
-          <div className="relative grid aspect-[1/1.12] place-items-center max-[760px]:order-first max-[760px]:col-span-2 max-[760px]:row-start-1 max-[760px]:mx-auto max-[760px]:w-full max-[760px]:max-w-[min(300px,34vh)]">
-            <DottedRing />
-            <div className="w-[58%] rotate-[14deg]">
-              <motion.div
-                animate={{ y: [-8, 10, -8] }}
-                transition={{ duration: 5, ease: "easeInOut", repeat: Infinity }}
-              >
-                <Image
-                  src="/coming-soon/sachet-single.png"
-                  alt="WITHIN electrolyte sachet"
-                  width={1632}
-                  height={3526}
-                  sizes="(max-width: 760px) 300px, 240px"
-                  draggable={false}
-                  className="h-auto w-full drop-shadow-[0_24px_40px_rgba(0,0,0,0.22)]"
-                />
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="grid justify-items-start gap-[min(110px,14vh)] max-[760px]:row-start-2 max-[760px]:mt-5 max-[760px]:content-start max-[760px]:gap-4 max-[760px]:justify-items-start">
-            {callout(3, "right", true)}
-            {callout(4, "right", false)}
-            {callout(5, "right", true)}
-          </div>
+        <div className="relative z-1 grid justify-items-start gap-[min(110px,14vh)] max-[760px]:row-start-2 max-[760px]:mt-2 max-[760px]:content-start max-[760px]:justify-items-start max-[760px]:gap-4">
+          {callout(3, "right", true)}
+          {callout(4, "right", false)}
+          {callout(5, "right", true)}
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

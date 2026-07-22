@@ -236,50 +236,10 @@
   display: none;
 }
 
-@media (max-width: 860px) {
-  .wi-science {
-    grid-template-columns: 1fr !important;
-    gap: 44px !important;
-  }
-  .wi-faq {
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
-  }
-  .wi-notins2 {
-    grid-template-columns: 1fr 1fr !important;
-  }
-  .wi-notins2 > div:nth-child(2) {
-    border-right: none !important;
-  }
-  .wi-compare {
-    font-size: 12px;
-  }
-  .wi-compare > div {
-    padding: 12px 6px !important;
-  }
-}
-
 @media (max-width: 560px) {
-  .wi-ig-label {
-    display: none;
-  }
   /* Cap oversized fixed-px hero/section headings on phones */
   .wi-display {
     font-size: clamp(32px, 9vw, 40px) !important;
     line-height: 0.98 !important;
-  }
-  /* Keep the 4-col comparison legible: scroll rather than crush */
-  .wi-compare-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin-left: -28px;
-    margin-right: -28px;
-    padding: 0 28px;
-  }
-  .wi-compare {
-    min-width: 480px;
-  }
-  .wi-science {
-    gap: 40px !important;
   }
 }

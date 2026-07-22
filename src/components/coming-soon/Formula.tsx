@@ -9,6 +9,7 @@ import { Candy, Cookie, FlaskConical, Palette, X } from "lucide-react";
 import { DisplayHeading } from "./DisplayHeading";
 import { Eyebrow } from "./Eyebrow";
 import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
+import { SectionContainer } from "./Section";
 
 /** name, description, image src — the ingredient carousel cards. */
 const ITEMS: [string, string, string][] = [
@@ -78,8 +79,8 @@ export function Formula() {
 
   return (
     <section className="bg-wi-paper text-wi-black">
-      <div className="max-w-[1200px] mx-auto pt-14 px-7">
-        <Reveal className="flex items-end justify-between gap-8 flex-wrap">
+      <SectionContainer flush className="pt-14">
+        <Reveal className="flex flex-wrap items-end justify-between gap-8">
           <div>
             <Eyebrow>The formula</Eyebrow>
             <DisplayHeading as="h2" className="mt-3 max-w-[700px] text-[54px]">
@@ -93,11 +94,12 @@ export function Formula() {
             front of the pack.
           </p>
         </Reveal>
-      </div>
+      </SectionContainer>
 
-      <div
+      <SectionContainer
+        flush
         ref={scroller}
-        className="wi-form-scroll flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-p-[0_28px] cursor-grab select-none pt-11 px-7 pb-2 max-w-[1200px] mx-auto box-border"
+        className="wi-form-scroll flex cursor-grab snap-x snap-mandatory select-none gap-6 overflow-x-auto scroll-p-[0_20px] pb-2 pt-11 md:scroll-p-[0_28px]"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -134,16 +136,18 @@ export function Formula() {
             </p>
           </div>
         ))}
-      </div>
+      </SectionContainer>
 
-      <div className="max-w-[1200px] mx-auto py-14 px-7 pb-[88px]">
+      <SectionContainer>
         <div className="border-t-2 border-wi-black pt-10">
           <Eyebrow>What&apos;s not in it</Eyebrow>
-          <RevealGroup className="wi-notins2 mt-7 grid grid-cols-4 gap-6">
-            {NOTINS.map(([label, Icon], i) => (
+          <RevealGroup className="mt-7 grid grid-cols-2 gap-6 min-[860px]:grid-cols-4">
+            {NOTINS.map(([label, Icon]) => (
+              // The divider is dropped on whichever cell ends a row, which differs
+              // between the two-up phone grid and the four-up desktop grid.
               <RevealItem
                 key={label}
-                className={`flex flex-col gap-4 p-[4px_24px_4px_0]${i < NOTINS.length - 1 ? " border-r border-wi-line" : ""}`}
+                className="flex flex-col gap-4 border-r border-wi-line py-1 pr-6 last:border-r-0 max-[860px]:even:border-r-0"
               >
                 <span className="relative inline-flex items-center justify-center w-[46px] h-[46px] rounded-full border border-wi-line text-wi-black">
                   <Icon size={21} strokeWidth={1.9} />
@@ -156,7 +160,7 @@ export function Formula() {
             ))}
           </RevealGroup>
         </div>
-      </div>
+      </SectionContainer>
     </section>
   );
 }

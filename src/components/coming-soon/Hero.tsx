@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { DisplayHeading } from "./DisplayHeading";
 import { EASE } from "./Reveal";
 import { SignupForm } from "./SignupForm";
+import { SectionContainer } from "./Section";
 
 /** Hero content; the headline is editorially set and defaults to the launch line. */
 interface HeroProps {
@@ -26,7 +27,7 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
         aria-hidden
         className="absolute inset-0 bg-linear-to-b from-black/[0.38] via-black/[0.30] to-black/[0.72]"
       />
-      <div className="relative max-w-[1200px] mx-auto pt-16 px-7 pb-[88px] min-h-[calc(100vh-66px)] box-border flex items-end">
+      <SectionContainer className="relative flex min-h-[calc(100svh-66px)] items-end">
         <div className="max-w-[640px]">
           <div className="overflow-hidden">
             <motion.div
@@ -57,7 +58,7 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
             <SignupForm tone="inverse" />
           </motion.div>
         </div>
-      </div>
+      </SectionContainer>
     </section>
   );
 }

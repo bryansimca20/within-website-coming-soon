@@ -2,12 +2,13 @@ import { WithinLogo } from "@/components/brand/WithinLogo";
 
 import { Eyebrow } from "./Eyebrow";
 import { Reveal } from "./Reveal";
+import { Section } from "./Section";
 
 /** Centered mission statement, anchored by the logomark. */
 export function Story() {
   return (
-    <section className="bg-wi-paper border-t border-wi-line border-b border-wi-line">
-      <Reveal className="max-w-[720px] mx-auto px-7 py-[84px] text-center">
+    <Section surface="paper" borderTop borderBottom containerClassName="max-w-[720px] text-center">
+      <Reveal>
         <div className="flex justify-center mb-[26px] opacity-90">
           <WithinLogo kind="logomark" height={34} alt="" />
         </div>
@@ -24,6 +25,6 @@ export function Story() {
           approvals clear.
         </p>
       </Reveal>
-    </section>
+    </Section>
   );
 }

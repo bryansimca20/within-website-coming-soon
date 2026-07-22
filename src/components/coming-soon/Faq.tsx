@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 
 import { DisplayHeading } from "./DisplayHeading";
 import { EASE, Reveal } from "./Reveal";
+import { Section } from "./Section";
 import { FAQS } from "./utils/faqs";
 
 /** One expandable question row. */
@@ -60,25 +61,26 @@ function FaqItem({
 export function Faq() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="bg-wi-paper-dim">
-      <div className="wi-faq max-w-[1200px] mx-auto grid grid-cols-[0.7fr_1.3fr] gap-12 px-7 py-20">
-        <Reveal>
-          <DisplayHeading as="h2" className="mt-3 text-[40px]">
-            Frequently asked questions
-          </DisplayHeading>
-        </Reveal>
-        <Reveal className="border-b border-wi-line" delay={100}>
-          {FAQS.map(([q, a], i) => (
-            <FaqItem
-              key={q}
-              q={q}
-              a={a}
-              open={open === i}
-              onToggle={() => setOpen(open === i ? -1 : i)}
-            />
-          ))}
-        </Reveal>
-      </div>
-    </section>
+    <Section
+      surface="paperDim"
+      containerClassName="grid grid-cols-1 gap-6 md:grid-cols-[0.7fr_1.3fr] md:gap-12"
+    >
+      <Reveal>
+        <DisplayHeading as="h2" className="mt-3 text-[40px]">
+          Frequently asked questions
+        </DisplayHeading>
+      </Reveal>
+      <Reveal className="border-b border-wi-line" delay={100}>
+        {FAQS.map(([q, a], i) => (
+          <FaqItem
+            key={q}
+            q={q}
+            a={a}
+            open={open === i}
+            onToggle={() => setOpen(open === i ? -1 : i)}
+          />
+        ))}
+      </Reveal>
+    </Section>
   );
 }

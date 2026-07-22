@@ -6,6 +6,7 @@ import { DisplayHeading } from "./DisplayHeading";
 import { Eyebrow } from "./Eyebrow";
 import { Reveal } from "./Reveal";
 import { SignupForm } from "./SignupForm";
+import { SectionContainer } from "./Section";
 import { InstagramGlyph } from "./svg/InstagramGlyph";
 
 /** Black footer: pre-launch signup, wordmark, tagline, Instagram follow, and a legal row. */
@@ -25,14 +26,12 @@ export function Footer() {
           <SignupForm tone="inverse" className="mt-8" />
         </Reveal>
       </div>
-      <div
-        className="max-w-[1200px] mx-auto pt-14 px-7 pb-[30px] flex items-end justify-between gap-[30px] flex-wrap border-t border-wi-on-dark-line"
+      <SectionContainer
+        className="flex flex-wrap items-end justify-between gap-[30px] pb-[30px]"
       >
         <div>
           <WithinLogo kind="logotype" color="white" height={20} />
-          <p
-            className="mt-4 text-sm text-wi-on-dark-2 max-w-[280px] leading-normal"
-          >
+          <p className="mt-4 max-w-[280px] text-sm leading-normal text-wi-on-dark-2">
             The electrolytes you sweat out, and nothing you don&apos;t. Made in Indonesia.
           </p>
         </div>
@@ -40,18 +39,19 @@ export function Footer() {
           href={INSTAGRAM_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-[10px] text-wi-paper text-[13px] font-bold tracking-[0.1em] uppercase no-underline border border-wi-on-dark-line rounded-md py-3 px-4"
+          className="inline-flex items-center gap-[10px] rounded-md border border-wi-on-dark-line px-4 py-3 text-[13px] font-bold uppercase tracking-[0.1em] text-wi-paper no-underline"
         >
           <InstagramGlyph size={18} />
           Follow {INSTAGRAM_HANDLE}
         </a>
-      </div>
-      <div
-        className="max-w-[1200px] mx-auto py-[18px] px-7 border-t border-wi-on-dark-line flex justify-between text-xs text-wi-on-dark-3 flex-wrap gap-2"
+      </SectionContainer>
+      <SectionContainer
+        flush
+        className="flex flex-wrap justify-between gap-2 border-t border-wi-on-dark-line py-[18px] text-xs text-wi-on-dark-3"
       >
         <span>© 2026 WITHIN</span>
         <span>Jakarta · Indonesia</span>
-      </div>
+      </SectionContainer>
     </footer>
   );
 }
