@@ -37,6 +37,13 @@ interface ICustomerInput {
   }>;
 }
 
+/** Shape of a successful `client_credentials` token exchange. */
+interface ITokenResponse {
+  access_token: string;
+  scope: string;
+  expires_in: number;
+}
+
 const ADMIN_API_VERSION = "2026-07";
 
 /** Segments the launch campaign. `coming-soon` records where the signup came from. */
@@ -107,12 +114,45 @@ export class ShopifyCustomerService {
     return allDuplicates ? SubscribeOutcome.AlreadySubscribed : SubscribeOutcome.Failed;
   }
 
+  /**
+   * Exchanges the app's client credentials for a short-lived Admin API token.
+   * Dev Dashboard apps issue no static token, so each write mints a fresh 24h token.
+   */
+  static async fetchAccessToken(storeDomain: string): Promise<string | null> {
+    const clientId = requireEnv("SHOPIFY_CLIENT_ID");
+    const clientSecret = requireEnv("SHOPIFY_CLIENT_SECRET");
+
+    const response = await fetch(`https://${storeDomain}/admin/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("[shopify] token exchange failed", response.status, await response.text());
+      return null;
+    }
+
+    const payload: ITokenResponse = await response.json();
+
+    return payload.access_token;
+  }
+
   /** Creates the customer. Never throws for expected outcomes; logs and reports failure instead. */
   static async createPrelaunchSubscriber(
     subscriber: IPrelaunchSubscriber
   ): Promise<SubscribeOutcome> {
     const storeDomain = requireEnv("SHOPIFY_STORE_DOMAIN");
-    const accessToken = requireEnv("SHOPIFY_ADMIN_API_TOKEN");
+    const accessToken = await ShopifyCustomerService.fetchAccessToken(storeDomain);
+
+    if (accessToken === null) {
+      return SubscribeOutcome.Failed;
+    }
 
     const response = await fetch(
       `https://${storeDomain}/admin/api/${ADMIN_API_VERSION}/graphql.json`,

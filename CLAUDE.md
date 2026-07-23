@@ -43,11 +43,17 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 | Key | Purpose |
 | --- | --- |
 | `SHOPIFY_STORE_DOMAIN` | `xxx.myshopify.com`. Which store signups are written to |
-| `SHOPIFY_ADMIN_API_TOKEN` | `shpat_…` Admin API token, **`write_customers` scope only** |
+| `SHOPIFY_CLIENT_ID` | Dev Dashboard app Client ID, **`write_customers` scope only** |
+| `SHOPIFY_CLIENT_SECRET` | `shpss_…` Client Secret. Exchanged for a 24h Admin API token at request time |
 
-- **Never** prefix either with `NEXT_PUBLIC_`, and never import
+- Shopify killed in-admin custom apps + static `shpat_` tokens. The app now lives in the
+  **Dev Dashboard** (`dev.shopify.com/dashboard`): scope `write_customers`, Release the version,
+  Install on the store. The service exchanges Client ID + Secret for a short-lived token via
+  `POST /admin/oauth/access_token` (`grant_type=client_credentials`) on each write — no static
+  token to store or rotate.
+- **Never** prefix any of these with `NEXT_PUBLIC_`, and never import
   [shopify-customer.service.ts](src/services/shopify-customer.service.ts) from a client
-  component. It imports `server-only`, so doing so is a build error rather than a leaked token.
+  component. It imports `server-only`, so doing so is a build error rather than a leaked secret.
 - The Admin API version is a code constant in that service, not an environment variable.
 - Shopify also needs a customer metafield definition (`custom.instagram_handle`, single line
   text). Without it the value still writes but stays invisible in the admin UI.
