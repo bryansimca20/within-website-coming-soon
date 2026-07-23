@@ -103,6 +103,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
     return {
       "aria-invalid": message !== undefined,
       "aria-describedby": message !== undefined ? `${idFor[field]}-error` : undefined,
+      className: "aria-invalid:border-wi-error",
       onBlur: (event: FormEvent<HTMLInputElement>) =>
         revalidate(field, event.currentTarget.value),
       onChange: (event: FormEvent<HTMLInputElement>) => {
@@ -122,10 +123,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
     return (
       <p
         id={`${idFor[field]}-error`}
-        className={cn(
-          "mt-1 mb-0 text-[13px] font-medium leading-[1.4]",
-          isDark ? "text-wi-on-dark-1" : "text-wi-black"
-        )}
+        className="mt-1 mb-0 text-[13px] font-medium leading-[1.4] text-wi-error"
       >
         {message}
       </p>
@@ -139,7 +137,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
       className={cn("max-w-[520px]", className)}
       noValidate
     >
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid items-start gap-3 sm:grid-cols-2">
         <div className="grid gap-2 sm:col-span-2">
           <Label htmlFor={idFor.fullName} tone={isDark ? "inverse" : "default"}>
             Full name
@@ -210,10 +208,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
         id={statusId}
         role="alert"
         aria-live="polite"
-        className={cn(
-          "mt-2 mb-0 min-h-[18px] text-[13px] leading-[1.4]",
-          isDark ? "text-wi-on-dark-1" : "text-wi-black"
-        )}
+        className="mt-2 mb-0 min-h-[18px] text-[13px] leading-[1.4] text-wi-error"
       >
         {state.status === SubscribeStatus.Error ? state.message : ""}
       </p>
