@@ -22,7 +22,7 @@ function DrawerBackdrop({ className, ...props }: React.ComponentProps<typeof Dra
   return (
     <DrawerPrimitive.Backdrop
       className={cn(
-        "fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ease-[var(--wi-ease-out)] data-starting-style:opacity-0 data-ending-style:opacity-0 data-swiping:duration-0 motion-reduce:transition-none",
+        "fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ease-[var(--wi-ease-out)] data-starting-style:opacity-0 data-ending-style:opacity-0 motion-reduce:transition-none",
         className
       )}
       {...props}
