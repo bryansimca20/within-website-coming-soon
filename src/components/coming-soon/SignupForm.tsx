@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useActionState, useEffect, useId, useRef, useState } from "react";
+import { type FormEvent, useActionState, useId, useState } from "react";
 
 import { subscribeAction } from "@/app/actions/subscribe.action";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
@@ -26,17 +26,12 @@ interface SignupFormProps {
 export function SignupForm({ tone = "default", className }: SignupFormProps) {
   const [state, formAction, isPending] = useActionState(subscribeAction, INITIAL_SUBSCRIBE_STATE);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
-  const timestampRef = useRef<HTMLInputElement>(null);
   const fieldId = useId();
-
-  // Written straight to the DOM after mount, never during render: the page is statically
-  // prerendered, so a build-time value would be hours old and the elapsed-time check would
-  // never catch a bot. Going through state here would only add a cascading render.
-  useEffect(() => {
-    if (timestampRef.current !== null) {
-      timestampRef.current.value = String(Date.now());
-    }
-  }, []);
+  // Honeypot render timestamp. This form only ever mounts client-side (inside the overlay,
+  // which mounts its children on open), so a lazy-initialized value is the client mount time
+  // with no SSR staleness. Held in state so re-renders and the post-action form reset cannot
+  // clear it, unlike an imperatively-set uncontrolled input value.
+  const [renderedAt] = useState(() => String(Date.now()));
 
   const isDark = tone === "inverse";
   const idFor: Record<FieldName, string> = {
@@ -192,7 +187,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
       <div aria-hidden className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden">
         <input name={HONEYPOT_TRAP_FIELD} type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
       </div>
-      <input ref={timestampRef} name={HONEYPOT_TIMESTAMP_FIELD} type="hidden" defaultValue="" />
+      <input name={HONEYPOT_TIMESTAMP_FIELD} type="hidden" value={renderedAt} readOnly />
 
       <Button
         type="submit"
