@@ -5,6 +5,7 @@ import {
   normalizeFullName,
   normalizeInstagramHandle,
   parseSubscriberInput,
+  validateField,
 } from "./subscriber-input";
 
 describe("normalizeEmail", () => {
@@ -157,5 +158,35 @@ describe("parseSubscriberInput", () => {
     });
 
     expect(result).toEqual({ ok: false, field: "instagramHandle", message: expect.any(String) });
+  });
+});
+
+describe("validateField", () => {
+  test("flags an empty name", () => {
+    expect(validateField("fullName", "   ")).toBe("Enter your name.");
+  });
+
+  test("accepts a present name", () => {
+    expect(validateField("fullName", "Bryan Simca")).toBeNull();
+  });
+
+  test("flags an invalid email", () => {
+    expect(validateField("email", "nope")).toBe("Enter a valid email address.");
+  });
+
+  test("accepts a valid email", () => {
+    expect(validateField("email", "bryan@example.com")).toBeNull();
+  });
+
+  test("treats an empty Instagram handle as valid (optional)", () => {
+    expect(validateField("instagramHandle", "  ")).toBeNull();
+  });
+
+  test("flags a malformed Instagram handle", () => {
+    expect(validateField("instagramHandle", "not a handle")).toBe("Enter a valid Instagram handle.");
+  });
+
+  test("accepts a valid Instagram handle", () => {
+    expect(validateField("instagramHandle", "@within.id")).toBeNull();
   });
 });

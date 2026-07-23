@@ -65,16 +65,40 @@ export function normalizeInstagramHandle(raw: string): string | null {
   return HANDLE_PATTERN.test(candidate) ? candidate : null;
 }
 
+/** Field-level error copy, shared by the server validator and the client-side form so they never drift. */
+export const SUBSCRIBER_FIELD_ERROR: Record<keyof ISubscriberInput, string> = {
+  fullName: "Enter your name.",
+  email: "Enter a valid email address.",
+  instagramHandle: "Enter a valid Instagram handle.",
+};
+
+/** Validates one field's raw value, returning its error message or null. Instagram is optional. */
+export function validateField(field: keyof ISubscriberInput, value: string): string | null {
+  if (field === "fullName") {
+    return normalizeFullName(value) === null ? SUBSCRIBER_FIELD_ERROR.fullName : null;
+  }
+
+  if (field === "email") {
+    return normalizeEmail(value) === null ? SUBSCRIBER_FIELD_ERROR.email : null;
+  }
+
+  if (value.trim() === "") {
+    return null;
+  }
+
+  return normalizeInstagramHandle(value) === null ? SUBSCRIBER_FIELD_ERROR.instagramHandle : null;
+}
+
 /** Validates a whole submission. Name and email are required; a supplied handle must be valid. */
 export function parseSubscriberInput(input: ISubscriberInput): ParsedSubscriber {
   const name = normalizeFullName(input.fullName);
   if (name === null) {
-    return { ok: false, field: "fullName", message: "Enter your name." };
+    return { ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName };
   }
 
   const email = normalizeEmail(input.email);
   if (email === null) {
-    return { ok: false, field: "email", message: "Enter a valid email address." };
+    return { ok: false, field: "email", message: SUBSCRIBER_FIELD_ERROR.email };
   }
 
   if (input.instagramHandle.trim() === "") {
@@ -83,7 +107,7 @@ export function parseSubscriberInput(input: ISubscriberInput): ParsedSubscriber 
 
   const instagramHandle = normalizeInstagramHandle(input.instagramHandle);
   if (instagramHandle === null) {
-    return { ok: false, field: "instagramHandle", message: "Enter a valid Instagram handle." };
+    return { ok: false, field: "instagramHandle", message: SUBSCRIBER_FIELD_ERROR.instagramHandle };
   }
 
   return { ok: true, firstName: name.firstName, lastName: name.lastName, email, instagramHandle };
