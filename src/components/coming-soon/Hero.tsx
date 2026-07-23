@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 
 import { DisplayHeading } from "./DisplayHeading";
 import { EASE } from "./Reveal";
+import { WaitlistOverlay } from "./WaitlistOverlay";
 import { SectionContainer } from "./Section";
 
 /** Hero content; the headline is editorially set and defaults to the launch line. */
@@ -48,6 +49,14 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
             The stuff your body actually loses when you sweat, in a single sachet. No sugar,
             no additives, no artificial stuff. Made in Indonesia.
           </motion.p>
+          <motion.div
+            className="mt-8"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
+          >
+            <WaitlistOverlay tone="inverse" />
+          </motion.div>
         </div>
       </SectionContainer>
     </section>

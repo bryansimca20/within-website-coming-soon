@@ -2,13 +2,28 @@ import { WithinLogo } from "@/components/brand/WithinLogo";
 
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 
+import { DisplayHeading } from "./DisplayHeading";
+import { Reveal } from "./Reveal";
+import { WaitlistOverlay } from "./WaitlistOverlay";
 import { SectionContainer } from "./Section";
 import { InstagramGlyph } from "./svg/InstagramGlyph";
 
-/** Black footer: wordmark, tagline, Instagram follow, and a legal row. */
+/** Black footer: pre-launch signup, wordmark, tagline, Instagram follow, and a legal row. */
 export function Footer() {
   return (
     <footer className="bg-wi-black text-wi-paper">
+      <div className="max-w-[1200px] mx-auto px-7 pt-[88px] pb-14">
+        <Reveal>
+          <DisplayHeading as="h2" dark className="mt-4 text-[clamp(30px,3.6vw,46px)] max-w-[620px]">
+            Get the launch 10% discount
+          </DisplayHeading>
+          <p className="mt-[18px] mb-0 max-w-[440px] text-wi-on-dark-2 text-[17px] leading-[1.55]">
+            Leave your email and we will send you a code on launch day. Add your Instagram if
+            you want us to reach you there too.
+          </p>
+          <WaitlistOverlay tone="inverse" className="mt-8" />
+        </Reveal>
+      </div>
       <SectionContainer
         className="flex flex-wrap items-end justify-between gap-[30px] pb-[30px]"
       >

@@ -46,4 +46,7 @@ docs/superpowers/
 # PRDs (local product docs, not committed)
 docs/PRD/
 
+# PRDs (local product docs, not committed)
+docs/PRD/
+
 *.agents
