@@ -137,15 +137,6 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
       </Button>
 
       <p
-        className={cn(
-          "mt-3 mb-0 text-2xs leading-[1.5]",
-          isDark ? "text-wi-on-dark-3" : "text-wi-ink-500"
-        )}
-      >
-        One email when we launch. Unsubscribe anytime.
-      </p>
-
-      <p
         id={statusId}
         role="alert"
         aria-live="polite"

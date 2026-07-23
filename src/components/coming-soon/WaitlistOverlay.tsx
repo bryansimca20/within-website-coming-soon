@@ -22,13 +22,14 @@ import {
   DrawerTrigger,
   DrawerViewport,
 } from "@/components/ui/drawer";
+import { WithinLogo } from "@/components/brand/WithinLogo";
 
 import { SignupForm } from "./SignupForm";
 
 /** Viewport at or above which the overlay is a centered Dialog rather than a bottom Drawer. */
 const DESKTOP_QUERY = "(min-width: 768px)";
 const OVERLAY_TITLE = "Get the launch 10% discount";
-const OVERLAY_SUBTITLE = "One email when we launch.";
+const OVERLAY_SUBTITLE = "One email when we launch. Unsubscribe anytime.";
 
 /** Signup entry point: a button that opens the form as a Dialog on desktop and a Drawer on mobile. */
 interface WaitlistOverlayProps {
@@ -53,10 +54,11 @@ export function WaitlistOverlay({ tone = "inverse", className }: WaitlistOverlay
         <DialogTrigger render={trigger} />
         <DialogPortal>
           <DialogBackdrop />
-          <DialogPopup>
-            <DialogTitle>{OVERLAY_TITLE}</DialogTitle>
-            <DialogDescription>{OVERLAY_SUBTITLE}</DialogDescription>
-            <SignupForm tone="default" />
+          <DialogPopup className="border-wi-on-dark-line bg-wi-black text-wi-paper">
+            <WithinLogo kind="logomark" color="white" height={26} className="mb-5" />
+            <DialogTitle className="text-wi-paper">{OVERLAY_TITLE}</DialogTitle>
+            <DialogDescription className="text-wi-on-dark-3">{OVERLAY_SUBTITLE}</DialogDescription>
+            <SignupForm tone="inverse" />
           </DialogPopup>
         </DialogPortal>
       </Dialog>
@@ -69,12 +71,13 @@ export function WaitlistOverlay({ tone = "inverse", className }: WaitlistOverlay
       <DrawerPortal>
         <DrawerBackdrop />
         <DrawerViewport>
-          <DrawerPopup>
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-wi-line" />
+          <DrawerPopup className="border-wi-on-dark-line bg-wi-black text-wi-paper">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-wi-on-dark-line" />
             <DrawerContent>
-              <DrawerTitle>{OVERLAY_TITLE}</DrawerTitle>
-              <DrawerDescription>{OVERLAY_SUBTITLE}</DrawerDescription>
-              <SignupForm tone="default" />
+              <WithinLogo kind="logomark" color="white" height={26} className="mb-5" />
+              <DrawerTitle className="text-wi-paper">{OVERLAY_TITLE}</DrawerTitle>
+              <DrawerDescription className="text-wi-on-dark-3">{OVERLAY_SUBTITLE}</DrawerDescription>
+              <SignupForm tone="inverse" />
             </DrawerContent>
           </DrawerPopup>
         </DrawerViewport>
