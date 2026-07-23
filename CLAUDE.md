@@ -99,6 +99,7 @@ src/
 │   └── favicon.ico
 ├── components/
 │   └── ui/           # shadcn/ui primitives — WITHIN-restyled, owned in-repo (see UI and Design Rules)
+├── hooks/            # Shared client hooks (e.g. use-media-query.ts)
 ├── services/
 │   └── shopify-customer.service.ts   # Shopify Admin API writes
 └── lib/
@@ -112,8 +113,7 @@ src/
 - A `"use server"` file may export **only async functions**. Types, enums and constants that
   the action's callers need live in `src/app/utils/` (e.g. `subscribe-state.ts`), never in the
   action file itself.
-- `src/hooks/` does not exist yet; create it per the Rules below when the code that belongs in
-  it appears.
+- `src/hooks/` holds shared client hooks (e.g. `use-media-query.ts`).
 
 ---
 
@@ -164,6 +164,7 @@ src/
 **Components**
 - Always prefer shadcn/ui over custom implementations. Check [src/components/ui/](src/components/ui/) first.
 - **`ui/` primitives are WITHIN-restyled and owned in-repo** — they may be hand-edited to carry brand styling (e.g. [button.tsx](src/components/ui/button.tsx) is rebranded uppercase/sharp/monochrome). Re-running `npx shadcn@latest add <component>` **overwrites** the file with the vanilla version; after any CLI re-add, reapply the WITHIN restyle and diff before committing.
+- [dialog.tsx](src/components/ui/dialog.tsx) and [drawer.tsx](src/components/ui/drawer.tsx) are hand-owned Base UI wrappers (no shadcn/Base UI Drawer ships upstream), under the same ownership model as `button.tsx`.
 - If a needed shadcn component is **not installed**, stop and tell the user — let them install (`npx shadcn@latest add <component>`) or take a different approach. Do not hand-roll a substitute.
 - If a component does **not exist in shadcn at all**, surface options before writing code.
 - Icons: `lucide-react` only. **Data viz:** Recharts (wrapped with shadcn `<ChartContainer>`) · Mapbox via `react-map-gl`. (Neither is installed yet — install when first needed.)
@@ -224,8 +225,11 @@ The site reads no server-side data. It **writes** in exactly one place: pre-laun
 
 **The signup path**
 
+SignupForm now mounts inside `WaitlistOverlay` (a Dialog on desktop, a Drawer on mobile),
+triggered by a button in Hero and in Footer, rather than rendered inline.
+
 ```
-SignupForm ("use client", mounted twice: Hero and Footer, both tone="inverse")
+SignupForm ("use client", mounted inside WaitlistOverlay, tone="default")
   └─ useActionState → subscribeAction ("use server")
        ├─ checkBotId()                       → isBot ? generic error
        ├─ isHoneypotTripped()                → tripped ? report success, write nothing

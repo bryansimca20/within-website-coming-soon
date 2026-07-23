@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 
 import { DisplayHeading } from "./DisplayHeading";
 import { EASE } from "./Reveal";
-import { SignupForm } from "./SignupForm";
+import { WaitlistOverlay } from "./WaitlistOverlay";
 import { SectionContainer } from "./Section";
 
 /** Hero content; the headline is editorially set and defaults to the launch line. */
@@ -55,7 +55,7 @@ export function Hero({ headline = "Redefining Your Hydration Routine. Soon" }: H
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
           >
-            <SignupForm tone="inverse" />
+            <WaitlistOverlay tone="inverse" />
           </motion.div>
         </div>
       </SectionContainer>

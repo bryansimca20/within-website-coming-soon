@@ -4,7 +4,7 @@ import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 
 import { DisplayHeading } from "./DisplayHeading";
 import { Reveal } from "./Reveal";
-import { SignupForm } from "./SignupForm";
+import { WaitlistOverlay } from "./WaitlistOverlay";
 import { SectionContainer } from "./Section";
 import { InstagramGlyph } from "./svg/InstagramGlyph";
 
@@ -21,7 +21,7 @@ export function Footer() {
             Leave your email and we will send you a code on launch day. Add your Instagram if
             you want us to reach you there too.
           </p>
-          <SignupForm tone="inverse" className="mt-8" />
+          <WaitlistOverlay tone="inverse" className="mt-8" />
         </Reveal>
       </div>
       <SectionContainer
