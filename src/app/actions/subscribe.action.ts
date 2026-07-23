@@ -46,6 +46,7 @@ export async function subscribeAction(
   }
 
   const parsed = parseSubscriberInput({
+    fullName: readField(formData, "fullName"),
     email: readField(formData, "email"),
     instagramHandle: readField(formData, "instagramHandle"),
   });

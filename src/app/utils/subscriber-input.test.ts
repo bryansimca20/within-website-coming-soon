@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { normalizeEmail, normalizeInstagramHandle, parseSubscriberInput } from "./subscriber-input";
+import {
+  normalizeEmail,
+  normalizeFullName,
+  normalizeInstagramHandle,
+  parseSubscriberInput,
+} from "./subscriber-input";
 
 describe("normalizeEmail", () => {
   test("lowercases and trims a valid address", () => {
@@ -62,39 +67,94 @@ describe("normalizeInstagramHandle", () => {
   });
 });
 
+describe("normalizeFullName", () => {
+  test("splits a two-word name on the space", () => {
+    expect(normalizeFullName("Bryan Simca")).toEqual({ firstName: "Bryan", lastName: "Simca" });
+  });
+
+  test("keeps everything after the first space as the last name", () => {
+    expect(normalizeFullName("Bryan Aditya Simca")).toEqual({
+      firstName: "Bryan",
+      lastName: "Aditya Simca",
+    });
+  });
+
+  test("a single token becomes the first name with a null last name", () => {
+    expect(normalizeFullName("Cher")).toEqual({ firstName: "Cher", lastName: null });
+  });
+
+  test("collapses and trims surrounding whitespace", () => {
+    expect(normalizeFullName("   Bryan   Simca  ")).toEqual({ firstName: "Bryan", lastName: "Simca" });
+  });
+
+  test("rejects an empty or whitespace-only name", () => {
+    expect(normalizeFullName("   ")).toBeNull();
+  });
+
+  test("rejects a name longer than 100 characters", () => {
+    expect(normalizeFullName("a".repeat(101))).toBeNull();
+  });
+});
+
 describe("parseSubscriberInput", () => {
-  test("accepts an email with no handle", () => {
-    expect(parseSubscriberInput({ email: "bryan@example.com", instagramHandle: "" })).toEqual({
+  test("accepts a name and email with no handle", () => {
+    expect(
+      parseSubscriberInput({ fullName: "Bryan Simca", email: "bryan@example.com", instagramHandle: "" })
+    ).toEqual({
       ok: true,
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: null,
     });
   });
 
-  test("accepts an email with a handle", () => {
-    expect(parseSubscriberInput({ email: "bryan@example.com", instagramHandle: "@within.id" })).toEqual({
+  test("accepts a name, email, and handle", () => {
+    expect(
+      parseSubscriberInput({
+        fullName: "Bryan Simca",
+        email: "bryan@example.com",
+        instagramHandle: "@within.id",
+      })
+    ).toEqual({
       ok: true,
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: "within.id",
     });
   });
 
   test("treats a whitespace-only handle as omitted", () => {
-    expect(parseSubscriberInput({ email: "bryan@example.com", instagramHandle: "   " })).toEqual({
+    expect(
+      parseSubscriberInput({ fullName: "Bryan Simca", email: "bryan@example.com", instagramHandle: "   " })
+    ).toEqual({
       ok: true,
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: null,
     });
   });
 
+  test("rejects a missing name before looking at the email", () => {
+    const result = parseSubscriberInput({ fullName: "  ", email: "nope", instagramHandle: "" });
+
+    expect(result).toEqual({ ok: false, field: "fullName", message: expect.any(String) });
+  });
+
   test("rejects an invalid email before looking at the handle", () => {
-    const result = parseSubscriberInput({ email: "nope", instagramHandle: "also bad" });
+    const result = parseSubscriberInput({ fullName: "Bryan Simca", email: "nope", instagramHandle: "also bad" });
 
     expect(result).toEqual({ ok: false, field: "email", message: expect.any(String) });
   });
 
   test("rejects a supplied but invalid handle", () => {
-    const result = parseSubscriberInput({ email: "bryan@example.com", instagramHandle: "not a handle" });
+    const result = parseSubscriberInput({
+      fullName: "Bryan Simca",
+      email: "bryan@example.com",
+      instagramHandle: "not a handle",
+    });
 
     expect(result).toEqual({ ok: false, field: "instagramHandle", message: expect.any(String) });
   });
