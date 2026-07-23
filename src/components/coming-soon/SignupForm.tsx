@@ -33,6 +33,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
   }, []);
 
   const isDark = tone === "inverse";
+  const nameId = `${fieldId}-fullname`;
   const emailId = `${fieldId}-email`;
   const handleId = `${fieldId}-instagram`;
   const statusId = `${fieldId}-status`;
@@ -58,6 +59,23 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
   return (
     <form action={formAction} className={cn("max-w-[520px]", className)} noValidate>
       <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2 sm:col-span-2">
+          <Label htmlFor={nameId} tone={isDark ? "inverse" : "default"}>
+            Full name
+          </Label>
+          <Input
+            id={nameId}
+            name="fullName"
+            type="text"
+            autoComplete="name"
+            placeholder="Your name"
+            required
+            tone={isDark ? "inverse" : "default"}
+            aria-invalid={errorField === "fullName"}
+            aria-describedby={hasError ? statusId : undefined}
+          />
+        </div>
+
         <div className="grid gap-2">
           <Label htmlFor={emailId} tone={isDark ? "inverse" : "default"}>
             Email
