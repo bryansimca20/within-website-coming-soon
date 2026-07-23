@@ -14,8 +14,9 @@
   --color-wi-paper-dim: #f2f2f2;
   --color-wi-paper: #ffffff;
 
-  /* The one intentional non-monochrome token: form validation errors read as red. */
+  /* Status colors: the intentional non-monochrome exceptions. Errors read red, success green. */
   --color-wi-error: #ef4444;
+  --color-wi-success: #22c55e;
 
   /* on-dark tints as utilities (text-wi-on-dark-2, border-wi-on-dark-line, bg-wi-on-dark-fill) */
   --color-wi-on-dark-1: rgba(255, 255, 255, 1);

@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useActionState, useId, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { subscribeAction } from "@/app/actions/subscribe.action";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
@@ -10,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+import { EASE } from "./Reveal";
 
 /** The visible fields validated on the client before the server ever runs. */
 type FieldName = "fullName" | "email" | "instagramHandle";
@@ -32,6 +35,7 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
   // with no SSR staleness. Held in state so re-renders and the post-action form reset cannot
   // clear it, unlike an imperatively-set uncontrolled input value.
   const [renderedAt] = useState(() => String(Date.now()));
+  const reduce = useReducedMotion();
 
   const isDark = tone === "inverse";
   const idFor: Record<FieldName, string> = {
@@ -79,16 +83,56 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
 
   if (state.status === SubscribeStatus.Success) {
     return (
-      <p
+      <div
+        role="status"
         className={cn(
-          "m-0 text-[15px] leading-[1.55]",
+          "m-0 flex flex-col items-start gap-3",
           isDark ? "text-wi-on-dark-1" : "text-wi-black",
           className
         )}
-        role="status"
       >
-        You are on the list. We will email you when WITHIN launches.
-      </p>
+        <motion.svg
+          width="40"
+          height="40"
+          viewBox="0 0 40 40"
+          fill="none"
+          aria-hidden
+          className="text-wi-success"
+          initial={reduce ? "shown" : "hidden"}
+          animate="shown"
+        >
+          <motion.circle
+            cx="20"
+            cy="20"
+            r="15"
+            stroke="currentColor"
+            strokeWidth="2"
+            variants={{
+              hidden: { pathLength: 0, opacity: 0 },
+              shown: { pathLength: 1, opacity: 1, transition: { duration: 0.4, ease: EASE } },
+            }}
+          />
+          <motion.path
+            d="M13 20.5l4.8 4.8L27.5 15"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            variants={{
+              hidden: { pathLength: 0 },
+              shown: { pathLength: 1, transition: { duration: 0.3, ease: EASE, delay: 0.35 } },
+            }}
+          />
+        </motion.svg>
+        <motion.p
+          className="m-0 text-[15px] leading-[1.55]"
+          initial={reduce ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: EASE, delay: reduce ? 0 : 0.2 }}
+        >
+          You are on the list. We will email you when WITHIN launches.
+        </motion.p>
+      </div>
     );
   }
 

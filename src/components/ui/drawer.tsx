@@ -45,7 +45,7 @@ function DrawerPopup({ className, ...props }: React.ComponentProps<typeof Drawer
   return (
     <DrawerPrimitive.Popup
       className={cn(
-        "flex max-h-[85vh] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[var(--wi-radius-card)] border-t border-wi-line bg-wi-paper px-6 pt-4 pb-8 text-wi-black shadow-[var(--wi-shadow-lg)] outline-none [transform:translateY(var(--drawer-swipe-movement-y,0px))] transition-transform duration-300 ease-[var(--wi-ease-out)] data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-swiping:select-none motion-reduce:transition-none",
+        "flex max-h-[85vh] w-full max-w-[520px] flex-col overflow-y-auto overscroll-contain rounded-t-[var(--wi-radius-card)] border-t border-wi-line bg-wi-paper px-6 pt-4 pb-8 text-wi-black shadow-[var(--wi-shadow-lg)] outline-none [transform:translateY(var(--drawer-swipe-movement-y,0px))] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-swiping:select-none motion-reduce:transition-none",
         className
       )}
       {...props}
