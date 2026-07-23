@@ -15,6 +15,8 @@ export interface IShopifyUserError {
 
 /** Validated values for one pre-launch signup, plus the moment consent was given. */
 export interface IPrelaunchSubscriber {
+  firstName: string;
+  lastName: string | null;
   email: string;
   instagramHandle: string | null;
   consentedAt: string;
@@ -23,6 +25,8 @@ export interface IPrelaunchSubscriber {
 /** Shape of the `CustomerInput` we send to `customerCreate`. */
 interface ICustomerInput {
   email: string;
+  firstName: string;
+  lastName?: string;
   tags: string[];
   emailMarketingConsent: {
     marketingState: "SUBSCRIBED";
@@ -80,6 +84,7 @@ export class ShopifyCustomerService {
   static buildCustomerInput(subscriber: IPrelaunchSubscriber): ICustomerInput {
     const input: ICustomerInput = {
       email: subscriber.email,
+      firstName: subscriber.firstName,
       tags: PRELAUNCH_TAGS,
       emailMarketingConsent: {
         marketingState: "SUBSCRIBED",
@@ -87,6 +92,10 @@ export class ShopifyCustomerService {
         consentUpdatedAt: subscriber.consentedAt,
       },
     };
+
+    if (subscriber.lastName !== null) {
+      input.lastName = subscriber.lastName;
+    }
 
     if (subscriber.instagramHandle !== null) {
       input.metafields = [

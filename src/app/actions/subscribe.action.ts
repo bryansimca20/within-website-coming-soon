@@ -56,6 +56,8 @@ export async function subscribeAction(
 
   try {
     const outcome = await ShopifyCustomerService.createPrelaunchSubscriber({
+      firstName: parsed.firstName,
+      lastName: parsed.lastName,
       email: parsed.email,
       instagramHandle: parsed.instagramHandle,
       consentedAt: new Date().toISOString(),

@@ -7,12 +7,16 @@ const CONSENTED_AT = "2026-07-20T00:00:00.000Z";
 describe("ShopifyCustomerService.buildCustomerInput", () => {
   test("subscribes the address and tags it for launch-day segmentation", () => {
     const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: null,
       consentedAt: CONSENTED_AT,
     });
 
     expect(input).toEqual({
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       tags: ["prelaunch", "coming-soon"],
       emailMarketingConsent: {
@@ -25,6 +29,8 @@ describe("ShopifyCustomerService.buildCustomerInput", () => {
 
   test("omits the metafields key entirely when no handle was given", () => {
     const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: null,
       consentedAt: CONSENTED_AT,
@@ -35,6 +41,8 @@ describe("ShopifyCustomerService.buildCustomerInput", () => {
 
   test("attaches the handle as a custom.instagram_handle metafield", () => {
     const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: "Simca",
       email: "bryan@example.com",
       instagramHandle: "within.id",
       consentedAt: CONSENTED_AT,
@@ -48,6 +56,32 @@ describe("ShopifyCustomerService.buildCustomerInput", () => {
         value: "within.id",
       },
     ]);
+  });
+
+  test("sets firstName and lastName on the customer", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: "Simca",
+      email: "bryan@example.com",
+      instagramHandle: null,
+      consentedAt: CONSENTED_AT,
+    });
+
+    expect(input.firstName).toBe("Bryan");
+    expect(input.lastName).toBe("Simca");
+  });
+
+  test("omits lastName entirely for a single-token name", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Cher",
+      lastName: null,
+      email: "cher@example.com",
+      instagramHandle: null,
+      consentedAt: CONSENTED_AT,
+    });
+
+    expect(input.firstName).toBe("Cher");
+    expect(input).not.toHaveProperty("lastName");
   });
 });
 
