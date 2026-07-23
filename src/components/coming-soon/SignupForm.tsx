@@ -110,10 +110,10 @@ export function SignupForm({ tone = "default", className }: SignupFormProps) {
 
       <Button
         type="submit"
-        size="lg"
+        size="default"
         variant={isDark ? "inverse" : "default"}
         disabled={isPending}
-        className="mt-4 w-full sm:w-auto"
+        className="mt-4 w-auto"
       >
         {isPending ? "Joining" : "Join the list"}
       </Button>

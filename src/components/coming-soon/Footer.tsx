@@ -3,7 +3,6 @@ import { WithinLogo } from "@/components/brand/WithinLogo";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 
 import { DisplayHeading } from "./DisplayHeading";
-import { Eyebrow } from "./Eyebrow";
 import { Reveal } from "./Reveal";
 import { SignupForm } from "./SignupForm";
 import { SectionContainer } from "./Section";
@@ -15,9 +14,8 @@ export function Footer() {
     <footer className="bg-wi-black text-wi-paper">
       <div className="max-w-[1200px] mx-auto px-7 pt-[88px] pb-14">
         <Reveal>
-          <Eyebrow dark>Before launch</Eyebrow>
           <DisplayHeading as="h2" dark className="mt-4 text-[clamp(30px,3.6vw,46px)] max-w-[620px]">
-            Get the launch discount
+            Get the launch 10% discount
           </DisplayHeading>
           <p className="mt-[18px] mb-0 max-w-[440px] text-wi-on-dark-2 text-[17px] leading-[1.55]">
             Leave your email and we will send you a code on launch day. Add your Instagram if
