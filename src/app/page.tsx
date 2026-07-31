@@ -1,13 +1,13 @@
+import { Close } from "@/components/coming-soon/Close";
 import { Compare } from "@/components/coming-soon/Compare";
+import { Dissection } from "@/components/coming-soon/Dissection";
+import { DosePanel } from "@/components/coming-soon/DosePanel";
 import { Faq } from "@/components/coming-soon/Faq";
 import { Footer } from "@/components/coming-soon/Footer";
-import { Formula } from "@/components/coming-soon/Formula";
-import { Header } from "@/components/coming-soon/Header";
 import { Hero } from "@/components/coming-soon/Hero";
-import { Marquee } from "@/components/coming-soon/Marquee";
-import { SachetCallouts } from "@/components/coming-soon/SachetCallouts";
-import { Story } from "@/components/coming-soon/Story";
+import { Ledger } from "@/components/coming-soon/Ledger";
 import { MotionProvider } from "@/components/coming-soon/MotionProvider";
+import { Nav } from "@/components/coming-soon/Nav";
 import { WhyWithin } from "@/components/coming-soon/WhyWithin";
 import { FAQS } from "@/components/coming-soon/utils/faqs";
 import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -47,7 +47,7 @@ const jsonLd = {
   ],
 };
 
-/** WITHIN coming-soon landing page. */
+/** WITHIN coming-soon landing page — Transparency Lab. */
 export default function Home() {
   return (
     <>
@@ -56,17 +56,17 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <MotionProvider>
-        <div className="min-h-screen bg-wi-paper-dim">
-          <Header />
+        <div className="bg-wi-paper">
+          <Nav />
           <main>
             <Hero />
-            <Marquee />
-            <SachetCallouts />
+            <Dissection />
             <WhyWithin />
+            <DosePanel />
             <Compare />
-            <Formula />
-            <Story />
+            <Ledger />
             <Faq />
+            <Close />
           </main>
           <Footer />
         </div>

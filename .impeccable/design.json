@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "title": "Design System: WITHIN",
+  "extensions": {
+    "colorMeta": {
+      "electric": { "role": "primary", "displayName": "Electric", "canonical": "#0047ff", "tonalRamp": ["#001433", "#001f52", "#002a7a", "#0038c2", "#0047ff", "#3d6bff", "#7d9bff", "#e8eeff"] },
+      "electric-bright": { "role": "primary", "displayName": "Electric Bright", "canonical": "#3d6bff", "tonalRamp": ["#001433", "#002a7a", "#0038c2", "#0047ff", "#3d6bff", "#7d9bff", "#bcccff", "#e8eeff"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0b0d12", "tonalRamp": ["#0b0d12", "#1a1e26", "#363d49", "#626b7a", "#9aa3b2", "#cfd6e0", "#e2e7ee", "#f6f8fb"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["#0b0d12", "#363d49", "#626b7a", "#9aa3b2", "#cfd6e0", "#e2e7ee", "#f6f8fb", "#ffffff"] },
+      "flag": { "role": "tertiary", "displayName": "Flag Red", "canonical": "#ce1126", "tonalRamp": ["#3d050b", "#5e0812", "#8a0d1b", "#b30f22", "#ce1126", "#e0455a", "#ec8894", "#f7d0d6"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero and closing headlines. Geist Sans, medium, sentence case, tight tracking." },
+      "readout": { "displayName": "Readout", "purpose": "Every dose and data numeral. Geist Mono, tabular, counts up on first view." },
+      "label": { "displayName": "Label", "purpose": "Mono data annotations only: units, axis numbers, mineral symbols." }
+    },
+    "shadows": [
+      { "name": "specimen-lift", "value": "0 20px 40px rgba(11,13,18,0.16)", "purpose": "Under the floating sachet only, so it reads as lifted off its frame." },
+      { "name": "overlay", "value": "0 18px 44px rgba(11,13,18,0.12)", "purpose": "The signup Dialog/Drawer." },
+      { "name": "focus", "value": "0 0 0 3px rgba(0,71,255,0.28)", "purpose": "Electric focus ring on interactive elements." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Strong ease-out for entrances, reveals, and press feedback." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "On-screen movement and morphs." },
+      { "name": "ease-drawer", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "iOS-like drawer curve for the mobile signup drawer." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The waitlist action. Ink fill, paper text, crisp 2px edge, electric focus ring, press-scale feedback.",
+      "html": "<button class=\"ds-btn-primary\">Join the list</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 22px; background: #0b0d12; color: #fff; border: 1px solid #0b0d12; border-radius: 2px; font-family: var(--font-geist-sans), sans-serif; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: opacity .13s cubic-bezier(0.23,1,0.32,1), transform .13s cubic-bezier(0.23,1,0.32,1); } .ds-btn-primary:hover { opacity: .86; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,71,255,.4); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Waitlist field. Paper fill, hairline stroke, label above, electric focus ring.",
+      "html": "<label class=\"ds-label\">Email</label><input class=\"ds-input\" placeholder=\"you@example.com\" />",
+      "css": ".ds-label { display:block; margin-bottom:8px; font-family: var(--font-geist-sans), sans-serif; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#626b7a; } .ds-input { width:100%; height:44px; padding:0 14px; background:#fff; color:#0b0d12; border:1px solid #cfd6e0; border-radius:2px; font-family: var(--font-geist-sans), sans-serif; font-size:16px; } .ds-input::placeholder { color:#9aa3b2; } .ds-input:focus-visible { outline:none; border-color:#0047ff; box-shadow:0 0 0 3px rgba(0,71,255,.28); }"
+    },
+    {
+      "name": "Dose Readout",
+      "kind": "custom",
+      "refersTo": "readout",
+      "description": "The signature instrument readout: a mono, tabular numeral with an electric register tick and unit.",
+      "html": "<div class=\"ds-readout\"><span class=\"ds-readout-tick\"></span><span class=\"ds-readout-sym\">Na</span><span class=\"ds-readout-num\">1000</span><span class=\"ds-readout-unit\">mg</span></div>",
+      "css": ".ds-readout { position:relative; display:flex; align-items:baseline; gap:6px; padding-top:10px; } .ds-readout-tick { position:absolute; top:0; left:0; width:40px; height:1px; background:#0047ff; } .ds-readout-sym { font-family: var(--font-geist-mono), monospace; font-size:12px; text-transform:uppercase; letter-spacing:.14em; color:#0047ff; } .ds-readout-num { font-family: var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; font-weight:600; font-size:64px; line-height:.9; letter-spacing:-.03em; color:#0b0d12; } .ds-readout-unit { font-family: var(--font-geist-mono), monospace; font-size:16px; color:#626b7a; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Transparency Lab",
+    "overview": "WITHIN reads like a bench instrument, not a sports-drink billboard. Its one honest claim is its dosing, so the page is built to let a visitor measure it: a paper-white clinical field ruled with a faint measurement grid, the sachet framed as a specimen, and every number set in a mono readout that ticks up like a meter settling. Persuasion is proof, not volume. The system is quiet in hue and loud in precision: one electric-blue voice spent only on live data or an active choice, everything else ink on paper separated by hairlines. It rejects the sugary sports-drink hero and the generic three-up supplement card grid.",
+    "keyCharacteristics": [
+      "Clinical paper-white canvas over a hairline measurement grid",
+      "One electric-blue signal, reserved for actives, live data, and focus",
+      "Geist Sans display over Geist Mono numerals (every number is a readout)",
+      "Crisp ~2px edges; register marks and crosshairs frame the product as a specimen",
+      "Exactly one dark instrument section (the dose); the rest stays light",
+      "Motion is instrumentation: hairlines draw, numbers count up, the specimen dissects on scroll"
+    ],
+    "rules": [
+      { "name": "The Single Signal Rule", "body": "Electric appears only where there is live data or an active choice. If it is decorating a surface, remove it.", "section": "colors" },
+      { "name": "The Flag Red Rule", "body": "Red is national provenance, not brand color. The only red on the page is the Indonesian flag itself.", "section": "colors" },
+      { "name": "The One Dark Room Rule", "body": "Exactly one section inverts to the dark instrument panel (the dose). No other section flips theme; the footer stays light.", "section": "colors" },
+      { "name": "The Measurement Voice Rule", "body": "Every number is Geist Mono and tabular. Prose is never mono. Mono is for data, units, and measurement, never as a costume.", "section": "typography" },
+      { "name": "The No-Eyebrow Rule", "body": "Headings carry their own weight. No small uppercase kicker above any heading, anywhere.", "section": "typography" },
+      { "name": "The Tone-Not-Shadow Rule", "body": "Surfaces are flat at rest. Layering is tonal surface plus hairline, never an ambient shadow. Shadows only under floating elements and focus.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep electric to actives, live data, and focus.",
+      "Do set every numeral in Geist Mono, tabular, counting up on first view.",
+      "Do build depth from tonal surfaces and hairlines, framing the product with register marks.",
+      "Do let each headline stand alone in sentence case, tight tracking, medium weight.",
+      "Do hold exactly one dark instrument section and keep the rest on the clinical light field."
+    ],
+    "donts": [
+      "Don't put a kicker or eyebrow above any heading.",
+      "Don't use mono for prose or as decoration; mono is data only.",
+      "Don't use red for anything but the literal Indonesian flag.",
+      "Don't ship the sugary sports-drink hero or the three-up icon-heading-text card grid.",
+      "Don't add ambient drop shadows or glass for depth; only floating elements and focus earn a shadow.",
+      "Don't claim any certification (BPOM and Halal are pending, not certified)."
+    ]
+  }
+}

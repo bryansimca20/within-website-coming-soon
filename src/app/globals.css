@@ -2,28 +2,44 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* ============================================================
+   WITHIN — Transparency Lab / Clinical White + Electric
+   Paper-white clinical canvas, hairline measurement grid, one
+   electric-blue signal on actives + data, Geist Mono for every
+   number. One dark instrument panel (the dose). Red = flag only.
+   ============================================================ */
+
 /* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-*, etc.) ---- */
 @theme {
-  --color-wi-black: #000000;
-  --color-wi-charcoal: #191919;
-  --color-wi-ink-700: #3d3d3d;
-  --color-wi-ink-500: #6b6b6b;
-  --color-wi-ink-300: #a3a3a3;
-  --color-wi-line: #d6d6d6;
-  --color-wi-mist: #e6e6e6;
-  --color-wi-paper-dim: #f2f2f2;
+  --color-wi-black: #0b0d12; /* cool off-black ink */
+  --color-wi-charcoal: #1a1e26;
+  --color-wi-ink-700: #363d49; /* body */
+  --color-wi-ink-500: #626b7a; /* muted */
+  --color-wi-ink-300: #9aa3b2; /* faint */
+  --color-wi-line: #e2e7ee; /* hairline */
+  --color-wi-line-strong: #cfd6e0;
+  --color-wi-mist: #eceff4;
+  --color-wi-paper-dim: #f6f8fb; /* clinical off-white */
   --color-wi-paper: #ffffff;
 
-  /* Status colors: the intentional non-monochrome exceptions. Errors read red, success green. */
-  --color-wi-error: #ef4444;
-  --color-wi-success: #22c55e;
+  /* The one accent: electric-blue signal on actives + data + focus. */
+  --color-wi-electric: #0047ff;
+  --color-wi-electric-bright: #3d6bff; /* on dark surfaces / glow */
+  --color-wi-electric-tint: #e8eeff; /* faint electric wash */
 
-  /* on-dark tints as utilities (text-wi-on-dark-2, border-wi-on-dark-line, bg-wi-on-dark-fill) */
+  /* Provenance only: the Indonesian flag red. Never decoration. */
+  --color-wi-flag: #ce1126;
+
+  /* Status colors */
+  --color-wi-error: #e5484d;
+  --color-wi-success: #30a46c;
+
+  /* on-dark tints (instrument panel + dialogs) */
   --color-wi-on-dark-1: rgba(255, 255, 255, 1);
-  --color-wi-on-dark-2: rgba(255, 255, 255, 0.64);
-  --color-wi-on-dark-3: rgba(255, 255, 255, 0.4);
-  --color-wi-on-dark-line: rgba(255, 255, 255, 0.16);
-  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.08);
+  --color-wi-on-dark-2: rgba(255, 255, 255, 0.66);
+  --color-wi-on-dark-3: rgba(255, 255, 255, 0.42);
+  --color-wi-on-dark-line: rgba(255, 255, 255, 0.14);
+  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.06);
 
   --text-display-2xl: 96px;
   --text-display-xl: 72px;
@@ -41,9 +57,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --font-heading: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -81,22 +97,28 @@
 
 :root {
   /* ---- WITHIN base scale (ink → paper) ---- */
-  --wi-black: #000000;
-  --wi-charcoal: #191919;
-  --wi-ink-700: #3d3d3d;
-  --wi-ink-500: #6b6b6b;
-  --wi-ink-300: #a3a3a3;
-  --wi-line: #d6d6d6;
-  --wi-mist: #e6e6e6;
-  --wi-paper-dim: #f2f2f2;
+  --wi-black: #0b0d12;
+  --wi-charcoal: #1a1e26;
+  --wi-ink-700: #363d49;
+  --wi-ink-500: #626b7a;
+  --wi-ink-300: #9aa3b2;
+  --wi-line: #e2e7ee;
+  --wi-line-strong: #cfd6e0;
+  --wi-mist: #eceff4;
+  --wi-paper-dim: #f6f8fb;
   --wi-paper: #ffffff;
+
+  --wi-electric: #0047ff;
+  --wi-electric-bright: #3d6bff;
+  --wi-electric-tint: #e8eeff;
+  --wi-flag: #ce1126;
 
   /* ---- on-dark tints ---- */
   --wi-on-dark-1: rgba(255, 255, 255, 1);
-  --wi-on-dark-2: rgba(255, 255, 255, 0.64);
-  --wi-on-dark-3: rgba(255, 255, 255, 0.4);
-  --wi-on-dark-line: rgba(255, 255, 255, 0.16);
-  --wi-on-dark-fill: rgba(255, 255, 255, 0.08);
+  --wi-on-dark-2: rgba(255, 255, 255, 0.66);
+  --wi-on-dark-3: rgba(255, 255, 255, 0.42);
+  --wi-on-dark-line: rgba(255, 255, 255, 0.14);
+  --wi-on-dark-fill: rgba(255, 255, 255, 0.06);
 
   /* ---- WITHIN semantic ---- */
   --wi-text-strong: var(--wi-black);
@@ -104,58 +126,65 @@
   --wi-text-muted: var(--wi-ink-500);
   --wi-text-faint: var(--wi-ink-300);
 
-  /* ---- DS semantic aliases (unprefixed names the Coming Soon design references) ---- */
+  /* ---- DS semantic aliases ---- */
   --text-strong: var(--wi-black);
   --text-muted: var(--wi-ink-500);
   --text-faint: var(--wi-ink-300);
   --border-default: var(--wi-line);
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- measurement grid (the clinical canvas) ---- */
+  --wi-grid-line: rgba(11, 13, 18, 0.05);
+  --wi-grid-line-strong: rgba(11, 13, 18, 0.09);
+  --wi-grid-size: 32px;
 
   /* ---- type ---- */
   --wi-weight-regular: 400;
   --wi-weight-medium: 500;
   --wi-weight-semibold: 600;
   --wi-weight-bold: 700;
-  --wi-weight-black: 900;
-  --wi-leading-tight: 0.98;
-  --wi-leading-snug: 1.12;
+  --wi-leading-tight: 0.96;
+  --wi-leading-snug: 1.1;
   --wi-leading-normal: 1.5;
   --wi-tracking-tight: -0.03em;
+  --wi-tracking-tighter: -0.045em;
   --wi-tracking-wide: 0.04em;
-  --wi-tracking-label: 0.14em;
+  --wi-tracking-label: 0.12em;
 
-  /* ---- radius (WITHIN, prefixed to avoid clashing with shadcn --radius-*) ---- */
-  --wi-radius-control: 6px;
-  --wi-radius-card: 10px;
+  /* ---- radius (crisp technical: near-sharp) ---- */
+  --wi-radius-control: 2px;
+  --wi-radius-card: 3px;
 
   /* ---- borders ---- */
   --wi-border-width: 1px;
   --wi-border-width-strong: 1.5px;
   --wi-border-width-heavy: 2px;
 
-  /* ---- shadows (low, tight, neutral) ---- */
-  --wi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --wi-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
-  --wi-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
-  --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.16);
+  /* ---- shadows (low, tight, cool-tinted; never a colored halo) ---- */
+  --wi-shadow-sm: 0 1px 2px rgba(11, 13, 18, 0.06);
+  --wi-shadow-md: 0 6px 20px rgba(11, 13, 18, 0.08);
+  --wi-shadow-lg: 0 18px 44px rgba(11, 13, 18, 0.12);
+  --wi-shadow-focus: 0 0 0 3px rgba(0, 71, 255, 0.28);
 
-  /* ---- motion ---- */
+  /* ---- motion (emil-design-eng curves) ---- */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --wi-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --wi-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --wi-duration-fast: 120ms;
-  --wi-duration-base: 180ms;
+  --wi-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --wi-duration-fast: 130ms;
+  --wi-duration-base: 190ms;
   --wi-duration-slow: 320ms;
   --wi-press-scale: 0.97;
 
   /* ---- layout ---- */
-  --wi-container-max: 1200px;
+  --wi-container-max: 1240px;
   --wi-container-narrow: 720px;
+  --wi-nav-h: 64px;
 
-  /* ---- shadcn semantic bridge → WITHIN (monochrome, no hue) ---- */
-  --radius: 0.625rem; /* 10px — cards via rounded-lg */
-  --background: var(--wi-paper-dim);
-  --foreground: var(--wi-charcoal);
+  /* ---- shadcn semantic bridge → WITHIN (clinical, electric ring) ---- */
+  --radius: 3px;
+  --background: var(--wi-paper);
+  --foreground: var(--wi-ink-700);
   --card: var(--wi-paper);
   --card-foreground: var(--wi-black);
   --popover: var(--wi-paper);
@@ -166,25 +195,25 @@
   --secondary-foreground: var(--wi-black);
   --muted: var(--wi-mist);
   --muted-foreground: var(--wi-ink-500);
-  --accent: var(--wi-mist);
-  --accent-foreground: var(--wi-black);
-  --destructive: var(--wi-charcoal);
+  --accent: var(--wi-electric-tint);
+  --accent-foreground: var(--wi-electric);
+  --destructive: var(--wi-error);
   --border: var(--wi-line);
-  --input: var(--wi-line);
-  --ring: var(--wi-black);
-  --chart-1: #a3a3a3;
-  --chart-2: #6b6b6b;
-  --chart-3: #3d3d3d;
-  --chart-4: #191919;
-  --chart-5: #000000;
+  --input: var(--wi-line-strong);
+  --ring: var(--wi-electric);
+  --chart-1: #9aa3b2;
+  --chart-2: #626b7a;
+  --chart-3: #363d49;
+  --chart-4: #1a1e26;
+  --chart-5: #0b0d12;
   --sidebar: var(--wi-paper);
-  --sidebar-foreground: var(--wi-charcoal);
+  --sidebar-foreground: var(--wi-ink-700);
   --sidebar-primary: var(--wi-black);
   --sidebar-primary-foreground: var(--wi-paper);
   --sidebar-accent: var(--wi-mist);
   --sidebar-accent-foreground: var(--wi-black);
   --sidebar-border: var(--wi-line);
-  --sidebar-ring: var(--wi-black);
+  --sidebar-ring: var(--wi-electric);
 }
 
 @layer base {
@@ -203,47 +232,87 @@
     @apply font-sans;
   }
   ::selection {
-    background: var(--wi-black);
+    background: var(--wi-electric);
     color: var(--wi-paper);
   }
 }
 
 /* ============================================================
-   Coming Soon page — layout/animation CSS ported from the
-   Claude Design "Coming Soon.html" (class hooks + keyframes +
-   responsive rules). Scoped to the design's `wi-*` classes.
+   Transparency-Lab utilities
    ============================================================ */
 
-/* Marquee scroll */
-@keyframes wiMarquee {
-  to {
-    transform: translateX(-33.33%);
-  }
+/* Fine measurement grid — the clinical canvas. Sits on a
+   pointer-events-none layer so it never intercepts input. */
+.wi-grid {
+  background-image:
+    linear-gradient(to right, var(--wi-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--wi-grid-line) 1px, transparent 1px);
+  background-size: var(--wi-grid-size) var(--wi-grid-size);
+}
+.wi-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: var(--wi-grid-size) var(--wi-grid-size);
 }
 
-.wi-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: wiMarquee 34s linear infinite;
+/* Hairline crosshair register mark (specimen framing). */
+.wi-crosshair::before,
+.wi-crosshair::after {
+  content: "";
+  position: absolute;
+  background: var(--wi-line-strong);
 }
-@media (prefers-reduced-motion: reduce) {
-  .wi-marquee-track {
-    animation: none;
-  }
+.wi-crosshair::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+.wi-crosshair::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
 }
 
-/* Hide the ingredient scroller's scrollbar */
-.wi-form-scroll {
+/* Mono numerals: tabular, tight, the lab-instrument readout voice. */
+.wi-readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.02em;
+}
+
+/* Hide horizontal scrollbars on drag galleries */
+.wi-noscrollbar {
   scrollbar-width: none;
 }
-.wi-form-scroll::-webkit-scrollbar {
+.wi-noscrollbar::-webkit-scrollbar {
   display: none;
 }
 
+/* SVG connector line-draw (dissection). Length set inline per path. */
+.wi-draw {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  transition: stroke-dashoffset 700ms var(--ease-out);
+}
+.wi-draw[data-drawn="true"] {
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wi-draw {
+    transition: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 @media (max-width: 560px) {
-  /* Cap oversized fixed-px hero/section headings on phones */
-  .wi-display {
-    font-size: clamp(32px, 9vw, 40px) !important;
-    line-height: 0.98 !important;
+  :root {
+    --wi-grid-size: 26px;
   }
 }

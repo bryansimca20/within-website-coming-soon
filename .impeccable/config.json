@@ -1,0 +1,74 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "createdAt": "2026-07-31T11:24:33.795Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "createdAt": "2026-07-31T11:24:33.837Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "14px",
+        "createdAt": "2026-07-31T11:24:33.881Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "15px",
+        "createdAt": "2026-07-31T11:24:33.923Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "createdAt": "2026-07-31T11:24:33.971Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "createdAt": "2026-07-31T11:24:34.014Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "19px",
+        "createdAt": "2026-07-31T11:24:34.059Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "26px",
+        "createdAt": "2026-07-31T11:24:34.109Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "22px",
+        "createdAt": "2026-07-31T11:24:34.151Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "14.5px",
+        "createdAt": "2026-07-31T11:24:34.196Z",
+        "reason": "Transparency Lab uses a fine-grained data-density type scale; intermediate sizes are intentional"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "createdAt": "2026-07-31T11:25:23.751Z",
+        "reason": "mask-image alpha primitive (opaque/transparent), not a palette color"
+      }
+    ]
+  }
+}

@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@phosphor-icons/react": "^2.1.10",
     "botid": "^1.5.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "geist": "^1.7.2",
     "lucide-react": "^1.23.0",
     "motion": "^12.42.2",
     "next": "16.2.10",
