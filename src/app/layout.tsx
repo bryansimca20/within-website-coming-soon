@@ -1,26 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-const TITLE = "WITHIN - Coming soon";
+const inter = localFont({
+  src: "./fonts/Inter-Variable.ttf",
+  variable: "--font-inter",
+  display: "swap",
+  weight: "100 900",
+});
 
-/**
- * Impeccable direction contract (new-work section 5). Emitted as a real HTML
- * comment and kept as the first child of <body> so it survives the production
- * build and stays greppable (seed key: WITHIN-TRANSPARENCY-LAB).
- */
-const DIRECTION_CONTRACT = `<!--
-WITHIN-TRANSPARENCY-LAB
-THESIS: WITHIN is a transparency instrument. The page dissects the product so the exact dose and every ingredient are provable, refusing the sugary sports-drink hero and the generic three-card supplement grid.
-OWN-WORLD: paper-white clinical canvas, hairline measurement grid, one electric-blue signal on actives + data, Geist Sans display over Geist Mono readouts, crisp 2px edges, a single dark instrument panel for the dose; red only for the Indonesian flag.
-STORY: the visitor meets a labelled specimen, learns why humid-heat training drains minerals, reads the exact doses on a dark instrument panel, compares against water and sports drinks, and joins the waitlist.
-FIRST VIEWPORT: split. Left, the value-prop headline and the waitlist action over a faint measurement grid; right, the sachet framed as a specimen with hairline crosshairs and the three doses ticking up in mono.
-FORM: transparency-lab / measurement-instrument. User-pinned direction, no concept roll.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md.
--->`;
+const TITLE = "WITHIN — Coming soon";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -73,7 +66,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#000000",
   colorScheme: "light",
 };
 
@@ -83,11 +76,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <div hidden aria-hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
-        {children}
-      </body>
+    // Geist rides along for `/v2`; `.theme-v2` opts that tree into it, `/` stays on Inter.
+    <html
+      lang="en"
+      className={`${inter.variable} ${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

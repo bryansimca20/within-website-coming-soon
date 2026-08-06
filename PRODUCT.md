@@ -19,7 +19,7 @@ Per sachet: **1000mg sodium, 250mg potassium, 50mg magnesium** — dosed to what
 Training in Indonesian heat and humidity, sweat cannot evaporate fast enough to cool the body, so the body makes more of it. Every drop carries minerals out, mostly sodium and some potassium. Water alone tops the fluid back up but dilutes what is left. WITHIN replaces both the fluid and the minerals.
 
 ## Formula / transparency
-Under 8 ingredients. No added sugar, no artificial colors, no artificial flavors, no artificial sweeteners. Mineral salts for the actives, real fruit for flavor, stevia leaf for sweetness. Transparency is a core value: everything on the label earns its place.
+Under 8 ingredients. No added sugar, no artificial colors, no artificial flavors, no artificial sweeteners. Mineral salts for the actives, natural flavoring for taste, stevia leaf for sweetness. Transparency is a core value: everything on the label earns its place.
 
 ## Audience
 Indonesian athletes and active people (running, cycling, gym, outdoor work) plus health-conscious buyers researching a supplement before purchase. They want to see clearly what is inside and why the dose is what it is.

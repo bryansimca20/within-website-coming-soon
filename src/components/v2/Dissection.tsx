@@ -14,7 +14,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 import { CountUp } from "./CountUp";
-import { MeasureGrid } from "./MeasureGrid";
+import { DissectionWatermark } from "./DissectionWatermark";
 
 interface Step {
   sym: string;
@@ -69,11 +69,14 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
       <div className="mt-1 flex items-baseline gap-1.5">
         <CountUp
           value={step.dose}
-          className="wi-readout text-[clamp(30px,3.4vw,46px)] font-semibold leading-[0.95] tracking-[-0.03em] text-wi-black"
+          className={cn(
+            "wi-readout text-[clamp(34px,3.9vw,56px)] font-semibold leading-[0.95] tracking-[-0.03em]",
+            current ? "text-wi-electric" : "text-wi-black"
+          )}
         />
         {step.unit && <span className="wi-readout text-[15px] font-semibold text-wi-ink-500">{step.unit}</span>}
         {step.exclude && (
-          <span className="text-[15px] font-medium text-wi-ink-500">grams, and nothing artificial</span>
+          <span className="text-[15px] font-medium text-wi-ink-500">g sugar, and nothing artificial</span>
         )}
       </div>
       <p className="mt-2 mb-0 max-w-[42ch] text-[15px] leading-[1.55] text-wi-ink-500">{step.body}</p>
@@ -124,26 +127,29 @@ export function Dissection() {
             : "py-16 md:py-20"
         )}
       >
-        <MeasureGrid fade="edges" />
+        <DissectionWatermark step={activeStep} />
         <div className="relative mx-auto grid w-full max-w-[1240px] items-center gap-12 px-5 md:px-7 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
           {/* specimen */}
           <div>
             <h2 className="m-0 mb-8 max-w-[14ch] text-[clamp(28px,3.6vw,46px)] font-medium leading-[1.0] tracking-[-0.035em] text-wi-black text-balance lg:mb-10">
               Three minerals in. The rest, left out.
             </h2>
-            <div className="wi-crosshair relative mx-auto grid aspect-[4/5] w-full max-w-[340px] place-items-center overflow-hidden rounded-[var(--wi-radius-card)] border border-wi-line bg-wi-paper-dim">
-              <MeasureGrid fade="none" className="opacity-70" />
-              <div className="relative z-1 w-[48%] rotate-[6deg]">
+            <div className="relative mx-auto flex aspect-[4/5] w-full max-w-[340px] items-center justify-center">
+              <motion.div
+                className="w-[50%] rotate-[6deg]"
+                animate={{ y: [-9, 11, -9] }}
+                transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
+              >
                 <Image
                   src="/coming-soon/sachet-single.png"
                   alt="A WITHIN sachet, shown as a specimen"
                   width={1632}
                   height={3526}
-                  sizes="(max-width: 1024px) 55vw, 200px"
+                  sizes="(max-width: 1024px) 55vw, 220px"
                   draggable={false}
-                  className="h-auto w-full drop-shadow-[0_20px_40px_rgba(11,13,18,0.16)]"
+                  className="h-auto w-full drop-shadow-[0_26px_48px_rgba(11,13,18,0.22)]"
                 />
-              </div>
+              </motion.div>
             </div>
           </div>
 

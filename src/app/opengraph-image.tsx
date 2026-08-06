@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "WITHIN - Coming soon";
+export const alt = "WITHIN — Coming soon";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -19,7 +19,7 @@ export default function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0b0d12",
+          background: "#000000",
         }}
       >
         <div style={{ fontSize: 172, fontWeight: 800, letterSpacing: "-8px", color: "#ffffff" }}>
@@ -31,7 +31,7 @@ export default function OpengraphImage() {
             fontSize: 30,
             fontWeight: 700,
             letterSpacing: "16px",
-            color: "#9aa3b2",
+            color: "#8a8a8a",
           }}
         >
           COMING SOON

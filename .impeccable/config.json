@@ -68,6 +68,12 @@
         "value": "#000",
         "createdAt": "2026-07-31T11:25:23.751Z",
         "reason": "mask-image alpha primitive (opaque/transparent), not a palette color"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "28px",
+        "createdAt": "2026-07-31T11:51:07.720Z",
+        "reason": "Transparency Lab data-density type scale; intentional"
       }
     ]
   }

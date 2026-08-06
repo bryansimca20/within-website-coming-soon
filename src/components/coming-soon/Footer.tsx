@@ -1,36 +1,55 @@
-import { InstagramLogo } from "@phosphor-icons/react/ssr";
-
 import { WithinLogo } from "@/components/brand/WithinLogo";
+
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 
-/** Minimal clinical footer: wordmark, one-line promise, Instagram, and a legal row. */
+import { DisplayHeading } from "./DisplayHeading";
+import { Reveal } from "./Reveal";
+import { WaitlistOverlay } from "./WaitlistOverlay";
+import { SectionContainer } from "./Section";
+import { InstagramGlyph } from "./svg/InstagramGlyph";
+
+/** Black footer: pre-launch signup, wordmark, tagline, Instagram follow, and a legal row. */
 export function Footer() {
   return (
-    <footer className="border-t border-wi-line bg-wi-paper">
-      <div className="mx-auto w-full max-w-[1240px] px-5 py-14 md:px-7">
-        <div className="flex flex-wrap items-end justify-between gap-8">
-          <div>
-            <WithinLogo kind="logotype" color="black" height={20} />
-            <p className="mt-4 mb-0 max-w-[300px] text-[14px] leading-[1.5] text-wi-ink-500">
-              The minerals you sweat out, dosed to the milligram, and nothing you do not. Made in
-              Indonesia.
-            </p>
-          </div>
-          <a
-            href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-[10px] rounded-[var(--wi-radius-control)] border border-wi-line px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-wi-black no-underline transition-colors hover:border-wi-black"
-          >
-            <InstagramLogo size={18} />
-            Follow {INSTAGRAM_HANDLE}
-          </a>
-        </div>
-        <div className="mt-10 flex flex-wrap justify-between gap-2 border-t border-wi-line pt-6 text-[12px] text-wi-ink-300">
-          <span className="wi-readout tracking-[0.02em]">© 2026 WITHIN</span>
-          <span className="wi-readout tracking-[0.02em]">Jakarta, Indonesia</span>
-        </div>
+    <footer className="bg-wi-black text-wi-paper">
+      <div className="max-w-[1200px] mx-auto px-7 pt-[88px] pb-14">
+        <Reveal>
+          <DisplayHeading as="h2" dark className="mt-4 text-[clamp(30px,3.6vw,46px)] max-w-[620px]">
+            Get the launch 10% discount
+          </DisplayHeading>
+          <p className="mt-[18px] mb-0 max-w-[440px] text-wi-on-dark-2 text-[17px] leading-[1.55]">
+            Leave your email and we will send you a code on launch day. Add your Instagram if
+            you want us to reach you there too.
+          </p>
+          <WaitlistOverlay tone="inverse" className="mt-8" />
+        </Reveal>
       </div>
+      <SectionContainer
+        className="flex flex-wrap items-end justify-between gap-[30px] pb-[30px]"
+      >
+        <div>
+          <WithinLogo kind="logotype" color="white" height={20} />
+          <p className="mt-4 max-w-[280px] text-sm leading-normal text-wi-on-dark-2">
+            The electrolytes you sweat out, and nothing you don&apos;t. Made in Indonesia.
+          </p>
+        </div>
+        <a
+          href={INSTAGRAM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-[10px] rounded-md border border-wi-on-dark-line px-4 py-3 text-[13px] font-bold uppercase tracking-[0.1em] text-wi-paper no-underline"
+        >
+          <InstagramGlyph size={18} />
+          Follow {INSTAGRAM_HANDLE}
+        </a>
+      </SectionContainer>
+      <SectionContainer
+        flush
+        className="flex flex-wrap justify-between gap-2 border-t border-wi-on-dark-line py-[18px] text-xs text-wi-on-dark-3"
+      >
+        <span>© 2026 WITHIN</span>
+        <span>Jakarta · Indonesia</span>
+      </SectionContainer>
     </footer>
   );
 }

@@ -1,0 +1,256 @@
+"use client";
+
+import { type FormEvent, useActionState, useId, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+
+import { subscribeAction } from "@/app/actions/subscribe.action";
+import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
+import { INITIAL_SUBSCRIBE_STATE, SubscribeStatus } from "@/app/utils/subscribe-state";
+import { validateField } from "@/app/utils/subscriber-input";
+import { Button } from "./ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
+import { EASE } from "./Reveal";
+
+/** The visible fields validated on the client before the server ever runs. */
+type FieldName = "fullName" | "email" | "instagramHandle";
+const FIELD_ORDER: FieldName[] = ["fullName", "email", "instagramHandle"];
+
+/** Pre-launch signup form. Renders on both paper and black surfaces. */
+interface SignupFormProps {
+  /** `inverse` for black panels (the hero, full-bleed sections). */
+  tone?: "default" | "inverse";
+  className?: string;
+}
+
+/** Captures a full name, email, and optional Instagram handle into the Shopify pre-launch list. */
+export function SignupForm({ tone = "default", className }: SignupFormProps) {
+  const [state, formAction, isPending] = useActionState(subscribeAction, INITIAL_SUBSCRIBE_STATE);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
+  const fieldId = useId();
+  // Honeypot render timestamp. This form only ever mounts client-side (inside the overlay,
+  // which mounts its children on open), so a lazy-initialized value is the client mount time
+  // with no SSR staleness. Held in state so re-renders and the post-action form reset cannot
+  // clear it, unlike an imperatively-set uncontrolled input value.
+  const [renderedAt] = useState(() => String(Date.now()));
+  const reduce = useReducedMotion();
+
+  const isDark = tone === "inverse";
+  const idFor: Record<FieldName, string> = {
+    fullName: `${fieldId}-fullname`,
+    email: `${fieldId}-email`,
+    instagramHandle: `${fieldId}-instagram`,
+  };
+  const statusId = `${fieldId}-status`;
+
+  /** Re-checks one field and updates only its error, leaving the others untouched. */
+  function revalidate(field: FieldName, value: string) {
+    const message = validateField(field, value);
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      if (message === null) {
+        delete next[field];
+      } else {
+        next[field] = message;
+      }
+      return next;
+    });
+  }
+
+  /** Validates every field on submit; blocks the server action and focuses the first error if any. */
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const nextErrors: Partial<Record<FieldName, string>> = {};
+
+    for (const field of FIELD_ORDER) {
+      const message = validateField(field, String(formData.get(field) ?? ""));
+      if (message !== null) {
+        nextErrors[field] = message;
+      }
+    }
+
+    setFieldErrors(nextErrors);
+
+    const firstInvalid = FIELD_ORDER.find((field) => nextErrors[field] !== undefined);
+    if (firstInvalid !== undefined) {
+      // Stop the server action; the invalid submission never leaves the browser.
+      event.preventDefault();
+      document.getElementById(idFor[firstInvalid])?.focus();
+    }
+  }
+
+  if (state.status === SubscribeStatus.Success) {
+    return (
+      <div
+        role="status"
+        className={cn(
+          "m-0 flex flex-col items-start gap-3",
+          isDark ? "text-wi-on-dark-1" : "text-wi-black",
+          className
+        )}
+      >
+        <motion.svg
+          width="40"
+          height="40"
+          viewBox="0 0 40 40"
+          fill="none"
+          aria-hidden
+          className="text-wi-success"
+          initial={reduce ? "shown" : "hidden"}
+          animate="shown"
+        >
+          <motion.circle
+            cx="20"
+            cy="20"
+            r="15"
+            stroke="currentColor"
+            strokeWidth="2"
+            variants={{
+              hidden: { pathLength: 0, opacity: 0 },
+              shown: { pathLength: 1, opacity: 1, transition: { duration: 0.4, ease: EASE } },
+            }}
+          />
+          <motion.path
+            d="M13 20.5l4.8 4.8L27.5 15"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            variants={{
+              hidden: { pathLength: 0 },
+              shown: { pathLength: 1, transition: { duration: 0.3, ease: EASE, delay: 0.35 } },
+            }}
+          />
+        </motion.svg>
+        <motion.p
+          className="m-0 text-[15px] leading-[1.55]"
+          initial={reduce ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: EASE, delay: reduce ? 0 : 0.2 }}
+        >
+          You are on the list. We will email you when WITHIN launches.
+        </motion.p>
+      </div>
+    );
+  }
+
+  /** Live validation props shared by every field: invalid state, error link, blur/change checks. */
+  function fieldProps(field: FieldName) {
+    const message = fieldErrors[field];
+    return {
+      "aria-invalid": message !== undefined,
+      "aria-describedby": message !== undefined ? `${idFor[field]}-error` : undefined,
+      className: "aria-invalid:border-wi-error",
+      onBlur: (event: FormEvent<HTMLInputElement>) =>
+        revalidate(field, event.currentTarget.value),
+      onChange: (event: FormEvent<HTMLInputElement>) => {
+        if (fieldErrors[field] !== undefined) {
+          revalidate(field, event.currentTarget.value);
+        }
+      },
+    };
+  }
+
+  /** One field's error paragraph, or null when the field is valid. */
+  function fieldMessage(field: FieldName) {
+    const message = fieldErrors[field];
+    if (message === undefined) {
+      return null;
+    }
+    return (
+      <p
+        id={`${idFor[field]}-error`}
+        className="mt-1 mb-0 text-[13px] font-medium leading-[1.4] text-wi-error"
+      >
+        {message}
+      </p>
+    );
+  }
+
+  return (
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      className={cn("max-w-[520px]", className)}
+      noValidate
+    >
+      <div className="grid items-start gap-3 sm:grid-cols-2">
+        <div className="grid gap-2 sm:col-span-2">
+          <Label htmlFor={idFor.fullName} tone={isDark ? "inverse" : "default"}>
+            Full name
+          </Label>
+          <Input
+            id={idFor.fullName}
+            name="fullName"
+            type="text"
+            autoComplete="name"
+            placeholder="Your name"
+            required
+            tone={isDark ? "inverse" : "default"}
+            {...fieldProps("fullName")}
+          />
+          {fieldMessage("fullName")}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={idFor.email} tone={isDark ? "inverse" : "default"}>
+            Email
+          </Label>
+          <Input
+            id={idFor.email}
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+            tone={isDark ? "inverse" : "default"}
+            {...fieldProps("email")}
+          />
+          {fieldMessage("email")}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={idFor.instagramHandle} tone={isDark ? "inverse" : "default"}>
+            Instagram (optional)
+          </Label>
+          <Input
+            id={idFor.instagramHandle}
+            name="instagramHandle"
+            type="text"
+            autoComplete="off"
+            placeholder="@yourhandle"
+            tone={isDark ? "inverse" : "default"}
+            {...fieldProps("instagramHandle")}
+          />
+          {fieldMessage("instagramHandle")}
+        </div>
+      </div>
+
+      <div aria-hidden className="absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden">
+        <input name={HONEYPOT_TRAP_FIELD} type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+      </div>
+      <input name={HONEYPOT_TIMESTAMP_FIELD} type="hidden" value={renderedAt} readOnly />
+
+      <Button
+        type="submit"
+        size="default"
+        variant={isDark ? "inverse" : "default"}
+        disabled={isPending}
+        className="mt-4 w-auto"
+      >
+        {isPending ? "Joining" : "Join the list"}
+      </Button>
+
+      <p
+        id={statusId}
+        role="alert"
+        aria-live="polite"
+        className="mt-2 mb-0 min-h-[18px] text-[13px] leading-[1.4] text-wi-error"
+      >
+        {state.status === SubscribeStatus.Error ? state.message : ""}
+      </p>
+    </form>
+  );
+}
