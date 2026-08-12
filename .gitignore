@@ -53,3 +53,6 @@ docs/PRD/
 
 # impeccable detector cache (config.json and design.json are committed)
 .impeccable/hook.cache.json
+
+.gstack
+.impeccable
