@@ -37,3 +37,8 @@ Fact-forward, honest, no hype, no filler verbs. Let the numbers and the transpar
 - **No certification claims.** BPOM and Halal are both *pending, not yet certified*. Never state or imply certified/approved status anywhere on the site.
 - **Preserve the waitlist function.** The SignupForm captures email (+ optional Instagram) to Shopify; do not rename its fields or change its submit behavior. Honeypot anti-spam stays.
 - Keep FAQ content, structured data (Organization/WebSite/FAQPage JSON-LD), and SEO metadata intact through the redesign.
+
+## Brand commitments
+- **Design stays grounded in transparency and restraint.** Bold conceptual worlds (race-day print, sportswear kit graphics) were shown and declined: the identity is transparent and minimalistic, and a new direction should be a play within that, not a departure from it.
+- **Restraint is not the same as the category default.** A straight execution of the category-standard supplement page was built and rejected on sight. Quiet is the register; generic is not the target.
+- **Craft references:** LMNT and Maurten for dose-forward starkness, Precision Fuel & Hydration and Skratch Labs for the education layer.
