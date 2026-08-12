@@ -39,7 +39,7 @@ function FaqRow({
           aria-hidden
           className={
             "grid size-7 shrink-0 place-items-center rounded-[var(--wi-radius-control)] border transition-colors " +
-            (open ? "border-wi-electric text-wi-electric" : "border-wi-line text-wi-ink-500")
+            (open ? "border-wi-signal text-wi-signal" : "border-wi-line text-wi-ink-500")
           }
           animate={{ rotate: open ? 45 : 0 }}
           transition={{ duration: 0.22, ease: EASE }}

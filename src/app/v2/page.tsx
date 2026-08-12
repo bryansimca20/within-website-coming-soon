@@ -19,7 +19,7 @@ import { WhyWithin } from "@/components/v2/WhyWithin";
 const DIRECTION_CONTRACT = `<!--
 WITHIN-TRANSPARENCY-LAB
 THESIS: WITHIN is a transparency instrument. The page dissects the product so the exact dose and every ingredient are provable, refusing the sugary sports-drink hero and the generic three-card supplement grid.
-OWN-WORLD: paper-white clinical canvas, one electric-blue signal on actives + data, Geist Sans display over Geist Mono readouts, crisp 2px edges; red only for the Indonesian flag.
+OWN-WORLD: paper-white clinical canvas, one true-black signal on actives + data over greyed resting states, Geist Sans display over Geist Mono readouts, crisp 2px edges; red only for the Indonesian flag.
 STORY: the visitor meets a labelled specimen, learns why humid-heat training drains minerals, reads the exact doses, compares against water and sports drinks, and joins the waitlist.
 FIRST VIEWPORT: split. Left, the value-prop headline and the waitlist action over a track band; right, the double sachet lifting off paper.
 FORM: transparency-lab / measurement-instrument. User-pinned direction, no concept roll.

@@ -263,9 +263,9 @@
    the values are never read outside `.theme-v2`. */
 @theme {
   --color-wi-line-strong: #cfd6e0;
-  --color-wi-electric: #0047ff;
-  --color-wi-electric-bright: #3d6bff;
-  --color-wi-electric-tint: #e8eeff;
+  --color-wi-signal: #000000;
+  --color-wi-signal-bright: #262c36;
+  --color-wi-signal-tint: #e3e7ef;
   --color-wi-flag: #ce1126;
 }
 
@@ -304,9 +304,11 @@
   --wi-mist: #eceff4;
   --wi-paper-dim: #f6f8fb;
   --wi-paper: #ffffff;
-  --wi-electric: #0047ff;
-  --wi-electric-bright: #3d6bff;
-  --wi-electric-tint: #e8eeff;
+  /* the third color: whatever marks actives + live data. Hue-agnostic by name —
+     currently true black, so resting states step down to ink rather than compete. */
+  --wi-signal: #000000;
+  --wi-signal-bright: #262c36;
+  --wi-signal-tint: #e3e7ef;
   --wi-flag: #ce1126;
   --wi-error: #e5484d;
   --wi-success: #30a46c;
@@ -341,7 +343,7 @@
   --wi-shadow-sm: 0 1px 2px rgba(11, 13, 18, 0.06);
   --wi-shadow-md: 0 6px 20px rgba(11, 13, 18, 0.08);
   --wi-shadow-lg: 0 18px 44px rgba(11, 13, 18, 0.12);
-  --wi-shadow-focus: 0 0 0 3px rgba(0, 71, 255, 0.28);
+  --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.24);
 
   /* motion */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -353,7 +355,7 @@
   --wi-container-max: 1240px;
   --wi-nav-h: 64px;
 
-  /* shadcn semantic bridge → clinical, electric ring */
+  /* shadcn semantic bridge → clinical, true-black signal ring */
   --radius: 3px;
   --background: var(--wi-paper);
   --foreground: var(--wi-ink-700);
@@ -367,16 +369,16 @@
   --secondary-foreground: var(--wi-black);
   --muted: var(--wi-mist);
   --muted-foreground: var(--wi-ink-500);
-  --accent: var(--wi-electric-tint);
-  --accent-foreground: var(--wi-electric);
+  --accent: var(--wi-signal-tint);
+  --accent-foreground: var(--wi-signal);
   --destructive: var(--wi-error);
   --border: var(--wi-line);
   --input: var(--wi-line-strong);
-  --ring: var(--wi-electric);
+  --ring: var(--wi-signal);
 }
 
 .theme-v2 ::selection {
-  background: var(--wi-electric);
+  background: var(--wi-signal);
   color: var(--wi-paper);
 }
 

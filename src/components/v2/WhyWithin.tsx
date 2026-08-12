@@ -13,7 +13,7 @@ const LOSS: readonly [string, number, number, number][] = [
   ["Potassium", 125, 200, 400],
 ];
 
-/** A measured range plotted on a ruler axis — the electric segment grows in on scroll. */
+/** A measured range plotted on a ruler axis — the signal segment grows in on scroll. */
 function LossScale({ name, low, high, max }: { name: string; low: number; high: number; max: number }) {
   const left = (low / max) * 100;
   const width = ((high - low) / max) * 100;
@@ -37,7 +37,7 @@ function LossScale({ name, low, high, max }: { name: string; low: number; high: 
         ))}
         {/* the measured loss segment */}
         <motion.div
-          className="absolute top-1/2 h-[9px] -translate-y-1/2 rounded-full bg-wi-electric"
+          className="absolute top-1/2 h-[9px] -translate-y-1/2 rounded-full bg-wi-signal"
           style={{ left: `${left}%` }}
           initial={{ width: 0 }}
           whileInView={{ width: `${width}%` }}

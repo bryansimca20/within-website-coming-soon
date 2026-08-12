@@ -33,7 +33,7 @@ const STEPS: readonly Step[] = [
   { sym: "0", name: "Everything else", dose: 0, unit: "", body: "No added sugar. No artificial colors, flavors, or sweeteners.", exclude: true },
 ];
 
-/** One annotation row: a rail node plus the mineral's readout, lit electric when active. */
+/** One annotation row: a rail node plus the mineral's readout, lit to the signal color when active. */
 function Annotation({ step, active, current }: { step: Step; active: boolean; current: boolean }) {
   return (
     <div
@@ -46,7 +46,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
       <span
         className={cn(
           "absolute left-0 top-1.5 grid size-[15px] place-items-center rounded-full border transition-colors duration-300",
-          active ? "border-wi-electric bg-wi-electric" : "border-wi-line-strong bg-wi-paper"
+          active ? "border-wi-signal bg-wi-signal" : "border-wi-line-strong bg-wi-paper"
         )}
       >
         <span className={cn("size-[5px] rounded-full", active ? "bg-wi-paper" : "bg-transparent")} />
@@ -57,7 +57,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
             "text-[12px] uppercase tracking-[0.12em]",
             step.exclude
               ? "font-medium text-wi-ink-500"
-              : cn("wi-readout tracking-[0.14em]", current ? "text-wi-electric" : "text-wi-ink-500")
+              : cn("wi-readout tracking-[0.14em]", current ? "text-wi-signal" : "text-wi-ink-500")
           )}
         >
           {step.exclude ? "Left out" : step.sym}
@@ -71,7 +71,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
           value={step.dose}
           className={cn(
             "wi-readout text-[clamp(34px,3.9vw,56px)] font-semibold leading-[0.95] tracking-[-0.03em]",
-            current ? "text-wi-electric" : "text-wi-black"
+            current ? "text-wi-signal" : "text-wi-ink-700"
           )}
         />
         {step.unit && <span className="wi-readout text-[15px] font-semibold text-wi-ink-500">{step.unit}</span>}
@@ -86,7 +86,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
 
 /**
  * The dissection: the sachet pins center-stage while its contents read out. Desktop
- * sweeps an electric highlight down the rail on scroll; every numeral counts up to its
+ * sweeps the signal highlight down the rail on scroll; every numeral counts up to its
  * true value on entering view and rests there, so a reading is never left at zero.
  * Smaller screens and reduced-motion show every reading at once.
  */
@@ -155,11 +155,11 @@ export function Dissection() {
 
           {/* the readings on a progress rail */}
           <div className="relative">
-            {/* rail track + electric fill */}
+            {/* rail track + signal fill */}
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-wi-line" />
             {drivePin && (
               <motion.div
-                className="absolute left-[7px] top-2 bottom-2 w-px origin-top bg-wi-electric"
+                className="absolute left-[7px] top-2 bottom-2 w-px origin-top bg-wi-signal"
                 style={{ scaleY: railScale }}
               />
             )}

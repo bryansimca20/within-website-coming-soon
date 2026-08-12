@@ -89,7 +89,7 @@ export function Ledger() {
             {EXCLUDED.map((item) => (
               <li key={item} className="flex items-baseline justify-between gap-4 border-b border-wi-line py-4">
                 <span className="text-[16px] font-medium text-wi-black">{item}</span>
-                <span className="wi-readout text-[12px] uppercase tracking-[0.14em] text-wi-electric">None</span>
+                <span className="wi-readout text-[12px] uppercase tracking-[0.14em] text-wi-signal">None</span>
               </li>
             ))}
           </ul>

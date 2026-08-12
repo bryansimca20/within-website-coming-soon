@@ -31,7 +31,7 @@ const ROWS: readonly [string, Cell, Cell, Cell][] = [
 /** Column 3 (Water) is dropped below md so phones never scroll sideways. */
 const MD_ONLY = "hidden md:flex";
 
-/** One verdict: WITHIN's affirmatives read electric-strong; everything else is a hairline mark. */
+/** One verdict: WITHIN's affirmatives read signal-strong; everything else is a hairline mark. */
 function Mark({ cell, strong, delay }: { cell: Cell; strong: boolean; delay: number }) {
   const isYes = cell.v === "yes";
   const brand = strong && isYes;
@@ -71,7 +71,7 @@ function Matrix() {
             className={cn(
               "flex items-center border-b border-wi-line px-3 py-4 text-[12px] font-semibold uppercase tracking-[0.1em] md:px-4",
               c === 0 ? "justify-start text-wi-ink-300" : "justify-center text-center",
-              c === 1 ? "bg-wi-electric-tint text-wi-electric" : "bg-wi-paper text-wi-ink-500",
+              c === 1 ? "bg-wi-signal-tint text-wi-signal" : "bg-wi-paper text-wi-ink-500",
               c === 3 && MD_ONLY
             )}
           >
@@ -89,7 +89,7 @@ function Matrix() {
             >
               {label}
             </div>
-            <div className={cn(CELL, "border-t border-wi-line bg-wi-electric-tint/40")}>
+            <div className={cn(CELL, "border-t border-wi-line bg-wi-signal-tint/40")}>
               <Mark cell={within} strong delay={r * 0.06} />
             </div>
             <div className={cn(CELL, "border-t border-wi-line")}>
