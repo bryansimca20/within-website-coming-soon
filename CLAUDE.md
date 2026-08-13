@@ -105,8 +105,7 @@ src/
 │   ├── actions/      # Server Actions ("use server"), one file per action
 │   └── utils/        # Route-local pure helpers (validation, honeypot, action state)
 ├── components/
-│   ├── brand/        # WithinLogo (used site-wide); WiHero / WiEyebrow exist but currently
-│   │                 #   have zero consumers (see WITHIN Design System)
+│   ├── brand/        # WithinLogo — the brand mark, used site-wide
 │   ├── coming-soon/  # "/" page sections + the Reveal / MotionProvider motion primitives
 │   │   ├── ui/       # button.tsx — a second, page-local Button (see WITHIN Design System)
 │   │   └── utils/    # faqs.ts — route-local content data
@@ -220,8 +219,10 @@ repo. Both fonts come from the `geist` package (`GeistSans` / `GeistMono` in
 tracking — not a dedicated component. Type scale exposed via `@theme`: `text-display-2xl`
 (96px), `text-display-xl` (72px), `text-display-lg` (56px), `text-display-md` (40px),
 `text-h1` (34px), `text-h2` (26px), `text-h3` (20px), `text-body-lg` (18px), `text-body`
-(16px), `text-2xs` (11px). There is no hero/label component register any more — see the
-`WiHero` / `WiEyebrow` note below.
+(16px), `text-2xs` (11px). There is no hero/label component register: hero and label type is
+hand-set per component (see `Hero.tsx`'s `<motion.h1>`, `WaitlistOverlay.tsx`'s
+`OVERLAY_TITLE`). Several steps of that scale currently have no consumer, which is expected
+for a declared ramp, not a signal to delete them.
 
 **Voice — honest, introverted, high-performing.** Short declarative statements. Subtractive
 framing ("No additives. Just what works."). Facts over adjectives ("1000mg sodium" beats
@@ -257,11 +258,8 @@ fades and short slides only, no infinite decorative loops.
   (`cubic-bezier(0.23, 1, 0.32, 1)`; the old system used a different curve). `EASE` is used
   throughout `Hero`, `WhyWithin`, `Ledger`, `Faq`, `Compare`, `CountUp`,
   `DissectionWatermark`, `WaitlistOverlay` and `SignupForm` — use it for every tween.
-  `Reveal.tsx` also exports `RevealGroup` / `RevealItem` (staggered-children helpers) and
-  `TOUCH_SPRING` (a press/hover spring, `stiffness: 360, damping: 28`); all three are real and
-  exported but currently have **no consumers** anywhere in the app. They're available
-  primitives, not evidence anything on the page uses them today — check before citing them as
-  "the pattern this section follows."
+  `Reveal.tsx` exports exactly two things: `Reveal` and `EASE`. Stagger a group by giving
+  sibling `Reveal`s increasing `delay` values (30-80ms apart).
 - Wrap animated trees in [MotionProvider](src/components/coming-soon/MotionProvider.tsx)
   (`<MotionConfig reducedMotion="user">`), mounted once around the whole tree in `page.tsx`,
   so motion honors `prefers-reduced-motion` (drops movement, keeps fades).
@@ -288,14 +286,10 @@ emoji.** The logomark is a brand mark, not an icon.
 **Logo.** Always use `WithinLogo` (or the PNGs in `public/brand/`). **Never redraw, trace, or
 approximate the mark.**
 
-**`WiHero` / `WiEyebrow`.** These still live in
-[src/components/brand/](src/components/brand/) and still compile, but nothing in the app
-imports them — the 404 page stopped using them once it moved onto the Transparency Lab type
-system, and no other route ever did. Hero and label type in the shipped page is hand-set per
-component (see `Hero.tsx`'s `<motion.h1>`, `WaitlistOverlay.tsx`'s `OVERLAY_TITLE`, etc.), not
-routed through a shared "hero voice" component. Do not point new agents at `WiHero` /
-`WiEyebrow` as the current type register. They're out of scope to delete as part of this
-task; if the dead-code question comes up, raise it rather than resolving it silently.
+**Brand components.** `WithinLogo` is the only one. `WiHero` and `WiEyebrow` were deleted on
+2026-08-13 once the 404 page moved onto the Transparency Lab type system and left them with no
+consumers. Do not reintroduce a shared "hero voice" component without a reason: hero and label
+type is hand-set per component in this design system.
 
 ## Data Fetching & Services
 
