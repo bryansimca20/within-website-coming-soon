@@ -207,8 +207,8 @@
 /* ============================================================
    WITHIN Design System — Transparency Lab.
 
-   Promoted from the former `.theme-v2` scope (Task 2 of the
-   promote-transparency-lab refactor). Tokens live in `:root`
+   Promoted from the former scoped Transparency Lab theme (Task 2 of
+   the promote-transparency-lab refactor). Tokens live in `:root`
    above; below are the remaining component-facing utilities.
    ============================================================ */
 

@@ -1,15 +1,15 @@
-import { Close } from "@/components/v2/Close";
-import { Compare } from "@/components/v2/Compare";
-import { Dissection } from "@/components/v2/Dissection";
-import { Faq } from "@/components/v2/Faq";
-import { Footer } from "@/components/v2/Footer";
-import { Hero } from "@/components/v2/Hero";
-import { Ledger } from "@/components/v2/Ledger";
-import { MotionProvider } from "@/components/v2/MotionProvider";
-import { Nav } from "@/components/v2/Nav";
-import { TheIdea } from "@/components/v2/TheIdea";
-import { WhyWithin } from "@/components/v2/WhyWithin";
-import { FAQS } from "@/components/v2/utils/faqs";
+import { Close } from "@/components/coming-soon/Close";
+import { Compare } from "@/components/coming-soon/Compare";
+import { Dissection } from "@/components/coming-soon/Dissection";
+import { Faq } from "@/components/coming-soon/Faq";
+import { Footer } from "@/components/coming-soon/Footer";
+import { Hero } from "@/components/coming-soon/Hero";
+import { Ledger } from "@/components/coming-soon/Ledger";
+import { MotionProvider } from "@/components/coming-soon/MotionProvider";
+import { Nav } from "@/components/coming-soon/Nav";
+import { TheIdea } from "@/components/coming-soon/TheIdea";
+import { WhyWithin } from "@/components/coming-soon/WhyWithin";
+import { FAQS } from "@/components/coming-soon/utils/faqs";
 import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
