@@ -66,7 +66,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#ffffff",
   colorScheme: "light",
 };
 
@@ -76,7 +76,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Geist rides along for `/v2`; `.theme-v2` opts that tree into it, `/` stays on Inter.
+    // Geist Sans/Mono ship alongside Inter for the Transparency Lab design on `/`.
     <html
       lang="en"
       className={`${inter.variable} ${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}

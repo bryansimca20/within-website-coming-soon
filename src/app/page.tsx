@@ -1,16 +1,29 @@
-import { Compare } from "@/components/coming-soon/Compare";
-import { Faq } from "@/components/coming-soon/Faq";
-import { Footer } from "@/components/coming-soon/Footer";
-import { Formula } from "@/components/coming-soon/Formula";
-import { Header } from "@/components/coming-soon/Header";
-import { Hero } from "@/components/coming-soon/Hero";
-import { Marquee } from "@/components/coming-soon/Marquee";
-import { SachetCallouts } from "@/components/coming-soon/SachetCallouts";
-import { Story } from "@/components/coming-soon/Story";
-import { MotionProvider } from "@/components/coming-soon/MotionProvider";
-import { WhyWithin } from "@/components/coming-soon/WhyWithin";
-import { FAQS } from "@/components/coming-soon/utils/faqs";
+import { Close } from "@/components/v2/Close";
+import { Compare } from "@/components/v2/Compare";
+import { Dissection } from "@/components/v2/Dissection";
+import { Faq } from "@/components/v2/Faq";
+import { Footer } from "@/components/v2/Footer";
+import { Hero } from "@/components/v2/Hero";
+import { Ledger } from "@/components/v2/Ledger";
+import { MotionProvider } from "@/components/v2/MotionProvider";
+import { Nav } from "@/components/v2/Nav";
+import { TheIdea } from "@/components/v2/TheIdea";
+import { WhyWithin } from "@/components/v2/WhyWithin";
+import { FAQS } from "@/components/v2/utils/faqs";
 import { INSTAGRAM_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+
+/**
+ * Impeccable direction contract (new-work section 5). Emitted as a real HTML comment inside
+ * the tree so it survives the production build and stays greppable.
+ */
+const DIRECTION_CONTRACT = `<!--
+WITHIN-TRANSPARENCY-LAB
+THESIS: WITHIN is a transparency instrument. The page dissects the product so the exact dose and every ingredient are provable, refusing the sugary sports-drink hero and the generic three-card supplement grid.
+OWN-WORLD: paper-white clinical canvas, one true-black signal on actives + data over greyed resting states, Geist Sans display over Geist Mono readouts, crisp 2px edges; red only for the Indonesian flag.
+STORY: the visitor meets a labelled specimen, learns why humid-heat training drains minerals, reads the exact doses, compares against water and sports drinks, and joins the waitlist.
+FIRST VIEWPORT: split. Left, the value-prop headline and the waitlist action over a track band; right, the double sachet lifting off paper.
+FORM: transparency-lab / measurement-instrument. User-pinned direction, no concept roll.
+-->`;
 
 /** Organization + WebSite + FAQ structured data for search engines. */
 const jsonLd = {
@@ -47,7 +60,7 @@ const jsonLd = {
   ],
 };
 
-/** WITHIN coming-soon landing page. */
+/** WITHIN coming-soon landing page, the Transparency Lab design. */
 export default function Home() {
   return (
     <>
@@ -55,22 +68,23 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <MotionProvider>
-        <div className="min-h-screen bg-wi-paper-dim">
-          <Header />
+      <div className="bg-wi-paper">
+        <div hidden aria-hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
+        <MotionProvider>
+          <Nav />
           <main>
             <Hero />
-            <Marquee />
-            <SachetCallouts />
+            <Dissection />
             <WhyWithin />
+            <TheIdea />
             <Compare />
-            <Formula />
-            <Story />
+            <Ledger />
             <Faq />
+            <Close />
           </main>
           <Footer />
-        </div>
-      </MotionProvider>
+        </MotionProvider>
+      </div>
     </>
   );
 }
