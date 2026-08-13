@@ -67,7 +67,7 @@ export function WaitlistOverlay({ tone = "inverse", className }: WaitlistOverlay
         <DialogTrigger render={trigger} />
         <DialogPortal>
           <DialogBackdrop />
-          <DialogPopup className="theme-v2 border-wi-on-dark-line bg-wi-black text-wi-paper">
+          <DialogPopup className="border-wi-on-dark-line bg-wi-black text-wi-paper">
             <motion.div variants={OVERLAY_CONTENT} initial="hidden" animate="show">
               <motion.div variants={OVERLAY_ITEM}>
                 <WithinLogo kind="logomark" color="white" height={26} className="mb-5" />
@@ -94,7 +94,7 @@ export function WaitlistOverlay({ tone = "inverse", className }: WaitlistOverlay
       <DrawerPortal>
         <DrawerBackdrop />
         <DrawerViewport>
-          <DrawerPopup className="theme-v2 border-wi-on-dark-line bg-wi-black text-wi-paper">
+          <DrawerPopup className="border-wi-on-dark-line bg-wi-black text-wi-paper">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-wi-on-dark-line" />
             <DrawerContent>
               <motion.div variants={OVERLAY_CONTENT} initial="hidden" animate="show">

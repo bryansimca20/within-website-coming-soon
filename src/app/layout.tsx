@@ -1,17 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-
-const inter = localFont({
-  src: "./fonts/Inter-Variable.ttf",
-  variable: "--font-inter",
-  display: "swap",
-  weight: "100 900",
-});
 
 const TITLE = "WITHIN — Coming soon";
 
@@ -76,11 +68,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Geist Sans/Mono ship alongside Inter for the Transparency Lab design on `/`.
-    <html
-      lang="en"
-      className={`${inter.variable} ${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
-    >
+    // Geist Sans/Mono power the entire app.
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
