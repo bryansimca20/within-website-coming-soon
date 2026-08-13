@@ -9,5 +9,5 @@ export const SITE_DESCRIPTION =
   "An Indonesian electrolyte sachet: 1000mg sodium, 250mg potassium, 50mg magnesium in 500ml of water. Puts back what the heat sweats out of you. No additives, no added sugar. Made in Indonesia, launching soon.";
 
 /** Instagram — the only live channel before launch. */
-export const INSTAGRAM_HANDLE = "@within__id";
-export const INSTAGRAM_URL = "https://instagram.com/within__id";
+export const INSTAGRAM_HANDLE = "@withinrecovery";
+export const INSTAGRAM_URL = "https://instagram.com/withinrecovery";
