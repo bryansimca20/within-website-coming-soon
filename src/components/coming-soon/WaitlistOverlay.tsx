@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogBackdrop,

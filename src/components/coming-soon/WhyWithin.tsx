@@ -1,63 +1,55 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
 
-import { DisplayHeading } from "./DisplayHeading";
-import { Eyebrow } from "./Eyebrow";
-import { EASE, Reveal, RevealGroup, RevealItem } from "./Reveal";
-import { Section } from "./Section";
+import { CountUp } from "./CountUp";
+import { EASE, Reveal } from "./Reveal";
+import { SectionContainer } from "./Section";
 
-const REASONS: [string, string, string][] = [
-  ["01", "Not just water", "Water puts the fluid back but not the minerals that left with it."],
-  ["02", "The three that matter", "Sodium holds it, Potassium moves it, and Magnesium helps regulate muscle contractions."],
-  ["03", "Dosed to your loss", "1000mg sodium + 250mg potassium. Enough to replace an hour of hard sweat, not a pinch for taste."],
+/** name, low, high, axis-max (mg) — sweat loss per hour of hard training. */
+const LOSS: readonly [string, number, number, number][] = [
+  ["Sodium", 900, 1250, 1600],
+  ["Potassium", 125, 200, 400],
 ];
 
-/** name, low value, high value, low label, high label, axis max (mg) — sweat loss per hour. */
-const STATS: [string, number, number, string, string, number][] = [
-  ["Sodium", 900, 1250, "900", "1,250", 1600],
-  ["Potassium", 125, 200, "125", "200", 400],
-];
-
-/** A horizontal range band (min–max) that grows against a per-stat mg scale when scrolled to. */
-function RangeBar({
-  min,
-  max,
-  scale,
-  delay = 0,
-}: {
-  min: number;
-  max: number;
-  scale: number;
-  delay?: number;
-}) {
-  const left = (min / scale) * 100;
-  const width = ((max - min) / scale) * 100;
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => Math.round(scale * fraction));
+/** A measured range plotted on a ruler axis — the signal segment grows in on scroll. */
+function LossScale({ name, low, high, max }: { name: string; low: number; high: number; max: number }) {
+  const left = (low / max) * 100;
+  const width = ((high - low) / max) * 100;
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(max * f));
   return (
-    <div className="mt-3">
-      <div className="relative h-4 bg-wi-paper-dim border border-wi-line rounded-[3px]">
-        {[25, 50, 75].map((t) => (
-          <span
-            key={t}
-            style={{ left: `${t}%` }}
-            className="absolute top-0 bottom-0 w-px bg-wi-line"
-          />
+    <div className="border-t border-wi-line py-6 first:border-t-0 first:pt-0">
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="wi-readout text-[12px] uppercase tracking-[0.12em] text-wi-ink-500">{name}</span>
+        <span className="flex items-baseline gap-1">
+          <CountUp value={low} className="wi-readout text-[28px] font-semibold text-wi-black" />
+          <span className="wi-readout text-[13px] text-wi-ink-300">to</span>
+          <CountUp value={high} className="wi-readout text-[28px] font-semibold text-wi-black" />
+          <span className="wi-readout text-[12px] text-wi-ink-500">mg</span>
+        </span>
+      </div>
+      <div className="relative mt-4 h-8">
+        {/* ruler */}
+        <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-wi-line" />
+        {[0, 25, 50, 75, 100].map((t) => (
+          <span key={t} style={{ left: `${t}%` }} className="absolute top-1/2 h-2 w-px -translate-y-1/2 bg-wi-line-strong" />
         ))}
+        {/* the measured loss segment */}
         <motion.div
-          className="absolute top-[2px] bottom-[2px] bg-wi-black rounded-[2px]"
+          className="absolute top-1/2 h-[9px] -translate-y-1/2 rounded-full bg-wi-signal"
           style={{ left: `${left}%` }}
           initial={{ width: 0 }}
           whileInView={{ width: `${width}%` }}
           viewport={{ once: true, margin: "0px 0px -60px 0px" }}
-          transition={{ duration: 0.9, ease: EASE, delay: delay / 1000 }}
+          transition={{ duration: 0.85, ease: EASE }}
         />
       </div>
-      <div className="flex justify-between mt-[7px] text-[10.5px] font-bold tracking-[0.08em] text-wi-ink-300">
-        {ticks.map((tick, i) => (
-          <span key={tick}>
-            {tick.toLocaleString("en-US")}
-            {i === ticks.length - 1 ? " MG" : ""}
+      <div className="mt-2 flex justify-between">
+        {ticks.map((t, i) => (
+          <span key={t} className="wi-readout text-[10.5px] tracking-[0.04em] text-wi-ink-300">
+            {t.toLocaleString("en-US")}
+            {i === ticks.length - 1 ? " mg" : ""}
           </span>
         ))}
       </div>
@@ -65,68 +57,58 @@ function RangeBar({
   );
 }
 
-/** "Why WITHIN" — the heat/humidity case, three reasons beside loss bars that grow in. */
+/** "Why WITHIN": the heat/humidity case, beside the measured sweat-loss scales. */
 export function WhyWithin() {
   return (
-    <Section surface="paper" borderTop fullHeight>
-      <Reveal>
-        <Eyebrow>Why WITHIN</Eyebrow>
-        <DisplayHeading as="h2" className="mt-3 max-w-[560px] text-[56px]">
-          Built for the heat and humidity.
-        </DisplayHeading>
-        <p className="mt-[22px] max-w-[820px] text-base leading-[1.6] text-wi-ink-500">
-          Train in Indonesia&apos;s heat and your sweat can&apos;t evaporate fast enough to cool
-          you, so your body just makes more of it. Every drop carries minerals out with it,
-          mostly sodium, some potassium. Tropical sweat isn&apos;t saltier. You just lose far
-          more of it.
-        </p>
-      </Reveal>
-      <div className="mt-14 grid grid-cols-1 items-start gap-10 border-t-2 border-wi-black min-[860px]:grid-cols-2 min-[860px]:gap-16">
-        <RevealGroup>
-          {REASONS.map(([n, title, body]) => (
-            <RevealItem key={n} className="border-b border-wi-line py-[26px]">
-              <div className="flex items-baseline gap-4">
-                <span className="text-[13px] font-bold tracking-[0.1em] text-wi-ink-300">{n}</span>
-                <span className="text-[22px] font-bold uppercase tracking-[-0.015em] text-wi-black">
-                  {title}
-                </span>
-              </div>
-              <p className="mb-0 mt-[10px] text-[15px] leading-[1.6] text-wi-ink-500">{body}</p>
-            </RevealItem>
+    <section className="relative overflow-hidden border-t border-wi-line bg-wi-paper">
+      {/* Subtle athletic backdrop — the sweat that carries the minerals out. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Image
+          src="/coming-soon/sweat-closeup.jpeg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-[22%_center] opacity-[0.6]"
+        />
+        <div className="absolute inset-0 bg-linear-to-r from-transparent via-wi-paper/70 to-wi-paper" />
+      </div>
+      <SectionContainer className="relative">
+        <div
+          id="why"
+          className="grid grid-cols-1 items-start gap-12 md:grid-cols-2 md:gap-16"
+        >
+        <Reveal>
+          <h2 className="m-0 max-w-[12ch] text-[clamp(30px,4vw,52px)] font-medium leading-[1.0] tracking-[-0.035em] text-wi-black text-balance">
+            Built for the heat and humidity.
+          </h2>
+          <p className="mt-6 mb-0 max-w-[46ch] text-[17px] leading-[1.6] text-wi-ink-500">
+            Train in Indonesia&apos;s heat and your sweat cannot evaporate fast enough to cool you,
+            so your body just makes more of it. Every drop carries minerals out, mostly sodium and
+            some potassium. Tropical sweat is not saltier. You simply lose far more of it.
+          </p>
+        </Reveal>
+        <Reveal delay={100} className="md:pt-2">
+          <p className="wi-readout m-0 mb-5 text-[11px] uppercase tracking-[0.14em] text-wi-ink-500">
+            Lost per hour of hard training
+          </p>
+          {LOSS.map(([name, low, high, max]) => (
+            <LossScale key={name} name={name} low={low} high={high} max={max} />
           ))}
-        </RevealGroup>
-        <div className="pt-[26px]">
-          <Eyebrow className="mb-[26px]">Lost per hour of training</Eyebrow>
-          {STATS.map(([name, min, max, lo, hi, scale], i) => (
-            <div key={name} className="mb-[30px]">
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="text-[13px] font-bold uppercase tracking-[0.12em] text-wi-black">
-                  {name}
-                </span>
-                <span className="whitespace-nowrap">
-                  <span className="text-[32px] font-bold tracking-[-0.03em] text-wi-black">{lo}</span>
-                  <span className="mx-[6px] text-[15px] font-bold text-wi-ink-300">to</span>
-                  <span className="text-[32px] font-bold tracking-[-0.03em] text-wi-black">{hi}</span>
-                  <span className="ml-[5px] text-sm font-bold text-wi-ink-500">mg</span>
-                </span>
-              </div>
-              <RangeBar min={min} max={max} scale={scale} delay={i * 160} />
-            </div>
-          ))}
-          <p className="mb-0 mt-[22px] max-w-[420px] text-[11.5px] leading-[1.55] text-wi-ink-300">
-            Sweat loss measured in runners at ~30°C / 70% humidity.{" "}
+          <p className="mt-6 mb-0 max-w-[44ch] text-[12px] leading-[1.5] text-wi-ink-300">
+            Measured in runners at roughly 30°C and 70% humidity.{" "}
             <a
               href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8072971/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-inherit"
+              className="text-wi-ink-500 underline decoration-wi-line underline-offset-2 hover:text-wi-black"
             >
               Surapongchai et al., Nutrients (2021)
             </a>
             .
           </p>
+        </Reveal>
         </div>
-      </div>
-    </Section>
+      </SectionContainer>
+    </section>
   );
 }

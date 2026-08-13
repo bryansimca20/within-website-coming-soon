@@ -4,26 +4,34 @@
 
 /* ---- WITHIN raw utilities exposed to Tailwind (bg-wi-*, text-*, etc.) ---- */
 @theme {
-  --color-wi-black: #000000;
-  --color-wi-charcoal: #191919;
-  --color-wi-ink-700: #3d3d3d;
-  --color-wi-ink-500: #6b6b6b;
-  --color-wi-ink-300: #a3a3a3;
-  --color-wi-line: #d6d6d6;
-  --color-wi-mist: #e6e6e6;
-  --color-wi-paper-dim: #f2f2f2;
+  --color-wi-black: #0b0d12;
+  --color-wi-charcoal: #1a1e26;
+  --color-wi-ink-700: #363d49;
+  --color-wi-ink-500: #626b7a;
+  --color-wi-ink-300: #9aa3b2;
+  --color-wi-line: #e2e7ee;
+  --color-wi-line-strong: #cfd6e0;
+  --color-wi-mist: #eceff4;
+  --color-wi-paper-dim: #f6f8fb;
   --color-wi-paper: #ffffff;
 
   /* Status colors: the intentional non-monochrome exceptions. Errors read red, success green. */
-  --color-wi-error: #ef4444;
-  --color-wi-success: #22c55e;
+  --color-wi-error: #e5484d;
+  --color-wi-success: #30a46c;
+
+  /* the third color: whatever marks actives + live data. Hue-agnostic by name —
+     currently true black, so resting states step down to ink rather than compete. */
+  --color-wi-signal: #000000;
+  --color-wi-signal-bright: #262c36;
+  --color-wi-signal-tint: #e3e7ef;
+  --color-wi-flag: #ce1126;
 
   /* on-dark tints as utilities (text-wi-on-dark-2, border-wi-on-dark-line, bg-wi-on-dark-fill) */
   --color-wi-on-dark-1: rgba(255, 255, 255, 1);
-  --color-wi-on-dark-2: rgba(255, 255, 255, 0.64);
-  --color-wi-on-dark-3: rgba(255, 255, 255, 0.4);
-  --color-wi-on-dark-line: rgba(255, 255, 255, 0.16);
-  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.08);
+  --color-wi-on-dark-2: rgba(255, 255, 255, 0.66);
+  --color-wi-on-dark-3: rgba(255, 255, 255, 0.42);
+  --color-wi-on-dark-line: rgba(255, 255, 255, 0.14);
+  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.06);
 
   --text-display-2xl: 96px;
   --text-display-xl: 72px;
@@ -41,22 +49,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --font-heading: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -80,218 +75,9 @@
 }
 
 :root {
-  /* ---- WITHIN base scale (ink → paper) ---- */
-  --wi-black: #000000;
-  --wi-charcoal: #191919;
-  --wi-ink-700: #3d3d3d;
-  --wi-ink-500: #6b6b6b;
-  --wi-ink-300: #a3a3a3;
-  --wi-line: #d6d6d6;
-  --wi-mist: #e6e6e6;
-  --wi-paper-dim: #f2f2f2;
-  --wi-paper: #ffffff;
-
-  /* ---- on-dark tints ---- */
-  --wi-on-dark-1: rgba(255, 255, 255, 1);
-  --wi-on-dark-2: rgba(255, 255, 255, 0.64);
-  --wi-on-dark-3: rgba(255, 255, 255, 0.4);
-  --wi-on-dark-line: rgba(255, 255, 255, 0.16);
-  --wi-on-dark-fill: rgba(255, 255, 255, 0.08);
-
-  /* ---- WITHIN semantic ---- */
-  --wi-text-strong: var(--wi-black);
-  --wi-text-body: var(--wi-ink-700);
-  --wi-text-muted: var(--wi-ink-500);
-  --wi-text-faint: var(--wi-ink-300);
-
-  /* ---- DS semantic aliases (unprefixed names the Coming Soon design references) ---- */
-  --text-strong: var(--wi-black);
-  --text-muted: var(--wi-ink-500);
-  --text-faint: var(--wi-ink-300);
-  --border-default: var(--wi-line);
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* ---- type ---- */
-  --wi-weight-regular: 400;
-  --wi-weight-medium: 500;
-  --wi-weight-semibold: 600;
-  --wi-weight-bold: 700;
-  --wi-weight-black: 900;
-  --wi-leading-tight: 0.98;
-  --wi-leading-snug: 1.12;
-  --wi-leading-normal: 1.5;
-  --wi-tracking-tight: -0.03em;
-  --wi-tracking-wide: 0.04em;
-  --wi-tracking-label: 0.14em;
-
-  /* ---- radius (WITHIN, prefixed to avoid clashing with shadcn --radius-*) ---- */
-  --wi-radius-control: 6px;
-  --wi-radius-card: 10px;
-
-  /* ---- borders ---- */
-  --wi-border-width: 1px;
-  --wi-border-width-strong: 1.5px;
-  --wi-border-width-heavy: 2px;
-
-  /* ---- shadows (low, tight, neutral) ---- */
-  --wi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --wi-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
-  --wi-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
-  --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.16);
-
-  /* ---- motion ---- */
-  --wi-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --wi-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --wi-duration-fast: 120ms;
-  --wi-duration-base: 180ms;
-  --wi-duration-slow: 320ms;
-  --wi-press-scale: 0.97;
-
-  /* ---- layout ---- */
-  --wi-container-max: 1200px;
-  --wi-container-narrow: 720px;
-
-  /* ---- shadcn semantic bridge → WITHIN (monochrome, no hue) ---- */
-  --radius: 0.625rem; /* 10px — cards via rounded-lg */
-  --background: var(--wi-paper-dim);
-  --foreground: var(--wi-charcoal);
-  --card: var(--wi-paper);
-  --card-foreground: var(--wi-black);
-  --popover: var(--wi-paper);
-  --popover-foreground: var(--wi-black);
-  --primary: var(--wi-black);
-  --primary-foreground: var(--wi-paper);
-  --secondary: var(--wi-mist);
-  --secondary-foreground: var(--wi-black);
-  --muted: var(--wi-mist);
-  --muted-foreground: var(--wi-ink-500);
-  --accent: var(--wi-mist);
-  --accent-foreground: var(--wi-black);
-  --destructive: var(--wi-charcoal);
-  --border: var(--wi-line);
-  --input: var(--wi-line);
-  --ring: var(--wi-black);
-  --chart-1: #a3a3a3;
-  --chart-2: #6b6b6b;
-  --chart-3: #3d3d3d;
-  --chart-4: #191919;
-  --chart-5: #000000;
-  --sidebar: var(--wi-paper);
-  --sidebar-foreground: var(--wi-charcoal);
-  --sidebar-primary: var(--wi-black);
-  --sidebar-primary-foreground: var(--wi-paper);
-  --sidebar-accent: var(--wi-mist);
-  --sidebar-accent-foreground: var(--wi-black);
-  --sidebar-border: var(--wi-line);
-  --sidebar-ring: var(--wi-black);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-    box-sizing: border-box;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-size: 16px;
-    line-height: var(--wi-leading-normal);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-  html {
-    @apply font-sans;
-  }
-  ::selection {
-    background: var(--wi-black);
-    color: var(--wi-paper);
-  }
-}
-
-/* ============================================================
-   Coming Soon page — layout/animation CSS ported from the
-   Claude Design "Coming Soon.html" (class hooks + keyframes +
-   responsive rules). Scoped to the design's `wi-*` classes.
-   ============================================================ */
-
-/* Marquee scroll */
-@keyframes wiMarquee {
-  to {
-    transform: translateX(-33.33%);
-  }
-}
-
-.wi-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: wiMarquee 34s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .wi-marquee-track {
-    animation: none;
-  }
-}
-
-/* Hide the ingredient scroller's scrollbar */
-.wi-form-scroll {
-  scrollbar-width: none;
-}
-.wi-form-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-@media (max-width: 560px) {
-  /* Cap oversized fixed-px hero/section headings on phones */
-  .wi-display {
-    font-size: clamp(32px, 9vw, 40px) !important;
-    line-height: 0.98 !important;
-  }
-}
-
-/* ============================================================
-   v2 — Transparency Lab, scoped to the /v2 tree.
-
-   `/` keeps the monochrome system declared above. Every token
-   name the two systems share is re-declared here, so the same
-   utility class (bg-wi-black, rounded-[var(--wi-radius-card)])
-   resolves to different values inside `.theme-v2`. Portalled UI
-   (dialog, drawer) must carry the class itself — it renders
-   outside this subtree.
-   ============================================================ */
-
-/* Names only v2 uses. The utilities have to be generated globally;
-   the values are never read outside `.theme-v2`. */
-@theme {
-  --color-wi-line-strong: #cfd6e0;
-  --color-wi-signal: #000000;
-  --color-wi-signal-bright: #262c36;
-  --color-wi-signal-tint: #e3e7ef;
-  --color-wi-flag: #ce1126;
-}
-
-.theme-v2 {
-  /* Geist replaces Inter for this tree only */
+  /* Geist Sans is the base font */
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   color: var(--wi-ink-700);
-
-  /* utility-facing palette (bg-wi-*, text-wi-*, border-wi-*) */
-  --color-wi-black: #0b0d12;
-  --color-wi-charcoal: #1a1e26;
-  --color-wi-ink-700: #363d49;
-  --color-wi-ink-500: #626b7a;
-  --color-wi-ink-300: #9aa3b2;
-  --color-wi-line: #e2e7ee;
-  --color-wi-mist: #eceff4;
-  --color-wi-paper-dim: #f6f8fb;
-  --color-wi-paper: #ffffff;
-  --color-wi-error: #e5484d;
-  --color-wi-success: #30a46c;
-  --color-wi-on-dark-1: rgba(255, 255, 255, 1);
-  --color-wi-on-dark-2: rgba(255, 255, 255, 0.66);
-  --color-wi-on-dark-3: rgba(255, 255, 255, 0.42);
-  --color-wi-on-dark-line: rgba(255, 255, 255, 0.14);
-  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.06);
 
   /* raw scale (ink → paper) */
   --wi-black: #0b0d12;
@@ -331,6 +117,7 @@
   /* type */
   --wi-leading-tight: 0.96;
   --wi-leading-snug: 1.1;
+  --wi-leading-normal: 1.5;
   --wi-tracking-tight: -0.03em;
   --wi-tracking-tighter: -0.045em;
   --wi-tracking-label: 0.12em;
@@ -377,10 +164,34 @@
   --ring: var(--wi-signal);
 }
 
-.theme-v2 ::selection {
-  background: var(--wi-signal);
-  color: var(--wi-paper);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: var(--wi-leading-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+  }
+  ::selection {
+    background: var(--wi-signal);
+    color: var(--wi-paper);
+  }
 }
+
+/* ============================================================
+   WITHIN Design System — Transparency Lab.
+
+   Promoted from the former scoped Transparency Lab theme (Task 2 of
+   the promote-transparency-lab refactor). Tokens live in `:root`
+   above; below are the remaining component-facing utilities.
+   ============================================================ */
 
 /* Mono numerals: tabular, tight, the lab-instrument readout voice. */
 .wi-readout {

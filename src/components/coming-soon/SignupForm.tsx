@@ -7,7 +7,7 @@ import { subscribeAction } from "@/app/actions/subscribe.action";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
 import { INITIAL_SUBSCRIBE_STATE, SubscribeStatus } from "@/app/utils/subscribe-state";
 import { validateField } from "@/app/utils/subscriber-input";
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";

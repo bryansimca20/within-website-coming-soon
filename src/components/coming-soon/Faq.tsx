@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "@phosphor-icons/react/ssr";
 
-import { DisplayHeading } from "./DisplayHeading";
-import { EASE, Reveal } from "./Reveal";
+import { EASE } from "./Reveal";
 import { Section } from "./Section";
 import { FAQS } from "./utils/faqs";
 
-/** One expandable question row. */
-function FaqItem({
+/** One expandable question row: a plus that rotates to a cross, answer height-animates open. */
+function FaqRow({
   q,
   a,
   open,
@@ -26,30 +25,39 @@ function FaqItem({
       <button
         onClick={onToggle}
         aria-expanded={open}
-        className="w-full flex items-center justify-between gap-4 py-[22px] bg-transparent border-none cursor-pointer text-left"
+        className="group flex w-full cursor-pointer items-center justify-between gap-6 border-none bg-transparent py-5 text-left"
       >
-        <span className="font-bold text-base tracking-[0.02em] uppercase text-wi-black transition-opacity duration-200 hover:opacity-60">
+        <span
+          className={
+            "text-[17px] font-medium tracking-[-0.01em] transition-colors md:text-[19px] " +
+            (open ? "text-wi-black" : "text-wi-ink-700 group-hover:text-wi-black")
+          }
+        >
           {q}
         </span>
         <motion.span
-          className="inline-flex shrink-0 text-wi-ink-500"
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.25, ease: EASE }}
+          aria-hidden
+          className={
+            "grid size-7 shrink-0 place-items-center rounded-[var(--wi-radius-control)] border transition-colors " +
+            (open ? "border-wi-signal text-wi-signal" : "border-wi-line text-wi-ink-500")
+          }
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.22, ease: EASE }}
         >
-          <ChevronDown size={20} strokeWidth={2.2} />
+          <Plus size={15} />
         </motion.span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
-            key="answer"
+            key="a"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: EASE }}
+            transition={{ duration: 0.28, ease: EASE }}
             className="overflow-hidden"
           >
-            <p className="m-0 pb-6 max-w-[640px] text-[15px] leading-[1.6] text-wi-ink-500">{a}</p>
+            <p className="m-0 max-w-[62ch] pb-6 text-[15px] leading-[1.6] text-wi-ink-500">{a}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -57,30 +65,27 @@ function FaqItem({
   );
 }
 
-/** Two-column FAQ: heading beside an accordion of the launch's common questions. */
+/** Two-column FAQ: a fixed heading beside the accordion of launch questions. */
 export function Faq() {
   const [open, setOpen] = useState(0);
   return (
     <Section
-      surface="paperDim"
-      containerClassName="grid grid-cols-1 gap-6 md:grid-cols-[0.7fr_1.3fr] md:gap-12"
+      surface="paper"
+      borderTop
+      containerClassName="grid grid-cols-1 gap-8 md:grid-cols-[0.8fr_1.2fr] md:gap-16"
     >
-      <Reveal>
-        <DisplayHeading as="h2" className="mt-3 text-[40px]">
-          Frequently asked questions
-        </DisplayHeading>
-      </Reveal>
-      <Reveal className="border-b border-wi-line" delay={100}>
+      <div>
+        <h2 className="m-0 text-[clamp(30px,3.6vw,44px)] font-medium leading-[1.02] tracking-[-0.03em] text-wi-black text-balance">
+          Questions,
+          <br />
+          answered plainly.
+        </h2>
+      </div>
+      <div className="border-b border-wi-line">
         {FAQS.map(([q, a], i) => (
-          <FaqItem
-            key={q}
-            q={q}
-            a={a}
-            open={open === i}
-            onToggle={() => setOpen(open === i ? -1 : i)}
-          />
+          <FaqRow key={q} q={q} a={a} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
         ))}
-      </Reveal>
+      </div>
     </Section>
   );
 }

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { WiEyebrow } from "@/components/brand/WiEyebrow";
-import { WiHero } from "@/components/brand/WiHero";
 import { WithinLogo } from "@/components/brand/WithinLogo";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -11,10 +9,12 @@ export default function NotFound() {
     <main className="flex flex-1 flex-col items-center justify-center gap-8 bg-background px-6 py-24 text-center">
       <WithinLogo kind="logotype" height={24} />
       <div className="flex flex-col items-center gap-4">
-        <WiEyebrow>404</WiEyebrow>
-        <WiHero as="h1" size="display-md" className="max-w-[14ch]">
+        <span className="wi-readout text-[11px] uppercase tracking-[0.14em] text-wi-ink-500">
+          404
+        </span>
+        <h1 className="m-0 max-w-[14ch] text-[clamp(34px,5vw,48px)] font-medium leading-[1.02] tracking-[-0.03em] text-wi-black text-balance">
           Nothing here.
-        </WiHero>
+        </h1>
         <p className="max-w-[42ch] leading-normal text-wi-ink-700">
           The page you&apos;re after doesn&apos;t exist.
         </p>
