@@ -77,26 +77,7 @@
 :root {
   /* Geist Sans is the base font */
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   color: var(--wi-ink-700);
-
-  /* utility-facing palette (bg-wi-*, text-wi-*, border-wi-*) */
-  --color-wi-black: #0b0d12;
-  --color-wi-charcoal: #1a1e26;
-  --color-wi-ink-700: #363d49;
-  --color-wi-ink-500: #626b7a;
-  --color-wi-ink-300: #9aa3b2;
-  --color-wi-line: #e2e7ee;
-  --color-wi-mist: #eceff4;
-  --color-wi-paper-dim: #f6f8fb;
-  --color-wi-paper: #ffffff;
-  --color-wi-error: #e5484d;
-  --color-wi-success: #30a46c;
-  --color-wi-on-dark-1: rgba(255, 255, 255, 1);
-  --color-wi-on-dark-2: rgba(255, 255, 255, 0.66);
-  --color-wi-on-dark-3: rgba(255, 255, 255, 0.42);
-  --color-wi-on-dark-line: rgba(255, 255, 255, 0.14);
-  --color-wi-on-dark-fill: rgba(255, 255, 255, 0.06);
 
   /* raw scale (ink → paper) */
   --wi-black: #0b0d12;
