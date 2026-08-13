@@ -75,7 +75,8 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 - **shadcn/ui** — style `base-nova`, base color `neutral`, RSC enabled. Built on
   **Base UI** (`@base-ui/react`), not Radix. Primitives live in
   [src/components/ui/](src/components/ui/).
-- **lucide-react** — icons.
+- **`@phosphor-icons/react/ssr`** — icons (`Nav`, `Footer`, `Compare`, `Faq`). `lucide-react`
+  is also a dependency but has zero call sites in `src/` right now.
 - Utilities: `tw-animate-css`, `class-variance-authority`, `clsx`, `tailwind-merge`
   (composed by `cn()` in [src/lib/utils.ts](src/lib/utils.ts)).
 - **`botid`** — Vercel bot protection for the signup Server Action. `next.config.ts` is wrapped
@@ -234,9 +235,17 @@ component reaches for the Tailwind `rounded-sm` / `rounded-lg` scale:
 drawer. `--wi-radius-card` happens to equal the shadcn `--radius` bridge (also `3px`), but
 nothing relies on that coincidence — every card/dialog pulls `--wi-radius-card` directly.
 Cool-tinted shadows only, never a colored halo: `--wi-shadow-sm` / `-md` / `-lg` (all
-`rgba(11, 13, 18, …)`), plus a `--wi-shadow-focus` ring. Full-bleed black panels remain a
-primary graphic device: `Section` exposes `black` as one of three page surfaces (`paper` /
-`paperDim` / `black`), used by `Hero`, `Close` and `WaitlistOverlay`.
+`rgba(11, 13, 18, …)`), plus a `--wi-shadow-focus` ring — in practice only `--wi-shadow-lg` has
+a current callsite (`dialog.tsx`, `drawer.tsx`); `-sm`, `-md` and `-focus` are declared but
+unused today. Full-bleed black surfaces do appear — `Close`'s waitlist section sets
+`bg-wi-black` directly on its `<section>`, and `WaitlistOverlay`'s Dialog/Drawer popup does
+the same — but **not** through `Section`: `Section`'s `SURFACE` object defines `black` as one
+of three page-surface options (`paper` / `paperDim` / `black`), yet every current callsite
+(`Compare.tsx` → `surface="paperDim"`, `Faq.tsx` → `surface="paper"`) passes `paper` or
+`paperDim`; nothing currently passes `surface="black"`. `Hero` does not import `Section` and
+is not a black panel — its only `bg-wi-black` is a 20%-opacity blurred glow behind the product
+photo, and its actual page background is `bg-wi-paper`. For a reference full-bleed black
+section, look at `Close.tsx`, not `Hero.tsx`.
 
 **Motion.** Animate with **Motion** (`motion/react`, the `motion` package) — not hand-rolled CSS
 keyframes or `IntersectionObserver`. Quick, precise, **no visible bounce** (WITHIN is introverted);
