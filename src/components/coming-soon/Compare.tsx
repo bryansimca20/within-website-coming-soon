@@ -10,31 +10,52 @@ import { WithinLogo } from "@/components/brand/WithinLogo";
 import { EASE, Reveal } from "./Reveal";
 import { Section } from "./Section";
 
+/** Whether the row's substance is present, partly present, or absent. The label — "Sodium"
+ * versus "Added sugar" — supplies whether presence is the good outcome. */
 type Verdict = "yes" | "part" | "no";
 interface Cell {
   v: Verdict;
-  note?: string;
+  /** Readout lines under the mark, one per line. */
+  notes: readonly string[];
 }
-const y = (note?: string): Cell => ({ v: "yes", note });
-const p = (note?: string): Cell => ({ v: "part", note });
-const n = (note?: string): Cell => ({ v: "no", note });
+const y = (...notes: string[]): Cell => ({ v: "yes", notes });
+const p = (...notes: string[]): Cell => ({ v: "part", notes });
+const n = (...notes: string[]): Cell => ({ v: "no", notes });
 
-const HEAD = ["", "WITHIN", "Sports drink", "Water"] as const;
+const HEAD = ["", "WITHIN", "Isotonic drinks", "H₂O"] as const;
 const ROWS: readonly [string, Cell, Cell, Cell][] = [
-  ["Replaces the fluid", y(), y(), y("mix with 500ml")],
-  ["Sodium, dosed to loss", y("1000mg"), p("~245mg"), n("0mg")],
-  ["Potassium and magnesium", y("250 + 50mg"), p("no magnesium"), n()],
-  ["No added sugar", y(), n("~31g per bottle"), y()],
-  ["No artificial colors, flavors, sweeteners", y(), n(), y()],
+  ["Fluid for rehydration", y("Prepared serving", "500 ml"), y(), y()],
+  // Competitor figures below are label-derived, normalized to 500 ml, and span the three brands
+  // named in the footnote. Pocari publishes electrolytes as mEq/L (mg = mEq x molar mass /
+  // valence); Isoplus per 175 ml; Mizone per 250 ml. Re-source before changing any of them.
+  // Na: Pocari ~240 (21 mEq/L, cross-checks against its own 120 mg / 250 ml), Isoplus ~243, Mizone ~110.
+  ["Sodium", y("1000 mg"), p("110–245 mg"), n()],
+  // K: Pocari ~98 (5 mEq/L), Isoplus ~100, Mizone ~70.
+  ["Potassium", y("250 mg"), p("70–100 mg"), n()],
+  // Mg: Pocari ~3 (0.5 mEq/L, divalent). Mizone Activ lists no magnesium salt at all, hence the 0.
+  ["Magnesium", y("50 mg"), p("0–3 mg"), n()],
+  // Sugar: Mizone ~22 g, Isoplus ~29 g, Pocari ~28-32 g.
+  ["Added sugar", n("None"), y("22–32 g"), n("None")],
+  // Indonesian isotonics are colourless by category convention: no colorant on any label checked.
+  ["Artificial colors", n("None"), n("None"), n("None")],
+  // Pocari Sweat and Mizone both print "perisa sintetik"; Isoplus uses nature-identical flavouring.
+  ["Artificial flavors", n("None"), y("Synthetic"), n("None")],
+  // Mizone carries acesulfame-K and sucralose; Pocari and Isoplus declare none.
+  ["Artificial sweeteners", n("None"), p("Some brands"), n("None")],
 ];
 
-/** Column 3 (Water) is dropped below md so phones never scroll sideways. */
+/** Column 3 (H₂O) is dropped below md so phones never scroll sideways. */
 const MD_ONLY = "hidden md:flex";
 
-/** One verdict: WITHIN's affirmatives read signal-strong; everything else is a hairline mark. */
+/**
+ * One reading. WITHIN's column always carries the signal: the logomark where the substance is
+ * ours to supply, a filled black cross where leaving it out is the point. Every other column
+ * stays a hairline mark.
+ */
 function Mark({ cell, strong, delay }: { cell: Cell; strong: boolean; delay: number }) {
   const isYes = cell.v === "yes";
   const brand = strong && isYes;
+  const omission = strong && cell.v === "no";
   return (
     <motion.div
       className="flex flex-col items-center gap-1.5"
@@ -45,14 +66,20 @@ function Mark({ cell, strong, delay }: { cell: Cell; strong: boolean; delay: num
     >
       {brand ? (
         <WithinLogo kind="logomark" color="black" height={20} alt="WITHIN" />
+      ) : omission ? (
+        <span className="inline-flex size-7 items-center justify-center rounded-full bg-wi-signal text-wi-paper">
+          <X size={15} weight="bold" />
+        </span>
       ) : (
         <span className="inline-flex size-7 items-center justify-center rounded-full border border-wi-line-strong bg-transparent text-wi-ink-500">
           {cell.v === "yes" ? <Check size={16} weight="bold" /> : cell.v === "no" ? <X size={15} /> : <Minus size={15} />}
         </span>
       )}
-      {cell.note && (
-        <span className="wi-readout text-center text-[11px] leading-[1.3] text-wi-ink-500">{cell.note}</span>
-      )}
+      {cell.notes.map((note) => (
+        <span key={note} className="wi-readout text-center text-[11px] leading-[1.3] text-wi-ink-500">
+          {note}
+        </span>
+      ))}
     </motion.div>
   );
 }
@@ -112,15 +139,18 @@ export function Compare() {
       <div id="compare">
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <h2 className="m-0 max-w-[14ch] text-[clamp(30px,4vw,52px)] font-medium leading-[1.0] tracking-[-0.035em] text-wi-black text-balance">
-            How WITHIN compares.
+            Compare what&apos;s WITHIN.
           </h2>
           <p className="mb-0 max-w-[40ch] text-[15px] leading-[1.55] text-wi-ink-500">
-            Hydration is fluid plus minerals. Most of what is sold gets the minerals wrong: too
-            little, or buried under sugar.
+            Formulated with precision, for those who train in the humid heat. Every ingredient
+            earns its place.
           </p>
         </Reveal>
         <Reveal delay={100} className="mt-10">
           <Matrix />
+          <p className="mt-5 mb-0 max-w-[40ch] text-[15px] leading-[1.55] text-wi-ink-500">
+            * All values normalized to a 500 ml serving.
+          </p>
         </Reveal>
       </div>
     </Section>

@@ -27,10 +27,10 @@ interface Step {
 }
 
 const STEPS: readonly Step[] = [
-  { sym: "Na", name: "Sodium", dose: 1000, unit: "mg", body: "Holds the fluid in, so it is not passed straight through." },
-  { sym: "K", name: "Potassium", dose: 250, unit: "mg", body: "Moves the water into your cells and steadies muscle function." },
-  { sym: "Mg", name: "Magnesium", dose: 50, unit: "mg", body: "Supports energy and calms muscle and nerve after the grind." },
-  { sym: "0", name: "Everything else", dose: 0, unit: "", body: "No added sugar. No artificial colors, flavors, or sweeteners.", exclude: true },
+  { sym: "Na", name: "Sodium", dose: 1000, unit: "mg", body: "The primary electrolyte lost in sweat. Helps maintain fluid balance." },
+  { sym: "K", name: "Potassium", dose: 250, unit: "mg", body: "Works alongside sodium to maintain fluid balance." },
+  { sym: "Mg", name: "Magnesium", dose: 50, unit: "mg", body: "Plays an important role in energy metabolism. Supports neuromuscular function." },
+  { sym: "0", name: "Everything else", dose: 0, unit: "", body: "No artificial colors, flavors, or sweeteners.", exclude: true },
 ];
 
 /** One annotation row: a rail node plus the mineral's readout, lit to the signal color when active. */
@@ -60,7 +60,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
               : cn("wi-readout tracking-[0.14em]", current ? "text-wi-signal" : "text-wi-ink-500")
           )}
         >
-          {step.exclude ? "Left out" : step.sym}
+          {step.exclude ? "[Without]" : step.sym}
         </span>
         {!step.exclude && (
           <span className="text-[12px] uppercase tracking-[0.1em] text-wi-ink-500">{step.name}</span>
@@ -76,7 +76,7 @@ function Annotation({ step, active, current }: { step: Step; active: boolean; cu
         />
         {step.unit && <span className="wi-readout text-[15px] font-semibold text-wi-ink-500">{step.unit}</span>}
         {step.exclude && (
-          <span className="text-[15px] font-medium text-wi-ink-500">g sugar, and nothing artificial</span>
+          <span className="text-[15px] font-medium text-wi-ink-500">g added sugar</span>
         )}
       </div>
       <p className="mt-2 mb-0 max-w-[42ch] text-[15px] leading-[1.55] text-wi-ink-500">{step.body}</p>
@@ -132,7 +132,7 @@ export function Dissection() {
           {/* specimen */}
           <div>
             <h2 className="m-0 mb-8 max-w-[14ch] text-[clamp(28px,3.6vw,46px)] font-medium leading-[1.0] tracking-[-0.035em] text-wi-black text-balance lg:mb-10">
-              Three minerals in. The rest, left out.
+              Three minerals. Nothing beyond what&apos;s useful.
             </h2>
             <div className="relative mx-auto flex aspect-[4/5] w-full max-w-[340px] items-center justify-center">
               <motion.div

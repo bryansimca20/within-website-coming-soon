@@ -4,31 +4,31 @@
  */
 export const FAQS: [string, string][] = [
   [
-    "What electrolytes does WITHIN contain?",
-    "Each sachet has 1000mg sodium, 250mg potassium and 50mg magnesium. Under 8 ingredients, no additives, no added sugar.",
+    "What's in a packet of WITHIN?",
+    "Three minerals: sodium, potassium and magnesium. Stevia for sweetness. Natural flavoring to help the whole thing go down. Under 8 ingredients in total, each there for a reason. No added sugar. No unnecessary extras.",
   ],
   [
-    "How fast does WITHIN rehydrate me?",
-    "Faster than water on its own. The sodium helps your body hold onto the fluid instead of passing it straight through, so most people feel level again before they finish the bottle.",
+    "How does WITHIN help with hydration?",
+    "Sweat doesn't just leave you short on water. It takes electrolytes with it. WITHIN supplies sodium, potassium and magnesium to help replace what you lose while training in the heat.",
   ],
   [
     "Why not just drink water?",
-    "Sweat takes minerals out with the fluid, mostly sodium and potassium. Water tops the fluid back up but dilutes what's left. WITHIN puts back both: the water and the minerals that left with it.",
+    "Water replaces the fluid. It doesn't replace the electrolytes you lose through sweat. When you're sweating hard, both matter.",
   ],
   [
     "How do I take it?",
-    "Mix one sachet into about 500ml of water and drink it during or after training. On heavy sweat days, split it: half before, half after.",
+    "One packet in 500 ml of water. Drink it before, during or after training, depending on the session and how much you sweat.",
   ],
   [
-    "How many can I have in a day?",
-    "One sachet per hour of hard training is a fair guide. Most days, two is plenty. Drink to thirst and adjust to how much you sweat.",
+    "How much should I take?",
+    "Start with one packet for a hard training session. Adjust to the session and your own sweat rate. Drink to thirst. Keep total daily sodium intake in mind: one packet provides 1,000 mg.",
   ],
   [
     "When does it launch?",
-    "Soon. We're finishing the last steps before release. Follow us on Instagram and you'll catch the day it goes live.",
+    "Soon. We're finishing the last steps. Get on the list, or follow us on Instagram. We'll keep you posted either way.",
   ],
   [
     "Where can I buy it?",
-    "Online first, direct from us, shipping across Indonesia. We'll post the details here and on Instagram.",
+    "Online first, direct from us, shipping across Indonesia. The details will be here when we're live.",
   ],
 ];

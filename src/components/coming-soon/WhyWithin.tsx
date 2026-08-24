@@ -79,23 +79,26 @@ export function WhyWithin() {
         >
         <Reveal>
           <h2 className="m-0 max-w-[12ch] text-[clamp(30px,4vw,52px)] font-medium leading-[1.0] tracking-[-0.035em] text-wi-black text-balance">
-            Built for the heat and humidity.
+            Humid heat changes the equation.
           </h2>
           <p className="mt-6 mb-0 max-w-[46ch] text-[17px] leading-[1.6] text-wi-ink-500">
-            Train in Indonesia&apos;s heat and your sweat cannot evaporate fast enough to cool you,
-            so your body just makes more of it. Every drop carries minerals out, mostly sodium and
-            some potassium. Tropical sweat is not saltier. You simply lose far more of it.
+            Sun&apos;s up. Shirt stuck to your back. Motorbikes passing by. Wet asphalt under your
+            feet. No crowd. No cheering. Just the heat.
+          </p>
+          <p className="mt-6 mb-0 max-w-[46ch] text-[17px] leading-[1.6] text-wi-ink-500">
+            The pace settles. The sweat doesn&apos;t. It builds up. Every drop takes something with
+            it. The longer you stay out there, the more there is to replace.
           </p>
         </Reveal>
         <Reveal delay={100} className="md:pt-2">
           <p className="wi-readout m-0 mb-5 text-[11px] uppercase tracking-[0.14em] text-wi-ink-500">
-            Lost per hour of hard training
+            Measured loss per hour
           </p>
           {LOSS.map(([name, low, high, max]) => (
             <LossScale key={name} name={name} low={low} high={high} max={max} />
           ))}
           <p className="mt-6 mb-0 max-w-[44ch] text-[12px] leading-[1.5] text-wi-ink-300">
-            Measured in runners at roughly 30°C and 70% humidity.{" "}
+            Measured in runners at approx. 30°C and 70% relative humidity.{" "}
             <a
               href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8072971/"
               target="_blank"
