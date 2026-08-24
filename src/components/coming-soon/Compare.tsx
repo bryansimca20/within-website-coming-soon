@@ -148,7 +148,7 @@ export function Compare() {
         </Reveal>
         <Reveal delay={100} className="mt-10">
           <Matrix />
-          <p className="mt-5 mb-0 max-w-[40ch] text-[15px] leading-[1.55] text-wi-ink-500">
+          <p className="mt-6 mb-0 max-w-[44ch] text-[12px] leading-[1.5] text-wi-ink-300">
             * All values normalized to a 500 ml serving.
           </p>
         </Reveal>
