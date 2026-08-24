@@ -47,7 +47,7 @@ export function Hero() {
             animate="show"
             className="m-0 max-w-[15ch] text-[clamp(46px,7.2vw,92px)] font-medium leading-[0.92] tracking-[-0.045em] text-wi-black text-balance"
           >
-            Put back what the heat takes out.
+            Take back what you lose in the heat.
           </motion.h1>
           <motion.p
             custom={0.26}
@@ -56,8 +56,8 @@ export function Hero() {
             animate="show"
             className="mt-6 mb-0 max-w-[46ch] text-[18px] leading-[1.55] text-wi-ink-700"
           >
-            An electrolyte drink sachet with the minerals you lose in sweat, dosed to the milligram.
-            Made in Indonesia.
+            Electrolytes for training, recovery, and everything that comes after. Dosed to the
+            milligram. Made in Indonesia. Built for the heat.
           </motion.p>
           <motion.div
             custom={0.38}

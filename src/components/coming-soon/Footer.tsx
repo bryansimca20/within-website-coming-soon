@@ -12,8 +12,8 @@ export function Footer() {
           <div>
             <WithinLogo kind="logotype" color="black" height={20} />
             <p className="mt-4 mb-0 max-w-[300px] text-[14px] leading-[1.5] text-wi-ink-500">
-              The minerals you sweat out, dosed to the milligram, and nothing you do not. Made in
-              Indonesia.
+              Electrolytes for training, recovery, and everything that comes after. Dosed to the
+              milligram. Made in Indonesia. Built for the heat.
             </p>
           </div>
           <a

@@ -10,13 +10,12 @@ export function TheIdea() {
         <Reveal>
           <WithinLogo kind="logomark" color="black" height={38} className="mx-auto mb-10" alt="" />
           <p className="m-0 text-[clamp(28px,4vw,54px)] font-medium leading-[1.08] tracking-[-0.03em] text-wi-black text-balance">
-            Somewhere along the line, hydration got complicated. More sugar, more dye, more claims on
-            the label than minerals in the drink. We went the other way: the minerals you lose, at
-            the dose you lose them, and nothing to read past.
+            Hydration doesn&apos;t need a longer list of ingredients. It needs the right ones, in
+            the right amounts, made into something you&apos;ll actually want to drink. Nothing
+            unnecessary.
           </p>
           <p className="mx-auto mt-8 mb-0 max-w-[54ch] text-[16px] leading-[1.6] text-wi-ink-500">
-            Made in Indonesia, for the way people train here.
-            clear.
+            The heat takes. WITHIN replenishes. You carry on.
           </p>
         </Reveal>
       </div>

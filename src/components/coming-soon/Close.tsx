@@ -20,11 +20,13 @@ export function Close() {
       <div className="relative mx-auto w-full max-w-[1200px] px-5 py-24 md:px-7 md:py-32">
         <Reveal className="max-w-[640px]">
           <h2 className="m-0 text-[clamp(40px,6vw,74px)] font-medium leading-[0.96] tracking-[-0.04em] text-wi-paper text-balance">
-            Be first when it goes live.
+            Meet us at the starting line.
           </h2>
           <p className="mt-5 mb-0 max-w-[46ch] text-[17px] leading-[1.55] text-wi-on-dark-2">
-            Join the waitlist for a 10% launch discount. One email the day WITHIN is available, and
-            nothing else.
+            Get on the list. A single email when we&apos;re ready. That&apos;s it.
+          </p>
+          <p className="mt-5 mb-0 max-w-[46ch] text-[17px] leading-[1.55] text-wi-on-dark-2">
+            Once we&apos;re set to go, 10% off at launch.
           </p>
         </Reveal>
         <Reveal delay={120} className="mt-9">
