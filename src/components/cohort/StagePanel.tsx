@@ -62,7 +62,7 @@ export function StagePanel({ member }: StagePanelProps) {
             </h2>
           </Reveal>
           <Reveal delay={120} className="mt-12">
-            <StoryBlank variant="caret" tone="dark" />
+            <StoryBlank />
           </Reveal>
         </div>
       </div>
