@@ -27,7 +27,7 @@ export function StagePanel({ member }: StagePanelProps) {
           up. Rendering a second <Image> for mobile would download every portrait twice. */}
       <div
         className={cn(
-          "relative mx-5 mt-20 aspect-[4/3] overflow-hidden rounded-[var(--wi-radius-card)] border border-wi-on-dark-line md:mx-7 lg:absolute lg:inset-y-0 lg:m-0 lg:aspect-auto lg:w-[46%] lg:rounded-none lg:border-0",
+          "relative mx-5 mt-20 aspect-[3/4] overflow-hidden rounded-[var(--wi-radius-card)] border border-wi-on-dark-line md:mx-7 lg:absolute lg:inset-y-0 lg:m-0 lg:aspect-auto lg:w-[46%] lg:rounded-none lg:border-0",
           portraitOnLeft ? "lg:left-0" : "lg:right-0"
         )}
       >
