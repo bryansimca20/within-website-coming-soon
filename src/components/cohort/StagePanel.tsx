@@ -41,11 +41,14 @@ export function StagePanel({ member }: StagePanelProps) {
           // See RosterPlate for the grayscale reasoning.
           className="object-cover object-center grayscale"
         />
-        {/* Scrim always fades toward the copy, so it flips with the portrait. */}
+        {/* Scrim always fades toward the copy, so it flips with the portrait. It clears by
+            70% so most of the panel still reads as photograph: portraits are cropped with
+            the runner on the centre line, and a heavy scrim would push that centre into
+            shadow and make every subject look shoved toward the copy. */}
         <div
           aria-hidden
           className={cn(
-            "absolute inset-0 hidden from-wi-black from-8% via-wi-black/45 to-wi-black/0 lg:block",
+            "absolute inset-0 hidden from-wi-black from-2% via-wi-black/30 via-35% to-wi-black/0 to-70% lg:block",
             portraitOnLeft ? "bg-linear-to-l" : "bg-linear-to-r"
           )}
         />
