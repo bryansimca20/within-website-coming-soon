@@ -10,7 +10,7 @@ stage: pre-launch (coming-soon site); primary goal is waitlist signups
 > Substituted for a live init interview: product truth was established over this session and the user asked to build; direction was locked with the user via brainstorming (Transparency Lab / Clinical White + Electric).
 
 ## What it is
-A single-serve electrolyte drink sachet. One sachet mixes into ~500ml of water and is taken during or after training.
+A single-serve electrolyte drink sachet. One sachet mixes into 500 to 1000ml of water and is taken during or after training.
 
 ## The mechanism (unique claim)
 Per sachet: **1000mg sodium, 250mg potassium, 50mg magnesium** — dosed to what a hard hour of sweat actually carries out, not a pinch for taste. Sodium holds the fluid in, potassium moves it into cells, magnesium steadies muscle and nerve.

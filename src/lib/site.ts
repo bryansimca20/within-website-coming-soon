@@ -6,7 +6,7 @@ export const SITE_NAME = "WITHIN";
 
 /** Default meta description — honest, keyword-bearing, on-brand. */
 export const SITE_DESCRIPTION =
-  "Take back what you lose in the heat. An Indonesian electrolyte sachet: 1000mg sodium, 250mg potassium, 50mg magnesium in 500ml. No added sugar, nothing artificial. Launching soon.";
+  "Take back what you lose in the heat. An Indonesian electrolyte sachet: 1000mg sodium, 250mg potassium, 50mg magnesium per sachet. No added sugar, nothing artificial. Launching soon.";
 
 /** Instagram — the only live channel before launch. */
 export const INSTAGRAM_HANDLE = "@withinrecovery";

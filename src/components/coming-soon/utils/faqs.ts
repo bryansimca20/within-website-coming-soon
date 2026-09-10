@@ -17,7 +17,7 @@ export const FAQS: [string, string][] = [
   ],
   [
     "How do I take it?",
-    "One packet in 500 ml of water. Drink it before, during or after training, depending on the session and how much you sweat.",
+    "One packet in 500 to 1000 ml of water. Less water for a stronger, saltier mix, more for a lighter one. Drink it before, during or after training, depending on the session and how much you sweat.",
   ],
   [
     "How much should I take?",

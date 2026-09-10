@@ -138,7 +138,7 @@ A near-monochrome ink-on-paper field carrying a single saturated accent; red exi
 - **Headline** (500, `clamp(30px,4vw,52px)`, 1.0, tracking -0.035em): Section headlines.
 - **Body** (400, 17px, 1.55): Explanatory copy; measure held to ~44-46ch.
 - **Readout** (600, `clamp(24px,7vw,88px)`, tabular-nums, tracking -0.02em): Every dose and data numeral. Counts up from zero when first scrolled into view.
-- **Label** (500, 11px, tracking 0.14em, uppercase, mono): Data annotations only — units, axis numbers, `PER SACHET · IN 500ML WATER`, mineral symbols.
+- **Label** (500, 11px, tracking 0.14em, uppercase, mono): Data annotations only — units, axis numbers, `PER SACHET`, mineral symbols.
 
 ### Named Rules
 **The Measurement Voice Rule.** Every number is Geist Mono and tabular. Prose is never mono. Mono is for data, units, and measurement, never as a costume for "technical."
