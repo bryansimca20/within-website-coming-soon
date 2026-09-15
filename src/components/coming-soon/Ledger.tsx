@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
 import Image from "next/image";
 import { motion, useInView } from "motion/react";
+
+import { useDragScroll } from "@/hooks/use-drag-scroll";
+import { cn } from "@/lib/utils";
 
 import { EASE, Reveal } from "./Reveal";
 import { SectionContainer } from "./Section";
@@ -18,7 +20,7 @@ const INGREDIENTS: readonly [string, string, string, string][] = [
 
 /** The formula laid open: a drag-scrollable gallery of every ingredient, labelled. */
 export function Ledger() {
-  const scroller = useRef<HTMLDivElement>(null);
+  const { ref: scroller, dragging } = useDragScroll<HTMLDivElement>();
   const inView = useInView(scroller, { once: true, margin: "0px 0px -80px 0px" });
 
   return (
@@ -34,13 +36,17 @@ export function Ledger() {
         </Reveal>
       </SectionContainer>
 
-      {/* Ingredient gallery — full colour, horizontally scrollable on every size.
-          Padding lives on the outer container so the first card aligns with the heading;
-          padding on the scroll container itself is dropped from the first item. */}
+      {/* Ingredient gallery — full colour, horizontally scrollable on every size, and
+          click-draggable with a mouse. Padding lives on the outer container so the first
+          card aligns with the heading; padding on the scroll container itself is dropped
+          from the first item. */}
       <SectionContainer flush className="pb-14 md:pb-[88px]">
         <div
           ref={scroller}
-          className="wi-noscrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto pt-10 pb-2"
+          className={cn(
+            "wi-noscrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto pt-10 pb-2",
+            dragging ? "cursor-grabbing" : "cursor-grab"
+          )}
         >
         {INGREDIENTS.map(([name, cls, role, src], i) => (
           <motion.article
