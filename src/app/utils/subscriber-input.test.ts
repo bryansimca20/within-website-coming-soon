@@ -6,6 +6,7 @@ import {
   normalizeInstagramHandle,
   parseSubscriberInput,
   SUBSCRIBER_FIELD_ERROR,
+  validateField,
 } from "./subscriber-input";
 
 describe("normalizeEmail", () => {
@@ -98,7 +99,7 @@ describe("normalizeFullName", () => {
 });
 
 describe("parseSubscriberInput", () => {
-  test("accepts a name, email, and handle", () => {
+  test("accepts an email, name, and handle", () => {
     expect(
       parseSubscriberInput({
         fullName: "Bryan Simca",
@@ -114,33 +115,35 @@ describe("parseSubscriberInput", () => {
     });
   });
 
-  test("rejects a missing name before looking at the email", () => {
-    const result = parseSubscriberInput({ fullName: "  ", email: "nope", instagramHandle: "" });
-
-    expect(result).toEqual({ ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName });
+  test("accepts an email and name with no handle", () => {
+    expect(
+      parseSubscriberInput({ fullName: "Bryan Simca", email: "bryan@example.com", instagramHandle: "  " })
+    ).toEqual({
+      ok: true,
+      firstName: "Bryan",
+      lastName: "Simca",
+      email: "bryan@example.com",
+      instagramHandle: null,
+    });
   });
 
-  test("rejects an invalid email before looking at the handle", () => {
-    const result = parseSubscriberInput({ fullName: "Bryan Simca", email: "nope", instagramHandle: "also bad" });
+  test("rejects an invalid email before looking at the name", () => {
+    const result = parseSubscriberInput({ fullName: "  ", email: "nope", instagramHandle: "" });
 
     expect(result).toEqual({ ok: false, field: "email", message: SUBSCRIBER_FIELD_ERROR.email });
   });
 
-  test("rejects a missing handle, because the waitlist asks for all three", () => {
+  test("rejects a missing name before looking at the handle", () => {
     const result = parseSubscriberInput({
-      fullName: "Bryan Simca",
+      fullName: "  ",
       email: "bryan@example.com",
-      instagramHandle: "   ",
+      instagramHandle: "also bad",
     });
 
-    expect(result).toEqual({
-      ok: false,
-      field: "instagramHandle",
-      message: SUBSCRIBER_FIELD_ERROR.instagramHandle,
-    });
+    expect(result).toEqual({ ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName });
   });
 
-  test("rejects a malformed handle", () => {
+  test("rejects a supplied but malformed handle", () => {
     const result = parseSubscriberInput({
       fullName: "Bryan Simca",
       email: "bryan@example.com",
@@ -152,5 +155,35 @@ describe("parseSubscriberInput", () => {
       field: "instagramHandle",
       message: SUBSCRIBER_FIELD_ERROR.instagramHandle,
     });
+  });
+});
+
+describe("validateField", () => {
+  test("flags an empty name", () => {
+    expect(validateField("fullName", "   ")).toBe(SUBSCRIBER_FIELD_ERROR.fullName);
+  });
+
+  test("accepts a present name", () => {
+    expect(validateField("fullName", "Bryan Simca")).toBeNull();
+  });
+
+  test("flags an invalid email", () => {
+    expect(validateField("email", "nope")).toBe(SUBSCRIBER_FIELD_ERROR.email);
+  });
+
+  test("accepts a valid email", () => {
+    expect(validateField("email", "bryan@example.com")).toBeNull();
+  });
+
+  test("treats an empty Instagram handle as valid, because it is optional", () => {
+    expect(validateField("instagramHandle", "  ")).toBeNull();
+  });
+
+  test("flags a malformed Instagram handle", () => {
+    expect(validateField("instagramHandle", "not a handle")).toBe(SUBSCRIBER_FIELD_ERROR.instagramHandle);
+  });
+
+  test("accepts a valid Instagram handle", () => {
+    expect(validateField("instagramHandle", "@within.id")).toBeNull();
   });
 });

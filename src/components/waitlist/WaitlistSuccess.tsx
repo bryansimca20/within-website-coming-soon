@@ -1,5 +1,6 @@
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 
+import { WaitlistInstagramGlyph } from "./svg/WaitlistGlyphs";
 import { WAITLIST_COPY } from "./utils/waitlist-copy";
 
 interface WaitlistSuccessProps {
@@ -9,7 +10,7 @@ interface WaitlistSuccessProps {
   onEdit: () => void;
 }
 
-/** Confirmation shown in the same sheet once the visitor is on the list. */
+/** Confirmation shown in the same sheet, with the Instagram follow as the next step. */
 export function WaitlistSuccess({ email, onEdit }: WaitlistSuccessProps) {
   const { success } = WAITLIST_COPY;
 
@@ -23,23 +24,26 @@ export function WaitlistSuccess({ email, onEdit }: WaitlistSuccessProps) {
         {success.bodyBeforeEmail}
         <span className="break-all">{email}</span>
         {success.bodyAfterEmail}
-        <a
-          href={INSTAGRAM_URL}
-          target="_blank"
-          rel="noopener"
-          className="text-brand-ink underline hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink"
-        >
-          {INSTAGRAM_HANDLE}
-        </a>
-        .
       </p>
       <span className="font-script text-[30px] leading-9 desk:text-[32px] desk:leading-10">
         {success.signOff}
       </span>
+      <a
+        href={INSTAGRAM_URL}
+        target="_blank"
+        rel="noopener"
+        className="flex h-[52px] items-center justify-center gap-2.5 bg-brand-ink text-base font-semibold text-brand-mist no-underline transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] motion-reduce:transition-none desk:h-14"
+      >
+        <WaitlistInstagramGlyph className="size-5" />
+        <span>
+          {success.follow}
+          {INSTAGRAM_HANDLE}
+        </span>
+      </a>
       <button
         type="button"
         onClick={onEdit}
-        className="h-12 cursor-pointer border border-brand-ink bg-transparent text-[15px] font-semibold text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink desk:self-start desk:px-6"
+        className="h-11 cursor-pointer self-center bg-transparent px-3 text-sm font-semibold text-brand-ink underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink"
       >
         {success.edit}
       </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useState } from "react";
+import { type RefObject, useRef, useState } from "react";
 
 import {
   Dialog,
@@ -39,11 +39,17 @@ export function WaitlistSheet({
 }: WaitlistSheetProps) {
   const [values, setValues] = useState(EMPTY_VALUES);
   const [joinedEmail, setJoinedEmail] = useState("");
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
   const { sheet } = WAITLIST_COPY;
 
   function handleJoined(email: string) {
     setJoinedEmail(email);
     onJoinedChange(true);
+  }
+
+  /** Desktop starts the cursor in the first field. A touch open does not, or the keyboard would cover the sheet at once. */
+  function pickInitialFocus(openType: string) {
+    return openType === "touch" ? true : (firstInputRef.current ?? true);
   }
 
   return (
@@ -52,6 +58,7 @@ export function WaitlistSheet({
         <DialogBackdrop className="bg-brand-ink/60" />
         <DialogPopup
           finalFocus={triggerRef}
+          initialFocus={pickInitialFocus}
           className="inset-x-0 bottom-0 max-h-dvh gap-4 overflow-y-auto border-t-[6px] border-brand-ink bg-white px-4 pt-5 pb-[max(24px,env(safe-area-inset-bottom))] text-brand-ink data-ending-style:translate-y-full data-starting-style:translate-y-full desk:inset-x-auto desk:top-1/2 desk:bottom-auto desk:left-1/2 desk:w-[calc(100vw-48px)] desk:max-w-[480px] desk:-translate-x-1/2 desk:-translate-y-1/2 desk:gap-5 desk:border-t-8 desk:px-8 desk:pt-7 desk:pb-8 desk:data-ending-style:-translate-y-1/2 desk:data-ending-style:opacity-0 desk:data-starting-style:-translate-y-1/2 desk:data-starting-style:scale-[0.96] desk:data-starting-style:opacity-0 desk:data-ending-style:scale-[0.96]"
         >
           <div className="flex items-start justify-between gap-4">
@@ -73,7 +80,12 @@ export function WaitlistSheet({
           {isJoined ? (
             <WaitlistSuccess email={joinedEmail} onEdit={() => onJoinedChange(false)} />
           ) : (
-            <WaitlistForm values={values} onValuesChange={setValues} onJoined={handleJoined} />
+            <WaitlistForm
+              values={values}
+              onValuesChange={setValues}
+              onJoined={handleJoined}
+              firstInputRef={firstInputRef}
+            />
           )}
         </DialogPopup>
       </DialogPortal>

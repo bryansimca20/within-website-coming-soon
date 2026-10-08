@@ -326,7 +326,7 @@ desktop), opened by the one orange button on the page.
 
 ```
 WaitlistForm ("use client", mounted inside WaitlistSheet)
-  ├─ parseSubscriberInput()                  → first error in field order, shown one at a time
+  ├─ validateField() per field               → each error shown under its own field
   └─ subscribeAction(formData) ("use server", called inside useTransition)
        ├─ checkBotId()                       → isBot ? generic error
        ├─ isHoneypotTripped()                → tripped ? report success, write nothing
@@ -335,7 +335,9 @@ WaitlistForm ("use client", mounted inside WaitlistSheet)
             └─ Admin GraphQL customerCreate  → customer tagged `prelaunch`, SUBSCRIBED
 ```
 
-Name, email and Instagram handle are all required. The form calls the action directly rather
+Fields run email, name, Instagram; email and name are required and the handle is optional
+(`SUBSCRIBER_FIELD_ORDER` and `validateField` in `subscriber-input.ts` drive both the form and
+the server check). Each field shows its own error under itself, checked on blur and on submit. The form calls the action directly rather
 than through `useActionState`, because the sheet keeps the typed values and the confirmed email
 for the success state and for "Edit my details". "Edit my details" re-opens the form; a second
 submit with the same email is a duplicate, which reports success and changes nothing in Shopify.
