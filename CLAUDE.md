@@ -17,10 +17,9 @@ full storefront launch.
 The production storefront lives separately (`../within-website`, a Shopify Hydrogen app).
 It shares branding, and — since email capture landed — the same Shopify store: signups here
 become customers there, tagged `prelaunch`. The two repos have deliberately diverged on
-design system: this repo runs Transparency Lab (see WITHIN Design System below), while
-`../within-website` still ships the earlier Inter/monochrome system (`app/styles/tailwind.css`
-sets `--font-sans: 'Inter', …`). Migrating the storefront onto Transparency Lab is a separate,
-not-yet-started project.
+design system: `/` here runs the WITHIN brand system from the waitlist design handoff (see
+WITHIN Design System below), `/cohort` and the 404 still run Transparency Lab, and
+`../within-website` ships the earlier Inter/monochrome system.
 
 ## 2. Commands
 
@@ -77,6 +76,10 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
   [src/components/ui/](src/components/ui/).
 - **`@phosphor-icons/react/ssr`** — icons (`Nav`, `Footer`, `Compare`, `Faq`). `lucide-react`
   is also a dependency but has zero call sites in `src/` right now.
+- **`@vercel/analytics`** — `<Analytics />` in the root layout records page views; waitlist
+  interactions go through `trackWaitlistEvent()` in
+  [waitlist-analytics.ts](src/components/waitlist/utils/waitlist-analytics.ts). Nothing is sent
+  in local dev. Web Analytics must be enabled on the Vercel project.
 - Utilities: `tw-animate-css`, `class-variance-authority`, `clsx`, `tailwind-merge`
   (composed by `cn()` in [src/lib/utils.ts](src/lib/utils.ts)).
 - **`botid`** — Vercel bot protection for the signup Server Action. `next.config.ts` is wrapped
@@ -97,7 +100,9 @@ src/
 ├── instrumentation-client.ts  # BotID protected-path declaration (runs on the client)
 ├── app/              # Routes. layout.tsx + page.tsx are the only entry points.
 │   ├── layout.tsx    # Root layout (fonts, <html>/<body>, globals import)
-│   ├── page.tsx      # "/" — the coming-soon page (Transparency Lab design)
+│   ├── page.tsx      # "/" — the waitlist page ("feature orbit", comp 2c of the handoff)
+│   ├── cohort/       # "/cohort" — unlisted founding-member preview (Transparency Lab)
+│   ├── fonts/        # BiroScriptPlus.otf, loaded with next/font/local
 │   ├── not-found.tsx # 404, on-brand
 │   ├── globals.css   # Tailwind v4 import + @theme tokens + :root design tokens
 │   ├── icon.tsx, apple-icon.tsx, opengraph-image.tsx  # generated icon/OG routes (no static favicon.ico)
@@ -106,11 +111,12 @@ src/
 │   └── utils/        # Route-local pure helpers (validation, honeypot, action state)
 ├── components/
 │   ├── brand/        # WithinLogo — the brand mark, used site-wide
-│   ├── coming-soon/  # "/" page sections + the Reveal / MotionProvider motion primitives
-│   │   ├── ui/       # button.tsx — a second, page-local Button (see WITHIN Design System)
-│   │   └── utils/    # faqs.ts — route-local content data
+│   ├── waitlist/     # The waitlist page: WaitlistPage + orbit, feature cards, sheet, form
+│   │   ├── svg/      # WaitlistGlyphs.tsx — the page's hand-drawn icons
+│   │   └── utils/    # waitlist-copy.ts (every string, layouts, features), waitlist-analytics.ts
+│   ├── cohort/       # "/cohort" sections
+│   ├── coming-soon/  # Reveal / Section / MotionProvider only, kept for "/cohort"
 │   └── ui/           # shadcn/ui primitives — WITHIN-restyled, owned in-repo (see UI and Design Rules)
-├── hooks/            # Shared client hooks (e.g. use-media-query.ts)
 ├── services/
 │   └── shopify-customer.service.ts   # Shopify Admin API writes
 └── lib/
@@ -120,12 +126,12 @@ src/
 
 - **Server Components by default** (RSC). Client interactivity is opt-in via `"use client"`,
   pushed as deep into the tree as possible.
-- **Single route** (`/`), still statically prerendered. The one dynamic path is the signup
-  Server Action.
+- **Every route is statically prerendered** (`/`, `/cohort`). The one dynamic path is the
+  signup Server Action. The handoff's alternate "button first" layout (comp 2f) was built and
+  then dropped on 2026-10-09 in favour of 2c on both phone and desktop.
 - A `"use server"` file may export **only async functions**. Types, enums and constants that
   the action's callers need live in `src/app/utils/` (e.g. `subscribe-state.ts`), never in the
   action file itself.
-- `src/hooks/` holds shared client hooks (e.g. `use-media-query.ts`).
 
 ---
 
@@ -176,7 +182,7 @@ src/
 **Components**
 - Always prefer shadcn/ui over custom implementations. Check [src/components/ui/](src/components/ui/) first.
 - **`ui/` primitives are WITHIN-restyled and owned in-repo** — they may be hand-edited to carry brand styling (e.g. [button.tsx](src/components/ui/button.tsx) is rebranded uppercase/sharp/monochrome). Re-running `npx shadcn@latest add <component>` **overwrites** the file with the vanilla version; after any CLI re-add, reapply the WITHIN restyle and diff before committing.
-- [dialog.tsx](src/components/ui/dialog.tsx) and [drawer.tsx](src/components/ui/drawer.tsx) are hand-owned Base UI wrappers (no shadcn/Base UI Drawer ships upstream), under the same ownership model as `button.tsx`.
+- [dialog.tsx](src/components/ui/dialog.tsx) is a hand-owned Base UI wrapper under the same ownership model as `button.tsx`. It carries behaviour only (focus trap, Escape, focus return, fade); each caller positions the popup and sets its surface. The waitlist's phone bottom sheet is this same Dialog pinned to the bottom edge, so there is no separate drawer.
 - If a needed shadcn component is **not installed**, stop and tell the user — let them install (`npx shadcn@latest add <component>`) or take a different approach. Do not hand-roll a substitute.
 - If a component does **not exist in shadcn at all**, surface options before writing code.
 - Icons: the shipped page actually uses `@phosphor-icons/react/ssr` (`Nav`, `Footer`,
@@ -191,6 +197,24 @@ src/
 - Extract a component for repeated multi-class patterns — never extract a CSS class. Do not extract a CSS class for styling either; component or utilities only.
 
 ## WITHIN Design System
+
+**Two systems coexist. Check which route you are in before reaching for a token.**
+
+- **`/` (the waitlist page) runs the WITHIN brand system** from the design
+  handoff (`../within-waitlist-handoff`, tokens in its `assets/within-tokens.json`). In
+  `globals.css` that is `brand-ink` `#191919`, `brand-mist` `#f2f2f2`, `brand-muted` `#6b6b6b`,
+  `brand-muted-dark` `#8c8c8c`, and `flavor-orange` `#ff8326` as the only accent (text on it is
+  ink). Type is Inter (`font-brand`), headlines Regular, emphasis by weight and never colour;
+  Biro Script (`font-script`) is for the "see you soon" accent only, letters only. Corners are
+  square, there are no shadows, and the dotted circle is the only round element. The page is one
+  viewport with no scroll (`h-dvh overflow-hidden`); the phone and desktop comps switch at the
+  `desk:` breakpoint (900px). The floating sachet is a CSS keyframe (`animate-sachet-float`),
+  off under reduced motion; it is the design's one sanctioned loop. Icons are the hand-drawn
+  SVGs in `components/waitlist/svg/`. Every string lives in `waitlist-copy.ts`.
+- **`/cohort` and the 404 still run Transparency Lab**, described in the rest of this section.
+  The paragraphs below that name `Hero`, `Nav`, `Footer`, `Compare`, `Faq`, `Ledger`, `Close`,
+  `WaitlistOverlay`, `SignupForm`, `drawer.tsx` or `coming-soon/ui/button.tsx` describe
+  components the waitlist remake deleted; read them as history.
 
 The durable brand guardrail: **Transparency Lab**, promoted to `/` from the exploratory `/v2`
 route earlier in this refactor. Source of truth: Claude Design project
@@ -297,18 +321,25 @@ The site reads no server-side data. It **writes** in exactly one place: pre-laun
 
 **The signup path**
 
-SignupForm now mounts inside `WaitlistOverlay` (a Dialog on desktop, a Drawer on mobile),
-triggered by a button in Hero and in Footer, rather than rendered inline.
+`WaitlistForm` mounts inside `WaitlistSheet` (a bottom sheet on phones, a centred modal on
+desktop), opened by the one orange button on the page.
 
 ```
-SignupForm ("use client", mounted inside WaitlistOverlay, tone="default")
-  └─ useActionState → subscribeAction ("use server")
+WaitlistForm ("use client", mounted inside WaitlistSheet)
+  ├─ parseSubscriberInput()                  → first error in field order, shown one at a time
+  └─ subscribeAction(formData) ("use server", called inside useTransition)
        ├─ checkBotId()                       → isBot ? generic error
        ├─ isHoneypotTripped()                → tripped ? report success, write nothing
-       ├─ parseSubscriberInput()             → field-level error
+       ├─ parseSubscriberInput()             → same validator, re-run server-side
        └─ ShopifyCustomerService.createPrelaunchSubscriber()
             └─ Admin GraphQL customerCreate  → customer tagged `prelaunch`, SUBSCRIBED
 ```
+
+Name, email and Instagram handle are all required. The form calls the action directly rather
+than through `useActionState`, because the sheet keeps the typed values and the confirmed email
+for the success state and for "Edit my details". "Edit my details" re-opens the form; a second
+submit with the same email is a duplicate, which reports success and changes nothing in Shopify.
+`/` must stay listed in `initBotId({ protect })`.
 
 **Rules this path establishes**
 

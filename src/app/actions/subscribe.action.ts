@@ -26,10 +26,7 @@ function readField(formData: FormData, name: string): string {
  * Adds one address to the pre-launch list in Shopify.
  * Reachable by direct POST, so it re-validates everything the form already checked.
  */
-export async function subscribeAction(
-  _previousState: SubscribeState,
-  formData: FormData
-): Promise<SubscribeState> {
+export async function subscribeAction(formData: FormData): Promise<SubscribeState> {
   const verification = await checkBotId();
   if (verification.isBot) {
     return { status: SubscribeStatus.Error, message: GENERIC_ERROR_MESSAGE, field: null };
