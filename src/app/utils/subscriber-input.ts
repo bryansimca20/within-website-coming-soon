@@ -65,21 +65,28 @@ export function normalizeInstagramHandle(raw: string): string | null {
   return HANDLE_PATTERN.test(candidate) ? candidate : null;
 }
 
-/** Field-level error copy, shared by the server validator and the client-side form so they never drift. */
+/** Field-level error copy, shared by the server validator and the waitlist form so they never drift. */
 export const SUBSCRIBER_FIELD_ERROR: Record<keyof ISubscriberInput, string> = {
-  fullName: "Enter your name.",
-  email: "Enter a valid email address.",
-  instagramHandle: "Enter a valid Instagram handle.",
+  fullName: "Add your name.",
+  email: "Check your email address.",
+  instagramHandle: "Check your Instagram handle: letters, numbers, dots or underscores.",
 };
+
+/** The order the waitlist form shows its fields in, and so the order errors are reported in. */
+export const SUBSCRIBER_FIELD_ORDER: Array<keyof ISubscriberInput> = [
+  "email",
+  "fullName",
+  "instagramHandle",
+];
 
 /** Validates one field's raw value, returning its error message or null. Instagram is optional. */
 export function validateField(field: keyof ISubscriberInput, value: string): string | null {
-  if (field === "fullName") {
-    return normalizeFullName(value) === null ? SUBSCRIBER_FIELD_ERROR.fullName : null;
-  }
-
   if (field === "email") {
     return normalizeEmail(value) === null ? SUBSCRIBER_FIELD_ERROR.email : null;
+  }
+
+  if (field === "fullName") {
+    return normalizeFullName(value) === null ? SUBSCRIBER_FIELD_ERROR.fullName : null;
   }
 
   if (value.trim() === "") {
@@ -89,16 +96,16 @@ export function validateField(field: keyof ISubscriberInput, value: string): str
   return normalizeInstagramHandle(value) === null ? SUBSCRIBER_FIELD_ERROR.instagramHandle : null;
 }
 
-/** Validates a whole submission. Name and email are required; a supplied handle must be valid. */
+/** Validates a whole submission in field order. Email and name are required; a supplied handle must be valid. */
 export function parseSubscriberInput(input: ISubscriberInput): ParsedSubscriber {
-  const name = normalizeFullName(input.fullName);
-  if (name === null) {
-    return { ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName };
-  }
-
   const email = normalizeEmail(input.email);
   if (email === null) {
     return { ok: false, field: "email", message: SUBSCRIBER_FIELD_ERROR.email };
+  }
+
+  const name = normalizeFullName(input.fullName);
+  if (name === null) {
+    return { ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName };
   }
 
   if (input.instagramHandle.trim() === "") {

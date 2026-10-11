@@ -1,11 +1,24 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-const TITLE = "WITHIN — Coming soon";
+/** Inter carries everything on the waitlist page; Geist stays for the cohort preview and the 404. */
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+
+/** Handwritten accent. Letters only: the cut has no digits or punctuation. */
+const biroScript = localFont({
+  src: "./fonts/BiroScriptPlus.otf",
+  variable: "--font-biro-script",
+  display: "swap",
+});
+
+const TITLE = "WITHIN | Coming soon";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -68,9 +81,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Geist Sans/Mono power the entire app.
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable} ${inter.variable} ${biroScript.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
