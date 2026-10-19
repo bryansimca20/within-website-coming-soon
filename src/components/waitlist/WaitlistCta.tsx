@@ -20,7 +20,7 @@ export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
   }
 
   return (
-    <div className={cn("flex flex-none flex-col gap-2 desk:gap-2.5", className)}>
+    <div className={cn("flex flex-none flex-col", className)}>
       <button
         type="button"
         aria-haspopup="dialog"
@@ -30,11 +30,6 @@ export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
         <span>{isJoined ? WAITLIST_COPY.ctaJoined : WAITLIST_COPY.cta}</span>
         <WaitlistArrowGlyph className="transition-transform duration-150 ease-brand group-hover:translate-x-1 motion-reduce:transition-none" />
       </button>
-      {!isJoined && (
-        <p className="m-0 text-xs leading-4 text-brand-muted desk:text-sm desk:leading-5 desk:text-brand-ink [@media(max-height:600px)]:hidden text-center desk:text-left">
-          {WAITLIST_COPY.ctaNote}
-        </p>
-      )}
     </div>
   );
 }

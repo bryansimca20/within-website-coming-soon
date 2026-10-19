@@ -38,8 +38,7 @@ export const WAITLIST_COPY = {
   subHeadline:
     "Electrolytes for training, recovery, and everything that comes after. Dosed to the milligram. Made in Indonesia. Built for the heat.",
   sachetAlt: "WITHIN orange electrolyte sachet",
-  cta: "Join the waitlist for 10% off",
-  ctaNote: "Coming soon. Your code arrives by email on launch day.",
+  cta: "Join the waitlist",
   ctaJoined: "You are on the list",
   close: "Close",
   facts: {
@@ -64,7 +63,7 @@ export const WAITLIST_COPY = {
   },
   sheet: {
     label: "THE WAITLIST",
-    title: "Get 10% off when we launch.",
+    title: "Hear first when we launch.",
     nameLabel: "Name",
     namePlaceholder: "Your name",
     emailLabel: "Email",
@@ -73,12 +72,12 @@ export const WAITLIST_COPY = {
     instagramPlaceholder: "handle",
     submit: "Join the waitlist",
     submitting: "Joining",
-    finePrint: "One email on launch day, with your code. Nothing in between.",
+    finePrint: "One email on launch day. Nothing in between.",
   },
   success: {
     label: "YOU ARE ON THE LIST",
-    title: "Your 10% off is held for launch day.",
-    bodyBeforeEmail: "We will send your code to ",
+    title: "You will hear from us on launch day.",
+    bodyBeforeEmail: "We will write to ",
     bodyAfterEmail: ".",
     follow: "Follow ",
     signOff: "see you soon",

@@ -28,7 +28,7 @@ Indonesian athletes and active people (running, cycling, gym, outdoor work) plus
 Positioned against plain water (replaces fluid, no minerals) and mainstream sports drinks (under-dosed minerals, buried under sugar). WITHIN's edge is honest, high electrolyte dosing with nothing artificial.
 
 ## Go-to-market
-Launching soon. Online first, direct-to-consumer, shipping across Indonesia. Waitlist offers a launch 10% discount. Only live channel pre-launch is Instagram @within__id.
+Launching soon. Online first, direct-to-consumer, shipping across Indonesia. Waitlist promises one launch-day email. No launch discount is offered (10% off removed 2026-10-19 while the offer is reconsidered). Only live channel pre-launch is Instagram @within__id.
 
 ## Voice
 Fact-forward, honest, no hype, no filler verbs. Let the numbers and the transparency do the persuading.
