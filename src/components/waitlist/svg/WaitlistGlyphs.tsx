@@ -14,6 +14,22 @@ export function WaitlistArrowGlyph({ className }: WaitlistGlyphProps) {
   );
 }
 
+/** Check mark on the joined button. `pathLength` is 1 so a stroke-dashoffset from 1 to 0 draws it on. */
+export function WaitlistCheckGlyph({ className, pathClassName }: WaitlistGlyphProps & { pathClassName?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className={cn("size-5 flex-none", className)}>
+      <path
+        pathLength={1}
+        d="M4 10.5l4 4 8-9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="square"
+        className={pathClassName}
+      />
+    </svg>
+  );
+}
+
 /** The X on every dialog's close button. */
 export function WaitlistCloseGlyph({ className }: WaitlistGlyphProps) {
   return (

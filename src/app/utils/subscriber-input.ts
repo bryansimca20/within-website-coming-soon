@@ -7,7 +7,7 @@ export interface ISubscriberInput {
 
 /** A validated signup, or the first field that failed with a message for that field. */
 export type ParsedSubscriber =
-  | { ok: true; firstName: string; lastName: string | null; email: string; instagramHandle: string | null }
+  | { ok: true; firstName: string; lastName: string | null; email: string; instagramHandle: string }
   | { ok: false; field: keyof ISubscriberInput; message: string };
 
 /** Deliberately permissive: Shopify is the real authority on address validity. */
@@ -69,7 +69,7 @@ export function normalizeInstagramHandle(raw: string): string | null {
 export const SUBSCRIBER_FIELD_ERROR: Record<keyof ISubscriberInput, string> = {
   fullName: "Add your name.",
   email: "Check your email address.",
-  instagramHandle: "Check your Instagram handle: letters, numbers, dots or underscores.",
+  instagramHandle: "Add your Instagram handle: letters, numbers, dots or underscores.",
 };
 
 /** The order the waitlist form shows its fields in, and so the order errors are reported in. */
@@ -79,7 +79,7 @@ export const SUBSCRIBER_FIELD_ORDER: Array<keyof ISubscriberInput> = [
   "instagramHandle",
 ];
 
-/** Validates one field's raw value, returning its error message or null. Instagram is optional. */
+/** Validates one field's raw value, returning its error message or null. Every field is required. */
 export function validateField(field: keyof ISubscriberInput, value: string): string | null {
   if (field === "email") {
     return normalizeEmail(value) === null ? SUBSCRIBER_FIELD_ERROR.email : null;
@@ -89,14 +89,10 @@ export function validateField(field: keyof ISubscriberInput, value: string): str
     return normalizeFullName(value) === null ? SUBSCRIBER_FIELD_ERROR.fullName : null;
   }
 
-  if (value.trim() === "") {
-    return null;
-  }
-
   return normalizeInstagramHandle(value) === null ? SUBSCRIBER_FIELD_ERROR.instagramHandle : null;
 }
 
-/** Validates a whole submission in field order. Email and name are required; a supplied handle must be valid. */
+/** Validates a whole submission in field order. Email, name and Instagram handle are all required. */
 export function parseSubscriberInput(input: ISubscriberInput): ParsedSubscriber {
   const email = normalizeEmail(input.email);
   if (email === null) {
@@ -106,10 +102,6 @@ export function parseSubscriberInput(input: ISubscriberInput): ParsedSubscriber 
   const name = normalizeFullName(input.fullName);
   if (name === null) {
     return { ok: false, field: "fullName", message: SUBSCRIBER_FIELD_ERROR.fullName };
-  }
-
-  if (input.instagramHandle.trim() === "") {
-    return { ok: true, firstName: name.firstName, lastName: name.lastName, email, instagramHandle: null };
   }
 
   const instagramHandle = normalizeInstagramHandle(input.instagramHandle);

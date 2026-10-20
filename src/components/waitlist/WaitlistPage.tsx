@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { WaitlistCta } from "./WaitlistCta";
 import { WaitlistFeatureDialog } from "./WaitlistFeatureDialog";
 import { WaitlistHeader } from "./WaitlistHeader";
+import { WaitlistJoinedDialog } from "./WaitlistJoinedDialog";
 import { WaitlistOrbit } from "./WaitlistOrbit";
 import { WaitlistSheet } from "./WaitlistSheet";
 import { trackWaitlistEvent, WaitlistEvent } from "./utils/waitlist-analytics";
@@ -16,6 +17,8 @@ export function WaitlistPage() {
   const [isFeatureOpen, setIsFeatureOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
+  const [isJoinedOpen, setIsJoinedOpen] = useState(false);
+  const [firstName, setFirstName] = useState("");
   const featureTriggerRef = useRef<HTMLButtonElement | null>(null);
   const ctaRef = useRef<HTMLButtonElement | null>(null);
 
@@ -31,11 +34,31 @@ export function WaitlistPage() {
     trackWaitlistEvent(WaitlistEvent.FeatureOpened, { feature: id });
   }
 
-  function openSheet(trigger: HTMLButtonElement) {
+  /** Before joining the button opens the form; after, it reopens the confirmation. */
+  function openFromCta(trigger: HTMLButtonElement) {
     ctaRef.current = trigger;
     setIsFeatureOpen(false);
-    setIsSheetOpen(true);
+    if (isJoined) {
+      setIsJoinedOpen(true);
+    } else {
+      setIsSheetOpen(true);
+    }
     trackWaitlistEvent(WaitlistEvent.CtaClicked);
+  }
+
+  /** The sheet leaves and the confirmation lands in the same beat; the button stamps itself behind the scrim. */
+  function handleJoined(name: string) {
+    setFirstName(name);
+    setIsJoined(true);
+    setIsSheetOpen(false);
+    setIsJoinedOpen(true);
+  }
+
+  /** "Edit my details": back to the form with the values intact, and the button back to its resting state. */
+  function handleEdit() {
+    setIsJoinedOpen(false);
+    setIsJoined(false);
+    setIsSheetOpen(true);
   }
 
   return (
@@ -57,7 +80,7 @@ export function WaitlistPage() {
         />
         <WaitlistCta
           isJoined={isJoined}
-          onOpen={openSheet}
+          onOpen={openFromCta}
           className="pt-3 desk:col-start-1 desk:row-start-3 desk:max-w-[460px] desk:pt-8"
         />
       </div>
@@ -70,8 +93,14 @@ export function WaitlistPage() {
       <WaitlistSheet
         isOpen={isSheetOpen}
         onOpenChange={setIsSheetOpen}
-        isJoined={isJoined}
-        onJoinedChange={setIsJoined}
+        onJoined={handleJoined}
+        triggerRef={ctaRef}
+      />
+      <WaitlistJoinedDialog
+        isOpen={isJoinedOpen}
+        onOpenChange={setIsJoinedOpen}
+        firstName={firstName}
+        onEdit={handleEdit}
         triggerRef={ctaRef}
       />
     </main>

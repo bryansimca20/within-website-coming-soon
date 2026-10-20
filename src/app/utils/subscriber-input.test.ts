@@ -115,15 +115,13 @@ describe("parseSubscriberInput", () => {
     });
   });
 
-  test("accepts an email and name with no handle", () => {
+  test("rejects a missing handle, because Instagram is required", () => {
     expect(
       parseSubscriberInput({ fullName: "Bryan Simca", email: "bryan@example.com", instagramHandle: "  " })
     ).toEqual({
-      ok: true,
-      firstName: "Bryan",
-      lastName: "Simca",
-      email: "bryan@example.com",
-      instagramHandle: null,
+      ok: false,
+      field: "instagramHandle",
+      message: SUBSCRIBER_FIELD_ERROR.instagramHandle,
     });
   });
 
@@ -175,8 +173,8 @@ describe("validateField", () => {
     expect(validateField("email", "bryan@example.com")).toBeNull();
   });
 
-  test("treats an empty Instagram handle as valid, because it is optional", () => {
-    expect(validateField("instagramHandle", "  ")).toBeNull();
+  test("flags an empty Instagram handle, because it is required", () => {
+    expect(validateField("instagramHandle", "  ")).toBe(SUBSCRIBER_FIELD_ERROR.instagramHandle);
   });
 
   test("flags a malformed Instagram handle", () => {

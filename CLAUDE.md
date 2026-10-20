@@ -111,7 +111,7 @@ src/
 │   └── utils/        # Route-local pure helpers (validation, honeypot, action state)
 ├── components/
 │   ├── brand/        # WithinLogo — the brand mark, used site-wide
-│   ├── waitlist/     # The waitlist page: WaitlistPage + orbit, feature cards, sheet, form
+│   ├── waitlist/     # The waitlist page: WaitlistPage + orbit, feature cards, sheet, form, joined dialog
 │   │   ├── svg/      # WaitlistGlyphs.tsx — the page's hand-drawn icons
 │   │   └── utils/    # waitlist-copy.ts (every string, layouts, features), waitlist-analytics.ts
 │   ├── cohort/       # "/cohort" sections
@@ -335,12 +335,15 @@ WaitlistForm ("use client", mounted inside WaitlistSheet)
             └─ Admin GraphQL customerCreate  → customer tagged `prelaunch`, SUBSCRIBED
 ```
 
-Fields run email, name, Instagram; email and name are required and the handle is optional
+Fields run email, name, Instagram, and all three are required since 2026-10-20
 (`SUBSCRIBER_FIELD_ORDER` and `validateField` in `subscriber-input.ts` drive both the form and
 the server check). Each field shows its own error under itself, checked on blur and on submit. The form calls the action directly rather
-than through `useActionState`, because the sheet keeps the typed values and the confirmed email
-for the success state and for "Edit my details". "Edit my details" re-opens the form; a second
-submit with the same email is a duplicate, which reports success and changes nothing in Shopify.
+than through `useActionState`, because the sheet keeps the typed values for "Edit my details".
+On success the sheet closes and `WaitlistJoinedDialog` opens in its place: a centred popup on
+every screen size that thanks the visitor by first name, signed WITHIN / Jakarta, with the
+Instagram follow as the next step. The orange button stamps to ink with a check (`data-joined`)
+and reopens that popup from then on. "Edit my details" re-opens the form; a second submit with
+the same email is a duplicate, which reports success and changes nothing in Shopify.
 `/` must stay listed in `initBotId({ protect })`.
 
 **Rules this path establishes**

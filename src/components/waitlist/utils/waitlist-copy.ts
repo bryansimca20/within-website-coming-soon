@@ -68,22 +68,31 @@ export const WAITLIST_COPY = {
     namePlaceholder: "Your name",
     emailLabel: "Email",
     emailPlaceholder: "you@email.com",
-    instagramLabel: "Instagram (optional)",
+    instagramLabel: "Instagram",
     instagramPlaceholder: "handle",
     submit: "Join the waitlist",
     submitting: "Joining",
-    finePrint: "One email on launch day. Nothing in between.",
   },
-  success: {
-    label: "YOU ARE ON THE LIST",
-    title: "You will hear from us on launch day.",
-    bodyBeforeEmail: "We will write to ",
-    bodyAfterEmail: ".",
+  joined: {
+    titleBeforeName: "Thanks for being early",
+    paragraphs: [
+      "Not only for signing up. For the hours you put in before you ever heard of us, in heat that takes more than it should.",
+      "We made WITHIN for the part of you that keeps going.",
+      "Watch Instagram for the launch, then your inbox. Until then, go well.",
+    ],
+    signaturePlace: "JAKARTA",
     follow: "Follow ",
-    signOff: "see you soon",
     edit: "Edit my details",
   },
 } as const;
+
+/** The confirmation headline, greeting the visitor by first name when there is one. */
+export function formatJoinedTitle(firstName: string): string {
+  const name = firstName.trim();
+  const { titleBeforeName } = WAITLIST_COPY.joined;
+
+  return name === "" ? `${titleBeforeName}.` : `${titleBeforeName}, ${name}.`;
+}
 
 /** The mineral rows of the product facts card. */
 export const WAITLIST_ELECTROLYTES: IWaitlistFactRow[] = [

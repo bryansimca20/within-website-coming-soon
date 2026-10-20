@@ -27,8 +27,8 @@ interface WaitlistFormProps {
   /** Field values, owned by the sheet so they survive closing it and "Edit my details". */
   values: ISubscriberInput;
   onValuesChange: (values: ISubscriberInput) => void;
-  /** Called with the normalized email once Shopify has the signup. */
-  onJoined: (email: string) => void;
+  /** Called with the normalized first name once Shopify has the signup. */
+  onJoined: (firstName: string) => void;
   /** Points at the first input, so the sheet can start the cursor there on desktop. */
   firstInputRef: RefObject<HTMLInputElement | null>;
 }
@@ -114,7 +114,7 @@ export function WaitlistForm({ values, onValuesChange, onJoined, firstInputRef }
         const result = await subscribeAction(formData);
         if (result.status === SubscribeStatus.Success) {
           trackWaitlistEvent(WaitlistEvent.SubmitSucceeded);
-          onJoined(parsed.email);
+          onJoined(parsed.firstName);
           return;
         }
 
@@ -168,9 +168,6 @@ export function WaitlistForm({ values, onValuesChange, onJoined, firstInputRef }
         <span>{isPending ? sheet.submitting : sheet.submit}</span>
         <WaitlistArrowGlyph />
       </button>
-      <p className="mt-2.5 mb-0 text-xs leading-4 text-brand-muted desk:mt-3 desk:text-[13px] desk:leading-[18px]">
-        {sheet.finePrint}
-      </p>
     </form>
   );
 }
