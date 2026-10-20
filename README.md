@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Sampling program
+
+`/sample` takes requests for the Batch 01 sample box, charges the courier fee through Midtrans
+Snap, ships through Biteship, and collects feedback at `/sample/feedback` (the QR on the card).
+Founders run it at `/admin/sample`.
+
+Local setup: put a Postgres URL in `DATABASE_URL` in `.env.local`, then
+
+```bash
+npm run db:migrate   # creates the tables and seeds Batch 01
+```
+
+Every key it needs is listed in `CLAUDE.md` under Environment. Without the Midtrans, Biteship
+and Resend keys the pages still render; area search, courier prices, payment and email do not.

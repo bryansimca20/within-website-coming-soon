@@ -8,10 +8,12 @@ Static "coming soon" landing page for **WITHIN**, an Indonesian sports-supplemen
 (BPOM and Halal certifications pending). Single-page marketing placeholder shown ahead of the
 full storefront launch.
 
-- **Almost no backend.** No API routes, no database, no auth. The single exception is the
-  pre-launch email capture: one Server Action that writes signups into Shopify as customers
-  (see Data Fetching & Services).
-- The route `/` is still statically prerendered; only the Server Action runs server-side.
+- **Two backends.** The waitlist on `/` writes signups into Shopify as customers through one
+  Server Action and has no database. The **sampling program** (`/sample`, `/sample/r/[token]`,
+  `/sample/feedback`, `/admin/sample`) has its own Postgres, Midtrans payments, Biteship
+  shipping, Resend emails and a founder admin (see Sampling program under Data Fetching &
+  Services). Spec: `docs/superpowers/specs/2026-10-20-sampling-program-design.md` (local only).
+- The route `/` is still statically prerendered. The sample and admin routes are dynamic.
 - Deploys to **Vercel** (auto-detected, zero config).
 
 The production storefront lives separately (`../within-website`, a Shopify Hydrogen app).
@@ -31,6 +33,8 @@ WITHIN Design System below), `/cohort` and the 404 still run Transparency Lab, a
 | `npm run lint` | Run ESLint (flat config, `eslint-config-next`) |
 | `npm run test` | Run the Vitest suite once |
 | `npm run test:watch` | Vitest in watch mode |
+| `npm run db:generate` | Generate a Drizzle migration from `src/db/schema.ts` into `drizzle/` |
+| `npm run db:migrate` | Apply migrations to `DATABASE_URL` |
 | `npx shadcn@latest add <component>` | Add a shadcn/ui component |
 
 Package manager is **npm** (`package-lock.json` is the source of truth). Do not introduce
@@ -49,6 +53,19 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 | `SHOPIFY_CLIENT_ID` | Dev Dashboard app Client ID, **`write_customers` scope only** |
 | `SHOPIFY_CLIENT_SECRET` | `shpss_…` Client Secret. Exchanged for a 24h Admin API token at request time |
 
+| `DATABASE_URL` | Neon Postgres for the sampling tables. Previews get their own Neon branch |
+| `SESSION_SECRET` | iron-session secret for the founder admin cookie, 32+ chars |
+| `ADMIN_PASSCODE` | Shared founder passcode for `/admin/login` |
+| `MIDTRANS_SERVER_KEY` | Snap transactions and notification signature checks |
+| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Public by design: snap.js `data-client-key` |
+| `NEXT_PUBLIC_MIDTRANS_ENV` | `sandbox` or `production`; picks both Midtrans hosts |
+| `BITESHIP_API_KEY` | Area search, rates, orders |
+| `BITESHIP_WEBHOOK_TOKEN` | Secret `?token=` on the Biteship webhook URL (Biteship signs nothing) |
+| `SAMPLE_ORIGIN_CONTACT_NAME`, `_PHONE`, `_ADDRESS`, `_AREA_ID`, `_POSTAL_CODE`, `_NOTE` | The BSD office as Biteship origin (all prefixed `SAMPLE_ORIGIN_`) |
+| `RESEND_API_KEY`, `SAMPLE_EMAIL_FROM`, `SAMPLE_EMAIL_REPLY_TO` | Sampler emails through Resend |
+
+- Every URL the sampling program emits (emails, the Snap finish callback, the card's QR target
+  `/sample/feedback`) is built from `SITE_URL` (`NEXT_PUBLIC_SITE_URL`). Set it per environment.
 - Shopify killed in-admin custom apps + static `shpat_` tokens. The app now lives in the
   **Dev Dashboard** (`dev.shopify.com/dashboard`): scope `write_customers`, Release the version,
   Install on the store. The service exchanges Client ID + Secret for a short-lived token via
@@ -88,8 +105,17 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
   `checkBotId()`. A path missing from `initBotId({ protect })` makes `checkBotId()` fail, so the
   two must stay in sync. Locally `checkBotId()` always returns `isBot: false`.
 - **`server-only`** — import guard on modules that hold secrets.
+- **Drizzle ORM** + **postgres** — sampling schema in [src/db/schema.ts](src/db/schema.ts), committed
+  migrations in `drizzle/` (the second one seeds Batch 01). [client.ts](src/db/client.ts) is a lazy
+  proxy, so importing it without `DATABASE_URL` does not connect. Services take the
+  `SampleDatabase` type so the same code runs on PGlite in tests.
+- **`zod`** — the two sampling form validators. The three-field waitlist validator stays hand-written.
+- **`iron-session`** — the founder admin cookie (`within_admin`). [src/proxy.ts](src/proxy.ts) only
+  checks the cookie is present; `requireAdmin()` verifies it on every admin page and action.
 - **Vitest** (dev) — unit tests for pure logic, colocated as `*.test.ts`. `server-only` is
   aliased to a stub in [vitest.config.ts](vitest.config.ts) so services stay testable.
+  Database services are tested against **`@electric-sql/pglite`** with every migration applied
+  ([test/sample-db.ts](test/sample-db.ts)); files run one at a time (`fileParallelism: false`).
 
 ## 5. Architecture
 
@@ -126,8 +152,9 @@ src/
 
 - **Server Components by default** (RSC). Client interactivity is opt-in via `"use client"`,
   pushed as deep into the tree as possible.
-- **Every route is statically prerendered** (`/`, `/cohort`). The one dynamic path is the
-  signup Server Action. The handoff's alternate "button first" layout (comp 2f) was built and
+- **`/` and `/cohort` are statically prerendered.** The sample and admin routes are
+  `force-dynamic`, since they read Postgres on every request.
+  The handoff's alternate "button first" layout (comp 2f) was built and
   then dropped on 2026-10-09 in favour of 2c on both phone and desktop.
 - A `"use server"` file may export **only async functions**. Types, enums and constants that
   the action's callers need live in `src/app/utils/` (e.g. `subscribe-state.ts`), never in the
@@ -317,7 +344,8 @@ type is hand-set per component in this design system.
 
 ## Data Fetching & Services
 
-The site reads no server-side data. It **writes** in exactly one place: pre-launch email capture.
+The waitlist on `/` reads no server-side data and writes in one place: pre-launch email capture.
+The sampling program is the other backend; it has its own section below.
 
 **The signup path**
 
@@ -359,6 +387,51 @@ the same email is a duplicate, which reports success and changes nothing in Shop
 - Never surface a Shopify error message to the browser. A duplicate email reports **success**
   (saying otherwise leaks who is registered); everything else reports one generic message.
   Real errors go to `console.error` only.
+
+## Sampling program
+
+Batch 01: 100 boxes of three sachets, free, the sampler pays the courier. Spec and plan are in
+`docs/superpowers/` (gitignored, local).
+
+```
+/sample (dynamic)                       SampleRequestForm, 3 steps, client-held values
+  ├─ GET  /api/sample/areas?q=          Biteship area search (rate-limited proxy)
+  ├─ POST /api/sample/rates             live courier quotes, cheapest 4
+  └─ requestSampleAction                BotID + honeypot + zod, then:
+       ├─ SampleRequestService.claim    one transaction, batch row locked: lapsed holds expire,
+       │                                same-email unpaid hold replaced, paid duplicate refused,
+       │                                capacity checked, next box number taken
+       ├─ SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
+       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-b01, ref-<slug>
+/sample/r/[token]                       status page; "Pay now" = reopenPaymentAction
+POST /api/webhooks/midtrans             signature checked, attempt updated, paid email once
+admin "Book selected"                   SampleShipmentService.bookRun, one Biteship order each
+POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/delivered email once
+/sample/feedback[?code=]                QR landing; matched by token, else by email
+/admin/sample, /admin/sample/[id]       founder dashboard, detail, resends, CSV export
+```
+
+**Rules this path establishes**
+
+- A request's 24-hour hold is ours; a Midtrans attempt lapsing (QRIS defaults to 15 minutes)
+  ends only that attempt. `pending_payment` becomes `expired` lazily, whenever the count or a
+  status page is read. No cron.
+- Webhook bodies are stored in `sample_webhook_events` before processing and every webhook is
+  answered 200 once stored. Midtrans is trusted only after its SHA512 signature; Biteship
+  bodies are never trusted, the order is re-fetched. A paid request is never moved backwards,
+  and each once-only email has a guard column (`paid_at`, `shipped_email_sent_at`,
+  `delivered_email_sent_at`).
+- `MidtransService.createSnapTransaction`, `BiteshipService.createOrder` and
+  `EmailService.send` never throw; they log and return null or false. A thrown error there
+  once left unpaid holds occupying slots.
+- The feedback form reports success whether or not the email matched, so it never reveals who
+  requested a box. Unmatched answers are kept and listed in admin.
+- Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels
+  live in `src/components/sample/utils/sample-copy.ts`; email copy in
+  `src/services/sample-email-copy.ts`.
+- `/sample*` runs the WITHIN brand system from `/` (and scrolls). `/admin` runs Transparency
+  Lab tokens and `components/ui/button.tsx`. Both are `noindex` and out of the sitemap.
+- `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`.
 
 When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /
 `layout.tsx` Server Component, then pass plain data down as props. Presentational components

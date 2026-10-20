@@ -14,13 +14,8 @@ import {
 } from "@/app/utils/subscribe-state";
 import { parseSubscriberInput } from "@/app/utils/subscriber-input";
 import { ShopifyCustomerService, SubscribeOutcome } from "@/services/shopify-customer.service";
+import { readFormField } from "@/app/utils/form-field";
 
-/** Reads a form field as a string, treating a missing or file value as empty. */
-function readField(formData: FormData, name: string): string {
-  const value = formData.get(name);
-
-  return typeof value === "string" ? value : "";
-}
 
 /**
  * Adds one address to the pre-launch list in Shopify.
@@ -33,8 +28,8 @@ export async function subscribeAction(formData: FormData): Promise<SubscribeStat
   }
 
   const tripped = isHoneypotTripped({
-    trap: readField(formData, HONEYPOT_TRAP_FIELD),
-    renderedAt: readField(formData, HONEYPOT_TIMESTAMP_FIELD),
+    trap: readFormField(formData, HONEYPOT_TRAP_FIELD),
+    renderedAt: readFormField(formData, HONEYPOT_TIMESTAMP_FIELD),
     now: Date.now(),
   });
   // Report success to automated submissions so they do not learn they were caught.
@@ -43,9 +38,9 @@ export async function subscribeAction(formData: FormData): Promise<SubscribeStat
   }
 
   const parsed = parseSubscriberInput({
-    fullName: readField(formData, "fullName"),
-    email: readField(formData, "email"),
-    instagramHandle: readField(formData, "instagramHandle"),
+    fullName: readFormField(formData, "fullName"),
+    email: readFormField(formData, "email"),
+    instagramHandle: readFormField(formData, "instagramHandle"),
   });
   if (!parsed.ok) {
     return { status: SubscribeStatus.Error, message: parsed.message, field: parsed.field };

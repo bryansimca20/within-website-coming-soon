@@ -12,5 +12,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // PGlite-backed tests flake when files run in parallel; one file at a time is fast enough.
+    fileParallelism: false,
+    testTimeout: 20_000,
   },
 });
