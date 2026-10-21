@@ -231,7 +231,8 @@ src/
   handoff (`../within-waitlist-handoff`, tokens in its `assets/within-tokens.json`). In
   `globals.css` that is `brand-ink` `#191919`, `brand-mist` `#f2f2f2`, `brand-muted` `#6b6b6b`,
   `brand-muted-dark` `#8c8c8c`, and `flavor-orange` `#ff8326` as the only accent (text on it is
-  ink). Type is Inter (`font-brand`), headlines Regular, emphasis by weight and never colour;
+  ink). Errors (messages and the 2px error underline) use `brand-error` `#d0312d`, a status
+  colour rather than an accent. Type is Inter (`font-brand`), headlines Regular, emphasis by weight and never colour;
   Biro Script (`font-script`) is for the "see you soon" accent only, letters only. Corners are
   square, there are no shadows, and the dotted circle is the only round element. The page is one
   viewport with no scroll (`h-dvh overflow-hidden`); the phone and desktop comps switch at the

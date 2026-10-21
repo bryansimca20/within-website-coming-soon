@@ -157,7 +157,7 @@ describe("SampleRequestService lookups", () => {
 describe("SampleRequestService labels and time", () => {
   test("formats the box label and word", () => {
     expect(SampleRequestService.boxLabel("b01", 42)).toBe("B01-042");
-    expect(SampleRequestService.boxWord(42)).toBe("Box 042");
+    expect(SampleRequestService.boxWord(42)).toBe("No. 042");
   });
 
   test("minutesLeft floors and never goes below zero", async () => {

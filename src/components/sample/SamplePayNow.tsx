@@ -57,7 +57,7 @@ export function SamplePayNow({ token, amount, redirectUrl }: SamplePayNowProps) 
           {SAMPLE_COPY.status.payFallback}
         </a>
       )}
-      {message !== null && <p role="alert" className="m-0 text-[13px] font-semibold">{message}</p>}
+      {message !== null && <p role="alert" className="m-0 text-[13px] font-semibold text-brand-error">{message}</p>}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   type ISampleRequestInput,
   parseSampleRequestInput,
   readSampleRequestInput,
+  SAMPLE_FIELD_ERROR,
   SAMPLE_STEP_FIELDS,
   validateSampleStep,
 } from "./sample-request-input";
@@ -134,16 +135,42 @@ describe("parseSampleRequestInput", () => {
 });
 
 describe("validateSampleStep", () => {
-  test("reports only step 1 errors for an empty step 1", () => {
-    const errors = validateSampleStep(1, EMPTY_SAMPLE_REQUEST_INPUT);
+  test("every request field except attribution belongs to exactly one step", () => {
+    const owned = Object.values(SAMPLE_STEP_FIELDS).flat();
+    const expected = Object.keys(EMPTY_SAMPLE_REQUEST_INPUT).filter((field) => !field.startsWith("utm") && field !== "ref");
 
-    expect(Object.keys(errors).sort()).toEqual(
-      SAMPLE_STEP_FIELDS[1].filter((field) => !["mainSportOther", "hydrationGoalOther", "runClub"].includes(field)).sort()
-    );
+    expect([...owned].sort()).toEqual([...expected].sort());
+    expect(new Set(owned).size).toBe(owned.length);
   });
 
-  test("returns no errors for a valid step 2", () => {
-    expect(validateSampleStep(2, VALID_INPUT)).toEqual({});
+  test("step 1 asks for contact and consent, not phone", () => {
+    expect(Object.keys(validateSampleStep(1, EMPTY_SAMPLE_REQUEST_INPUT)).sort()).toEqual([
+      "consent",
+      "email",
+      "fullName",
+      "instagramHandle",
+    ]);
+  });
+
+  test("step 2 needs a sport, and Other needs its text", () => {
+    expect(validateSampleStep(2, EMPTY_SAMPLE_REQUEST_INPUT)).toEqual({ mainSport: SAMPLE_FIELD_ERROR.mainSport });
+    expect(validateSampleStep(2, { ...VALID_INPUT, mainSport: "other", mainSportOther: "" })).toEqual({
+      mainSportOther: SAMPLE_FIELD_ERROR.mainSportOther,
+    });
+  });
+
+  test("step 4 Other needs its text", () => {
+    expect(validateSampleStep(4, { ...VALID_INPUT, hydrationGoal: "other", hydrationGoalOther: "" })).toEqual({
+      hydrationGoalOther: SAMPLE_FIELD_ERROR.hydrationGoalOther,
+    });
+  });
+
+  test("step 5 owns the phone", () => {
+    expect(validateSampleStep(5, { ...VALID_INPUT, whatsapp: "123" })).toEqual({ whatsapp: SAMPLE_FIELD_ERROR.whatsapp });
+  });
+
+  test("valid input passes every step", () => {
+    for (const step of [1, 2, 3, 4, 5] as const) expect(validateSampleStep(step, VALID_INPUT)).toEqual({});
   });
 });
 

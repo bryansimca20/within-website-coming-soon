@@ -140,7 +140,7 @@ export const SAMPLE_FIELD_ERROR: Record<SampleRequestField, string> = {
   hydrationGoalOther: "Tell us what you want from hydration.",
   runClub: "Keep the club name under 200 characters.",
   fullName: "Add your name.",
-  email: "Check your email address.",
+  email: "Invalid email address.",
   whatsapp: "Add an Indonesian mobile number, like 0812 3456 7890.",
   instagramHandle: "Add your Instagram handle: letters, numbers, dots or underscores.",
   addressLine: "Add the full street address, 10 to 255 characters.",
@@ -166,23 +166,16 @@ export const SAMPLE_FIELD_ERROR: Record<SampleRequestField, string> = {
   utmTerm: "",
 };
 
+/** The five form steps after the intro: about you, sport, sessions, goal, shipping. */
+export type SampleStep = 1 | 2 | 3 | 4 | 5;
+
 /** The fields each step of the form owns, in display order. */
-export const SAMPLE_STEP_FIELDS: Record<1 | 2 | 3, SampleRequestField[]> = {
-  1: [
-    "mainSport",
-    "mainSportOther",
-    "sessionsPerWeek",
-    "sessionLength",
-    "trainWhere",
-    "hydrationGoal",
-    "hydrationGoalOther",
-    "runClub",
-  ],
-  2: [
-    "fullName",
-    "email",
-    "whatsapp",
-    "instagramHandle",
+export const SAMPLE_STEP_FIELDS: Record<SampleStep, SampleRequestField[]> = {
+  1: ["fullName", "email", "instagramHandle", "consent", "willShare"],
+  2: ["mainSport", "mainSportOther", "runClub"],
+  3: ["sessionsPerWeek", "sessionLength", "trainWhere"],
+  4: ["hydrationGoal", "hydrationGoalOther"],
+  5: [
     "areaId",
     "areaName",
     "province",
@@ -190,11 +183,14 @@ export const SAMPLE_STEP_FIELDS: Record<1 | 2 | 3, SampleRequestField[]> = {
     "district",
     "postalCode",
     "addressLine",
+    "whatsapp",
     "deliveryNote",
-    "willShare",
-    "consent",
+    "courierCompany",
+    "courierType",
+    "courierServiceName",
+    "shippingFee",
+    "shippingEta",
   ],
-  3: ["courierCompany", "courierType", "courierServiceName", "shippingFee", "shippingEta"],
 };
 
 const MAX_SHIPPING_FEE = 1_000_000;
@@ -385,7 +381,7 @@ export function parseSampleRequestInput(input: ISampleRequestInput): ParsedSampl
 
 /** Errors for one step only, keyed by field, so the form can stop a visitor before they move on. */
 export function validateSampleStep(
-  step: 1 | 2 | 3,
+  step: SampleStep,
   input: ISampleRequestInput
 ): Partial<Record<SampleRequestField, string>> {
   const fields = SAMPLE_STEP_FIELDS[step];
@@ -397,7 +393,7 @@ export function validateSampleStep(
 
   if (result.success) {
     for (const issue of otherFieldIssues(result.data)) {
-      errors[issue.field] = issue.message;
+      if (fields.includes(issue.field)) errors[issue.field] = issue.message;
     }
     return errors;
   }

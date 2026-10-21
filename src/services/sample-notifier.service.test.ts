@@ -13,6 +13,6 @@ describe("buildSampleEmailContext", () => {
     );
 
     expect(context.courier).toMatchObject({ name: "JNE", service: "Reguler" });
-    expect(context.boxWord).toBe("Box 042");
+    expect(context.boxWord).toBe("No. 042");
   });
 });

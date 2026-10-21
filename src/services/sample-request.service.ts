@@ -280,9 +280,9 @@ export class SampleRequestService {
     return `${batchId.toUpperCase()}-${String(boxNumber).padStart(3, "0")}`;
   }
 
-  /** `Box 042`: how the sampler reads their number. */
+  /** `No. 042`: how the sampler reads their number. */
   static boxWord(boxNumber: number): string {
-    return `Box ${String(boxNumber).padStart(3, "0")}`;
+    return `No. ${String(boxNumber).padStart(3, "0")}`;
   }
 
   /** Whole minutes left in the hold, never negative. */

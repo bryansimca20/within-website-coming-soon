@@ -3,6 +3,7 @@ import { track } from "@vercel/analytics";
 /** Sampling interactions. Page views come from `<Analytics />` in the root layout. */
 export enum SampleEvent {
   Landed = "sample_landed",
+  IntroContinued = "sample_intro_continued",
   StepCompleted = "sample_step_completed",
   SubmitSucceeded = "sample_submit_succeeded",
   SubmitFailed = "sample_submit_failed",

@@ -50,6 +50,8 @@
   --color-brand-muted: #6b6b6b;
   --color-brand-muted-dark: #8c8c8c;
   --color-flavor-orange: #ff8326;
+  /* Errors only: field messages and the error underline. 5.05:1 on white. */
+  --color-brand-error: #d0312d;
 
   /* The waitlist comps switch from the phone layout to the desktop layout at 900px. */
   --breakpoint-desk: 900px;

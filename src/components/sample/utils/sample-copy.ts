@@ -16,12 +16,13 @@ export function formatRupiah(amount: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 }
 
-export function formatClaimed(claimed: number, capacity: number): string {
-  return `${claimed} of ${capacity} claimed`;
-}
-
 export function formatPayButton(amount: number): string {
   return `Pay shipping ${formatRupiah(amount)}`;
+}
+
+/** Chip options for one closed answer set, in the set's order. */
+export function choiceOptions<T extends string>(keys: readonly T[], labels: Record<T, string>) {
+  return keys.map((value) => ({ value, label: labels[value] }));
 }
 
 /** Answer labels per option set, keyed by the stored option key. */
@@ -64,13 +65,25 @@ export const OPTION_LABEL: {
 
 /** Every visitor-facing string on the sample pages. Validation errors live with the validators. */
 export const SAMPLE_COPY = {
-  batchLabel: "LIMITED SAMPLE BATCH 01",
-  headline: "Three sachets, before launch.",
-  trade:
-    "100 boxes for people who train in the heat. The sample is free, you cover the courier. In return, tell us how it went.",
-  shippingHint: "Shipping in Jabodetabek is usually around Rp 10.000. You see the exact price before you pay.",
-  steps: ["Your training", "Where to send it", "Shipping"] as const,
-  stepCounter: (step: number) => `Step ${step} of 3`,
+  intro: {
+    label: "SAMPLE BATCH 01",
+    headline: "Be one of the first 100 to train with it.",
+    why: "We're not on sale yet, but we wanted you to try it first. Your feedback matters to us.",
+    offerBefore: "You'll get ",
+    offerBold: "3 sachets",
+    offerAfter: " as your samples. Just cover the shipping.",
+    cta: "Claim my samples",
+    note: "Takes about 2 minutes. You see the shipping cost before you pay.",
+  },
+  steps: ["About you", "Your sport", "Your sessions", "Your goal", "Shipping"] as const,
+  stepCounter: (step: number) => `Step ${step} of 5`,
+  headings: {
+    contact: "Who are the samples for?",
+    sport: "What do you train for?",
+    sessions: "How do you train?",
+    goal: "What do you want most from your hydration?",
+    shipping: "Where should we send it?",
+  },
   continue: "Continue",
   back: "Back",
   opening: "Opening payment",
@@ -90,9 +103,10 @@ export const SAMPLE_COPY = {
     fullNamePlaceholder: "Your full name",
     email: "Email",
     emailPlaceholder: "you@email.com",
-    whatsapp: "WhatsApp",
+    emailHint: "We'll send your payment receipt and tracking link here.",
+    whatsapp: "Phone",
     whatsappPlaceholder: "0812 3456 7890",
-    whatsappHint: "Only for delivery updates.",
+    whatsappHint: "For the courier only.",
     instagram: "Instagram",
     instagramPlaceholder: "handle",
     area: "Area",
@@ -104,24 +118,24 @@ export const SAMPLE_COPY = {
     addressPlaceholder: "Street, number, building, floor",
     deliveryNote: "Note for the courier (optional)",
     deliveryNotePlaceholder: "Gate code, landmark",
-    willShare: "I'll share how it went after trying.",
+    willShare: "I promise to share my feedback after trying it.",
+    willShareNote: "Your feedback matters. Your samples come with a QR code that opens a short form. It takes less than 30 seconds.",
     consent: "Add me to the WITHIN waitlist and send me launch updates.",
   },
   shipping: {
+    pickArea: "Pick your area to see courier prices.",
     loading: "Getting courier prices",
     noCourier: "No courier serves this area right now.",
-    changeAddress: "Change the address",
     failed: "Could not load courier prices.",
     retry: "Try again",
-    sendTo: "Sending to",
   },
   closed: {
     headline: "Batch 01 is claimed.",
-    body: "All 100 boxes are spoken for. Join the waitlist and hear first when the next batch opens.",
+    body: "Every sample in this batch is spoken for. Join the waitlist and hear first when the next batch opens.",
     cta: "Join the waitlist",
   },
   already: {
-    headline: "You already have a box.",
+    headline: "You've already claimed your samples.",
     body: (email: string) => `We sent your status link to ${email} again.`,
   },
   status: {
@@ -132,13 +146,13 @@ export const SAMPLE_COPY = {
     boxOf: (box: string, batch: string) => `${box} of ${batch}`,
     steps: { requested: "Requested", paid: "Paid", shipped: "Shipped", delivered: "Delivered" },
     payLabel: "Shipping to pay",
-    holdLeft: (text: string) => `Your box is held for ${text}.`,
+    holdLeft: (text: string) => `Your samples are held for ${text}.`,
     payNow: "Pay now",
     payFallback: "Open the payment page",
-    lapsedBody: "The payment window closed and the box went back to the batch.",
+    lapsedBody: "The payment window closed and your samples went back to the batch.",
     lapsedCta: "Request again",
     feedbackLabel: "ONE THING WE ASK",
-    feedbackBody: "After a few sessions, tell us how it went. It takes about a minute.",
+    feedbackBody: "After a few sessions, tell us how it went. It takes less than 30 seconds.",
     feedbackCta: "Tell us how it went",
     feedbackDone: "Thanks, we have your feedback.",
     deliveryHeading: "DELIVERY",
@@ -149,7 +163,7 @@ export const SAMPLE_COPY = {
     label: "ONE THING WE ASK",
     headline: "How did it go?",
     headlineNamed: (name: string) => `How did it go, ${name}?`,
-    emailLabel: "The email you requested your box with",
+    emailLabel: "The email you claimed your samples with",
     emailPlaceholder: "you@email.com",
     progress: (step: number, total: number) => `${step} of ${total}`,
     questions: {

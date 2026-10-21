@@ -58,7 +58,7 @@ export function SampleFeedbackQuestion({ field, values, onChange, error }: Sampl
       <label htmlFor="comment" className="mb-2.5 block text-[15px] leading-[22px] font-semibold">{copy.questions.comment}</label>
       <textarea id="comment" name="comment" rows={5} maxLength={1000} value={values.comment} onChange={(event) => onChange({ comment: event.currentTarget.value })}
         className="block w-full resize-none rounded-none border border-brand-ink bg-transparent p-3 text-base leading-6 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink" />
-      {error !== undefined && <p role="alert" className="mt-1.5 mb-0 text-[13px] font-semibold">{error}</p>}
+      {error !== undefined && <p role="alert" className="mt-1.5 mb-0 text-[13px] font-semibold text-brand-error">{error}</p>}
     </div>
   );
 }

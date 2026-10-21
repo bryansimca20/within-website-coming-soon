@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import type { IBiteshipArea } from "@/services/biteship.service";
 
 import { SAMPLE_COPY } from "./utils/sample-copy";
+import { sampleDevAreas } from "./utils/sample-dev-fixtures";
 import type { ISampleStepProps } from "./utils/sample-form-types";
 
 const { delivery } = SAMPLE_COPY;
@@ -29,6 +30,11 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
     const timer = window.setTimeout(async () => {
       setIsSearching(true);
       try {
+        const devAreas = sampleDevAreas();
+        if (devAreas !== null) {
+          setAreas(devAreas);
+          return;
+        }
         const response = await fetch(`/api/sample/areas?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal });
         const payload: { areas?: IBiteshipArea[] } = await response.json();
         setAreas(payload.areas ?? []);
@@ -64,7 +70,19 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
   }
 
   function clear() {
-    onChange({ areaId: "", areaName: "", province: "", city: "", district: "", postalCode: "" });
+    onChange({
+      areaId: "",
+      areaName: "",
+      province: "",
+      city: "",
+      district: "",
+      postalCode: "",
+      shippingFee: "",
+      courierCompany: "",
+      courierType: "",
+      courierServiceName: "",
+      shippingEta: "",
+    });
   }
 
   if (values.areaId !== "") {
@@ -85,7 +103,7 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
 
   return (
     <div>
-      <div className={error === undefined ? "border-b border-brand-muted pt-2 pb-1.5" : "border-b-2 border-brand-ink pt-2 pb-[5px]"}>
+      <div className={error === undefined ? "border-b border-brand-muted pt-2 pb-1.5" : "border-b-2 border-brand-error pt-2 pb-[5px]"}>
         <label htmlFor={inputId} className="text-[13px] leading-[18px] text-brand-muted">
           {delivery.area}
         </label>
@@ -117,7 +135,7 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
         </ul>
       )}
       {error !== undefined && (
-        <p role="alert" className="mt-1.5 mb-0 text-[13px] leading-[18px] font-semibold">
+        <p role="alert" className="mt-1.5 mb-0 text-[13px] leading-[18px] font-semibold text-brand-error">
           {error}
         </p>
       )}

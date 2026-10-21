@@ -51,7 +51,7 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
 
   /** The current screen's own check, before moving on. */
   function currentError(): string | null {
-    if (field === "email") return normalizeEmail(values.email) === null ? "Add the email you requested your box with." : null;
+    if (field === "email") return normalizeEmail(values.email) === null ? "Add the email you claimed your samples with." : null;
     if (field === "comment") return null;
     const parsed = parseSampleFeedbackInput({ ...values, comment: "" });
     if (!parsed.ok && (parsed.field === field || (field === "felt" && parsed.field === "feltOther"))) return parsed.message;

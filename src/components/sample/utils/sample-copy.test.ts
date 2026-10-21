@@ -11,7 +11,7 @@ import {
   WOULD_REACH_AGAIN,
 } from "@/app/utils/sample-options";
 
-import { formatClaimed, formatPayButton, formatRupiah, OPTION_LABEL } from "./sample-copy";
+import { formatPayButton, formatRupiah, OPTION_LABEL } from "./sample-copy";
 
 describe("OPTION_LABEL", () => {
   test.each([
@@ -36,10 +36,6 @@ describe("formatting", () => {
     expect(formatRupiah(10000)).toBe("Rp 10.000");
     expect(formatRupiah(1250000)).toBe("Rp 1.250.000");
     expect(formatRupiah(900)).toBe("Rp 900");
-  });
-
-  test("formats the counter", () => {
-    expect(formatClaimed(42, 100)).toBe("42 of 100 claimed");
   });
 
   test("formats the pay button", () => {

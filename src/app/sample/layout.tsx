@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { MotionProvider } from "@/components/coming-soon/MotionProvider";
+
 /** Sample pages are reached by link only: out of search results and the sitemap. */
 export const metadata: Metadata = {
   title: "Sample Batch 01",
@@ -8,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function SampleLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <MotionProvider>{children}</MotionProvider>;
 }

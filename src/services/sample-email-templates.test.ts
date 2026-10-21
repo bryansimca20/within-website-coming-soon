@@ -5,7 +5,7 @@ import { type ISampleEmailContext, renderSampleEmail, SampleEmailKind } from "./
 
 const CONTEXT: ISampleEmailContext = {
   firstName: "Fanny",
-  boxWord: "Box 042",
+  boxWord: "No. 042",
   batchLabel: "Batch 01",
   statusUrl: "https://within.id/sample/r/AbCdEfGhIjKlMnOpQrStUvWx",
   feedbackUrl: "https://within.id/sample/feedback?code=AbCdEfGhIjKlMnOpQrStUvWx",
@@ -21,7 +21,7 @@ const KINDS = Object.values(SampleEmailKind);
 
 describe("renderSampleEmail", () => {
   test.each(KINDS)("%s subject names the box", (kind) => {
-    expect(renderSampleEmail(kind, CONTEXT).subject).toContain("Box 042");
+    expect(renderSampleEmail(kind, CONTEXT).subject).toContain("No. 042");
   });
 
   test("the paid email links to the status page in html and text", () => {
@@ -29,7 +29,7 @@ describe("renderSampleEmail", () => {
 
     expect(email.html).toContain(CONTEXT.statusUrl);
     expect(email.text).toContain(CONTEXT.statusUrl);
-    expect(email.subject).toBe("You're in. Box 042 of Batch 01.");
+    expect(email.subject).toBe("You're in. No. 042 of Batch 01.");
   });
 
   test("the shipped email carries the waybill and tracking link", () => {
