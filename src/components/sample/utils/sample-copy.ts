@@ -87,6 +87,7 @@ export const SAMPLE_COPY = {
   continue: "Continue",
   back: "Back",
   opening: "Opening payment",
+  payShipping: "Pay shipping",
   training: {
     mainSport: "Main sport",
     mainSportOther: "Which sport?",

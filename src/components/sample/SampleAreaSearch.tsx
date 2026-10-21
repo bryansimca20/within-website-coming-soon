@@ -118,7 +118,7 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
         />
       </div>
       {showList && (
-        <ul className="m-0 mt-1 list-none border border-brand-ink p-0" aria-live="polite">
+        <ul className="m-0 mt-1 max-h-[264px] list-none overflow-y-auto overscroll-contain border border-brand-ink p-0" aria-live="polite">
           {isSearching && areas.length === 0 && <li className="px-3 py-3 text-sm text-brand-muted">{delivery.areaSearching}</li>}
           {!isSearching && areas.length === 0 && <li className="px-3 py-3 text-sm text-brand-muted">{delivery.areaEmpty}</li>}
           {areas.map((area) => (

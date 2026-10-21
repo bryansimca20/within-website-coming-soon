@@ -20,12 +20,13 @@ export function SampleStepSport({ values, errors, onChange }: ISampleStepProps) 
           value={values.mainSport} onChange={(mainSport) => onChange({ mainSport })} error={errors.mainSport} />
         <SampleOtherReveal isOpen={values.mainSport === "other"}>
           <WaitlistField id="mainSportOther" name="mainSportOther" label={training.mainSportOther} value={values.mainSportOther}
-            onValueChange={(mainSportOther) => onChange({ mainSportOther })} onValueBlur={noop} error={errors.mainSportOther} />
+            onValueChange={(mainSportOther) => onChange({ mainSportOther })} onValueBlur={noop} error={errors.mainSportOther}
+            inputProps={{ maxLength: 100 }} />
         </SampleOtherReveal>
       </div>
       <WaitlistField id="runClub" name="runClub" label={training.runClub} value={values.runClub}
         onValueChange={(runClub) => onChange({ runClub })} onValueBlur={noop} error={errors.runClub}
-        inputProps={{ placeholder: training.runClubPlaceholder, autoComplete: "off" }} />
+        inputProps={{ placeholder: training.runClubPlaceholder, autoComplete: "off", maxLength: 200 }} />
     </div>
   );
 }

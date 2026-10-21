@@ -26,12 +26,13 @@ export function SampleStepShipping({ values, errors, onChange }: ISampleStepProp
             id="addressLine"
             name="addressLine"
             rows={2}
+            maxLength={255}
             value={values.addressLine}
             onChange={(event) => onChange({ addressLine: event.currentTarget.value })}
             autoComplete="street-address"
             placeholder={delivery.addressPlaceholder}
             aria-invalid={errors.addressLine !== undefined}
-            className="m-0 block w-full resize-none appearance-none rounded-none border-0 bg-transparent px-0 py-1 text-base leading-6 outline-none placeholder:text-brand-muted"
+            className="m-0 block min-h-14 w-full field-sizing-content resize-none appearance-none rounded-none border-0 bg-transparent px-0 py-1 text-base leading-6 outline-none placeholder:text-brand-muted"
           />
         </div>
         {errors.addressLine !== undefined && (
@@ -46,7 +47,7 @@ export function SampleStepShipping({ values, errors, onChange }: ISampleStepProp
       </div>
       <WaitlistField id="deliveryNote" name="deliveryNote" label={delivery.deliveryNote} value={values.deliveryNote}
         onValueChange={(deliveryNote) => onChange({ deliveryNote })} onValueBlur={noop} error={errors.deliveryNote}
-        inputProps={{ autoComplete: "off", placeholder: delivery.deliveryNotePlaceholder }} />
+        inputProps={{ autoComplete: "off", maxLength: 200, placeholder: delivery.deliveryNotePlaceholder }} />
 
       <div className="mt-4">
         <SampleCourierOptions values={values} errors={errors} onChange={onChange} />

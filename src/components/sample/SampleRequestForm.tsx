@@ -146,7 +146,7 @@ export function SampleRequestForm() {
   const fee = Number(values.shippingFee);
   const isLast = screen === 5;
   const StepScreen = STEP_SCREENS[screen];
-  const buttonLabel = !isLast ? SAMPLE_COPY.continue : isPending ? SAMPLE_COPY.opening : formatPayButton(fee > 0 ? fee : 0);
+  const buttonLabel = !isLast ? SAMPLE_COPY.continue : isPending ? SAMPLE_COPY.opening : fee > 0 ? formatPayButton(fee) : SAMPLE_COPY.payShipping;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="mx-auto flex w-full max-w-[560px] flex-col gap-8">

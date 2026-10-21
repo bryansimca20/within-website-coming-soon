@@ -41,7 +41,7 @@ export function SampleIntro({ onContinue }: SampleIntroProps) {
       </motion.h1>
       <motion.div
         variants={rise}
-        className="mt-1 [--sample-box-w:72px] desk:col-start-1 desk:row-span-6 desk:row-start-1 desk:mt-0 desk:self-center desk:[--sample-box-w:116px]"
+        className="mt-1 [--sample-box-w:clamp(34px,calc((100dvh-480px)/4.95),72px)] desk:col-start-1 desk:row-span-6 desk:row-start-1 desk:mt-0 desk:self-center desk:[--sample-box-w:116px]"
       >
         <SampleBox3D width="var(--sample-box-w)" speed={-14} />
       </motion.div>

@@ -125,11 +125,11 @@ export function SampleCourierOptions({ values, errors, onChange }: ISampleStepPr
             className="relative flex min-h-14 cursor-pointer items-center justify-between gap-4 border border-brand-ink px-4 py-3 has-checked:bg-brand-ink has-checked:text-brand-mist has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-ink"
           >
             <input type="radio" name="courier" checked={key === selectedKey} onChange={() => onChange(choose(option))} className="absolute size-px opacity-0" />
-            <span className="flex flex-col">
+            <span className="flex min-w-0 flex-col">
               <span className="text-[15px] leading-5 font-semibold">{option.courierName} {option.serviceName}</span>
               <span className="text-[13px] leading-[18px] opacity-70">{option.etaLabel}</span>
             </span>
-            <span className="text-[15px] font-semibold tabular-nums">{formatRupiah(option.price)}</span>
+            <span className="shrink-0 text-[15px] font-semibold whitespace-nowrap tabular-nums">{formatRupiah(option.price)}</span>
           </motion.label>
         );
       })}

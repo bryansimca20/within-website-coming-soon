@@ -21,7 +21,8 @@ export function SampleStepGoal({ values, errors, onChange }: ISampleStepProps) {
           value={values.hydrationGoal} onChange={(hydrationGoal) => onChange({ hydrationGoal })} error={errors.hydrationGoal} />
         <SampleOtherReveal isOpen={values.hydrationGoal === "other"}>
           <WaitlistField id="hydrationGoalOther" name="hydrationGoalOther" label={training.hydrationGoalOther} value={values.hydrationGoalOther}
-            onValueChange={(hydrationGoalOther) => onChange({ hydrationGoalOther })} onValueBlur={noop} error={errors.hydrationGoalOther} />
+            onValueChange={(hydrationGoalOther) => onChange({ hydrationGoalOther })} onValueBlur={noop} error={errors.hydrationGoalOther}
+          inputProps={{ maxLength: 100 }} />
         </SampleOtherReveal>
       </div>
     </div>

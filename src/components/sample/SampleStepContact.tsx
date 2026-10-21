@@ -15,7 +15,7 @@ export function SampleStepContact({ values, errors, onChange }: ISampleStepProps
       <SampleStepHeading>{SAMPLE_COPY.headings.contact}</SampleStepHeading>
       <WaitlistField id="fullName" name="fullName" label={delivery.fullName} value={values.fullName}
         onValueChange={(fullName) => onChange({ fullName })} onValueBlur={noop} error={errors.fullName}
-        inputProps={{ autoComplete: "name", autoCapitalize: "words", placeholder: delivery.fullNamePlaceholder }} />
+        inputProps={{ autoComplete: "name", autoCapitalize: "words", maxLength: 100, placeholder: delivery.fullNamePlaceholder }} />
       <div>
         <WaitlistField id="email" name="email" label={delivery.email} value={values.email}
           onValueChange={(email) => onChange({ email })} onValueBlur={noop} error={errors.email}
