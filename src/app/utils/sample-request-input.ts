@@ -3,30 +3,37 @@ import { z } from "zod";
 import { type IAttribution, sanitizeRef, sanitizeUtm } from "./attribution";
 import { normalizeIndonesianPhone } from "./phone";
 import {
-  HYDRATION_GOAL,
-  type HydrationGoal,
-  MAIN_SPORT,
-  type MainSport,
+  HEARD_FROM,
+  type HeardFrom,
+  HOPE,
+  type Hope,
   SESSION_LENGTH,
   SESSIONS_PER_WEEK,
   type SessionLength,
   type SessionsPerWeek,
-  TRAIN_WHERE,
-  type TrainWhere,
+  TRAINING_TYPE,
+  type TrainingType,
+  WHY_REASON,
+  type WhyReason,
 } from "./sample-options";
 import { normalizeEmail, normalizeFullName, normalizeInstagramHandle } from "./subscriber-input";
 import { readFormField } from "./form-field";
 
 /** Raw, untrusted request values exactly as they arrive from the form. Every field is a string. */
 export interface ISampleRequestInput {
-  mainSport: string;
-  mainSportOther: string;
+  /** Comma-joined option keys, as every multi-select is carried in the form. */
+  trainingTypes: string;
+  trainingOther: string;
+  trainingPrimary: string;
+  runClub: string;
   sessionsPerWeek: string;
   sessionLength: string;
-  trainWhere: string;
-  hydrationGoal: string;
-  hydrationGoalOther: string;
-  runClub: string;
+  heardFrom: string;
+  heardFromOther: string;
+  whyReasons: string;
+  whyOther: string;
+  hopes: string;
+  hopesOther: string;
   fullName: string;
   email: string;
   whatsapp: string;
@@ -58,14 +65,18 @@ export type SampleRequestField = keyof ISampleRequestInput;
 
 /** A validated, normalized request, ready to store. */
 export interface ISampleRequestValues {
-  mainSport: MainSport;
-  mainSportOther: string | null;
+  trainingTypes: TrainingType[];
+  trainingOther: string | null;
+  trainingPrimary: TrainingType;
+  runClub: string | null;
   sessionsPerWeek: SessionsPerWeek;
   sessionLength: SessionLength;
-  trainWhere: TrainWhere;
-  hydrationGoal: HydrationGoal;
-  hydrationGoalOther: string | null;
-  runClub: string | null;
+  heardFrom: HeardFrom;
+  heardFromOther: string | null;
+  whyReasons: WhyReason[];
+  whyOther: string | null;
+  hopes: Hope[];
+  hopesOther: string | null;
   fullName: string;
   firstName: string;
   lastName: string | null;
@@ -94,14 +105,18 @@ export type ParsedSampleRequest =
   | { ok: false; field: SampleRequestField; message: string };
 
 export const EMPTY_SAMPLE_REQUEST_INPUT: ISampleRequestInput = {
-  mainSport: "",
-  mainSportOther: "",
+  trainingTypes: "",
+  trainingOther: "",
+  trainingPrimary: "",
+  runClub: "",
   sessionsPerWeek: "",
   sessionLength: "",
-  trainWhere: "",
-  hydrationGoal: "",
-  hydrationGoalOther: "",
-  runClub: "",
+  heardFrom: "",
+  heardFromOther: "",
+  whyReasons: "",
+  whyOther: "",
+  hopes: "",
+  hopesOther: "",
   fullName: "",
   email: "",
   whatsapp: "",
@@ -131,14 +146,18 @@ export const EMPTY_SAMPLE_REQUEST_INPUT: ISampleRequestInput = {
 
 /** Field-level error copy, shared by the server validator and the form so they never drift. */
 export const SAMPLE_FIELD_ERROR: Record<SampleRequestField, string> = {
-  mainSport: "Pick your main sport.",
-  mainSportOther: "Tell us which sport.",
+  trainingTypes: "Pick how you train.",
+  trainingOther: "Tell us how you train.",
+  trainingPrimary: "Pick the one you do most.",
+  runClub: "Keep the club name under 200 characters.",
   sessionsPerWeek: "Pick how often you train.",
   sessionLength: "Pick a typical session length.",
-  trainWhere: "Pick where you usually train.",
-  hydrationGoal: "Pick what you want most from hydration.",
-  hydrationGoalOther: "Tell us what you want from hydration.",
-  runClub: "Keep the club name under 200 characters.",
+  heardFrom: "Pick how you heard about us.",
+  heardFromOther: "Tell us where you heard about us.",
+  whyReasons: "Pick at least one reason.",
+  whyOther: "Tell us your reason.",
+  hopes: "Pick what you hope it does.",
+  hopesOther: "Tell us what you hope for.",
   fullName: "Add your name.",
   email: "Invalid email address.",
   whatsapp: "Add an Indonesian mobile number, like 0812 3456 7890.",
@@ -172,9 +191,9 @@ export type SampleStep = 1 | 2 | 3 | 4 | 5;
 /** The fields each step of the form owns, in display order. */
 export const SAMPLE_STEP_FIELDS: Record<SampleStep, SampleRequestField[]> = {
   1: ["fullName", "email", "instagramHandle", "consent", "willShare"],
-  2: ["mainSport", "mainSportOther", "runClub"],
-  3: ["sessionsPerWeek", "sessionLength", "trainWhere"],
-  4: ["hydrationGoal", "hydrationGoalOther"],
+  2: ["trainingTypes", "trainingOther", "trainingPrimary", "runClub"],
+  3: ["sessionsPerWeek", "sessionLength"],
+  4: ["heardFrom", "heardFromOther", "whyReasons", "whyOther", "hopes", "hopesOther"],
   5: [
     "areaId",
     "areaName",
@@ -204,16 +223,37 @@ const optionalText = (max: number) =>
 
 const requiredText = z.string().trim().min(1).max(200);
 
+/** Comma-joined option keys from a multi-select, empties dropped. Duplicates are kept so they can be refused. */
+export function splitChoices(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((key) => key.trim())
+    .filter((key) => key !== "");
+}
+
+/** A multi-select: at least one key, every key from `set`, none twice. */
+export function multiChoice<T extends string>(set: readonly T[]) {
+  return z
+    .string()
+    .transform(splitChoices)
+    .refine((keys) => keys.length > 0 && new Set(keys).size === keys.length && keys.every((key) => (set as readonly string[]).includes(key)))
+    .transform((keys) => keys as T[]);
+}
+
 /** Zod carries the shape rules; the normalizers from the waitlist carry email, name and handle. */
 const sampleRequestShape = z.object({
-    mainSport: z.enum(MAIN_SPORT),
-    mainSportOther: optionalText(100),
+    trainingTypes: multiChoice(TRAINING_TYPE),
+    trainingOther: optionalText(100),
+    trainingPrimary: z.string().trim(),
+    runClub: optionalText(200),
     sessionsPerWeek: z.enum(SESSIONS_PER_WEEK),
     sessionLength: z.enum(SESSION_LENGTH),
-    trainWhere: z.enum(TRAIN_WHERE),
-    hydrationGoal: z.enum(HYDRATION_GOAL),
-    hydrationGoalOther: optionalText(100),
-    runClub: optionalText(200),
+    heardFrom: z.enum(HEARD_FROM),
+    heardFromOther: optionalText(100),
+    whyReasons: multiChoice(WHY_REASON),
+    whyOther: optionalText(100),
+    hopes: multiChoice(HOPE),
+    hopesOther: optionalText(100),
     fullName: z.string().transform((value, context) => {
       const name = normalizeFullName(value);
       if (name === null) {
@@ -275,25 +315,44 @@ const sampleRequestShape = z.object({
     utmTerm: z.string(),
 });
 
-/** The "other" free-text fields are required only when their parent option is `other`. */
-function otherFieldIssues(value: {
-  mainSport?: string;
-  mainSportOther?: string | null;
-  hydrationGoal?: string;
-  hydrationGoalOther?: string | null;
-}): Array<{ field: SampleRequestField; message: string }> {
-  const issues: Array<{ field: SampleRequestField; message: string }> = [];
-  if (value.mainSport === "other" && (value.mainSportOther ?? null) === null) {
-    issues.push({ field: "mainSportOther", message: SAMPLE_FIELD_ERROR.mainSportOther });
+type Issue = { field: SampleRequestField; message: string };
+
+/** Answers a single key or key list into whether it includes `other`. */
+function hasOther(value: string | string[] | undefined): boolean {
+  return Array.isArray(value) ? value.includes("other") : value === "other";
+}
+
+/** Cross-field rules: "Other" needs its text, and two or more ways of training need a primary that is one of them. */
+function crossFieldIssues(value: {
+  trainingTypes?: string[];
+  trainingOther?: string | null;
+  trainingPrimary?: string;
+  heardFrom?: string;
+  heardFromOther?: string | null;
+  whyReasons?: string[];
+  whyOther?: string | null;
+  hopes?: string[];
+  hopesOther?: string | null;
+}): Issue[] {
+  const issues: Issue[] = [];
+  const pairs: Array<[string | string[] | undefined, string | null | undefined, SampleRequestField]> = [
+    [value.trainingTypes, value.trainingOther, "trainingOther"],
+    [value.heardFrom, value.heardFromOther, "heardFromOther"],
+    [value.whyReasons, value.whyOther, "whyOther"],
+    [value.hopes, value.hopesOther, "hopesOther"],
+  ];
+  for (const [answer, text, field] of pairs) {
+    if (hasOther(answer) && (text ?? null) === null) issues.push({ field, message: SAMPLE_FIELD_ERROR[field] });
   }
-  if (value.hydrationGoal === "other" && (value.hydrationGoalOther ?? null) === null) {
-    issues.push({ field: "hydrationGoalOther", message: SAMPLE_FIELD_ERROR.hydrationGoalOther });
+  const types = value.trainingTypes;
+  if (types !== undefined && types.length > 1 && !types.includes(value.trainingPrimary ?? "")) {
+    issues.push({ field: "trainingPrimary", message: SAMPLE_FIELD_ERROR.trainingPrimary });
   }
   return issues;
 }
 
 const sampleRequestSchema = sampleRequestShape.superRefine((value, context) => {
-  for (const issue of otherFieldIssues(value)) {
+  for (const issue of crossFieldIssues(value)) {
     context.addIssue({ code: "custom", path: [issue.field], message: issue.message });
   }
 });
@@ -339,14 +398,18 @@ export function parseSampleRequestInput(input: ISampleRequestInput): ParsedSampl
   return {
     ok: true,
     value: {
-      mainSport: data.mainSport,
-      mainSportOther: data.mainSport === "other" ? data.mainSportOther : null,
+      trainingTypes: data.trainingTypes,
+      trainingOther: data.trainingTypes.includes("other") ? data.trainingOther : null,
+      trainingPrimary: data.trainingTypes.length === 1 ? data.trainingTypes[0] : (data.trainingPrimary as TrainingType),
+      runClub: data.runClub,
       sessionsPerWeek: data.sessionsPerWeek,
       sessionLength: data.sessionLength,
-      trainWhere: data.trainWhere,
-      hydrationGoal: data.hydrationGoal,
-      hydrationGoalOther: data.hydrationGoal === "other" ? data.hydrationGoalOther : null,
-      runClub: data.runClub,
+      heardFrom: data.heardFrom,
+      heardFromOther: data.heardFrom === "other" ? data.heardFromOther : null,
+      whyReasons: data.whyReasons,
+      whyOther: data.whyReasons.includes("other") ? data.whyOther : null,
+      hopes: data.hopes,
+      hopesOther: data.hopes.includes("other") ? data.hopesOther : null,
       fullName: data.fullName.fullName,
       firstName: data.fullName.firstName,
       lastName: data.fullName.lastName,
@@ -392,7 +455,7 @@ export function validateSampleStep(
   const errors: Partial<Record<SampleRequestField, string>> = {};
 
   if (result.success) {
-    for (const issue of otherFieldIssues(result.data)) {
+    for (const issue of crossFieldIssues(result.data)) {
       if (fields.includes(issue.field)) errors[issue.field] = issue.message;
     }
     return errors;

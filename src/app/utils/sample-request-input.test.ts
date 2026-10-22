@@ -11,14 +11,18 @@ import {
 } from "./sample-request-input";
 
 const VALID_INPUT: ISampleRequestInput = {
-  mainSport: "running",
-  mainSportOther: "",
+  trainingTypes: "running,gym",
+  trainingOther: "",
+  trainingPrimary: "running",
+  runClub: "Senayan Runners",
   sessionsPerWeek: "three_to_four",
   sessionLength: "from_45_to_90",
-  trainWhere: "outdoors",
-  hydrationGoal: "cramps",
-  hydrationGoalOther: "",
-  runClub: "Senayan Runners",
+  heardFrom: "instagram",
+  heardFromOther: "",
+  whyReasons: "sweat_heat,no_sugar",
+  whyOther: "",
+  hopes: "less_cramping,felt_hydrated",
+  hopesOther: "",
   fullName: "Fanny Lie",
   email: "Fanny@Example.com",
   whatsapp: "0812 3456 7890",
@@ -63,21 +67,35 @@ describe("parseSampleRequestInput", () => {
     expect(parsed.value.shippingFee).toBe(10000);
     expect(parsed.value.willShare).toBe(true);
     expect(parsed.value.attribution.ref).toBe("fanny");
-    expect(parsed.value.mainSportOther).toBeNull();
     expect(parsed.value.runClub).toBe("Senayan Runners");
+    expect(parsed.value.trainingTypes).toEqual(["running", "gym"]);
+    expect(parsed.value.trainingPrimary).toBe("running");
+    expect(parsed.value.whyReasons).toEqual(["sweat_heat", "no_sugar"]);
+    expect(parsed.value.hopes).toEqual(["less_cramping", "felt_hydrated"]);
+    expect(parsed.value.trainingOther).toBeNull();
   });
 
-  test("requires the free-text sport when the sport is other", () => {
-    const parsed = parseWith({ mainSport: "other", mainSportOther: "" });
+  test("primary defaults to the only pick", () => {
+    const parsed = parseWith({ trainingTypes: "padel", trainingPrimary: "" });
 
-    expect(parsed).toMatchObject({ ok: false, field: "mainSportOther" });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.trainingPrimary).toBe("padel");
   });
 
-  test("requires the free-text goal when the goal is other", () => {
-    expect(parseWith({ hydrationGoal: "other", hydrationGoalOther: " " })).toMatchObject({
-      ok: false,
-      field: "hydrationGoalOther",
-    });
+  test("rejects duplicate or unknown keys", () => {
+    expect(parseWith({ trainingTypes: "running,running" })).toMatchObject({ ok: false, field: "trainingTypes" });
+    expect(parseWith({ trainingTypes: "running,skiing" })).toMatchObject({ ok: false, field: "trainingTypes" });
+    expect(parseWith({ hopes: "more_energy,flying" })).toMatchObject({ ok: false, field: "hopes" });
+  });
+
+  test("Other needs its text, up to 100 characters", () => {
+    expect(parseWith({ trainingTypes: "other", trainingPrimary: "", trainingOther: "" })).toMatchObject({ ok: false, field: "trainingOther" });
+    expect(parseWith({ heardFrom: "other", heardFromOther: " " })).toMatchObject({ ok: false, field: "heardFromOther" });
+    expect(parseWith({ whyReasons: "other", whyOther: "" })).toMatchObject({ ok: false, field: "whyOther" });
+    expect(parseWith({ hopes: "other", hopesOther: "" })).toMatchObject({ ok: false, field: "hopesOther" });
+    expect(parseWith({ hopes: "other", hopesOther: "x".repeat(101) })).toMatchObject({ ok: false, field: "hopesOther" });
+    expect(parseWith({ hopes: "other", hopesOther: "Sleep better" }).ok).toBe(true);
   });
 
   test("requires consent", () => {
@@ -152,17 +170,23 @@ describe("validateSampleStep", () => {
     ]);
   });
 
-  test("step 2 needs a sport, and Other needs its text", () => {
-    expect(validateSampleStep(2, EMPTY_SAMPLE_REQUEST_INPUT)).toEqual({ mainSport: SAMPLE_FIELD_ERROR.mainSport });
-    expect(validateSampleStep(2, { ...VALID_INPUT, mainSport: "other", mainSportOther: "" })).toEqual({
-      mainSportOther: SAMPLE_FIELD_ERROR.mainSportOther,
-    });
+  test("step 2 needs at least one way of training", () => {
+    expect(validateSampleStep(2, EMPTY_SAMPLE_REQUEST_INPUT)).toEqual({ trainingTypes: SAMPLE_FIELD_ERROR.trainingTypes });
   });
 
-  test("step 4 Other needs its text", () => {
-    expect(validateSampleStep(4, { ...VALID_INPUT, hydrationGoal: "other", hydrationGoalOther: "" })).toEqual({
-      hydrationGoalOther: SAMPLE_FIELD_ERROR.hydrationGoalOther,
-    });
+  test("two picks need a primary that is one of them", () => {
+    const two = { ...VALID_INPUT, trainingTypes: "running,gym" };
+    expect(validateSampleStep(2, { ...two, trainingPrimary: "" })).toEqual({ trainingPrimary: SAMPLE_FIELD_ERROR.trainingPrimary });
+    expect(validateSampleStep(2, { ...two, trainingPrimary: "cycling" })).toEqual({ trainingPrimary: SAMPLE_FIELD_ERROR.trainingPrimary });
+    expect(validateSampleStep(2, { ...two, trainingPrimary: "gym" })).toEqual({});
+  });
+
+  test("step 3 needs frequency and length", () => {
+    expect(Object.keys(validateSampleStep(3, EMPTY_SAMPLE_REQUEST_INPUT)).sort()).toEqual(["sessionLength", "sessionsPerWeek"]);
+  });
+
+  test("step 4 needs heard-from, a reason and a hope", () => {
+    expect(Object.keys(validateSampleStep(4, EMPTY_SAMPLE_REQUEST_INPUT)).sort()).toEqual(["heardFrom", "hopes", "whyReasons"]);
   });
 
   test("step 5 owns the phone", () => {

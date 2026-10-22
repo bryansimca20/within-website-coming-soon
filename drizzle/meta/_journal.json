@@ -15,6 +15,13 @@
       "when": 1792479352201,
       "tag": "0001_seed_batch_01",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792656039040,
+      "tag": "0002_training_questions",
+      "breakpoints": true
     }
   ]
 }

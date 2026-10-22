@@ -3,11 +3,12 @@ import { describe, expect, test } from "vitest";
 import {
   FEEDBACK_FELT,
   FEEDBACK_SESSION,
-  HYDRATION_GOAL,
-  MAIN_SPORT,
+  HEARD_FROM,
+  HOPE,
   SESSION_LENGTH,
   SESSIONS_PER_WEEK,
-  TRAIN_WHERE,
+  TRAINING_TYPE,
+  WHY_REASON,
   WOULD_REACH_AGAIN,
 } from "@/app/utils/sample-options";
 
@@ -15,11 +16,12 @@ import { formatPayButton, formatRupiah, OPTION_LABEL } from "./sample-copy";
 
 describe("OPTION_LABEL", () => {
   test.each([
-    ["mainSport", MAIN_SPORT],
+    ["trainingType", TRAINING_TYPE],
     ["sessionsPerWeek", SESSIONS_PER_WEEK],
     ["sessionLength", SESSION_LENGTH],
-    ["trainWhere", TRAIN_WHERE],
-    ["hydrationGoal", HYDRATION_GOAL],
+    ["heardFrom", HEARD_FROM],
+    ["whyReason", WHY_REASON],
+    ["hope", HOPE],
     ["feedbackSession", FEEDBACK_SESSION],
     ["felt", FEEDBACK_FELT],
     ["wouldReachAgain", WOULD_REACH_AGAIN],

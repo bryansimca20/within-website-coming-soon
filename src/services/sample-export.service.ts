@@ -42,6 +42,15 @@ export const SAMPLE_CSV_COLUMNS = [
   "hydration_goal",
   "hydration_goal_other",
   "run_club",
+  "training_types",
+  "training_other",
+  "training_primary",
+  "heard_from",
+  "heard_from_other",
+  "why_reasons",
+  "why_other",
+  "hopes",
+  "hopes_other",
   "will_share",
   "created_at",
   "paid_at",
@@ -73,6 +82,11 @@ function cell(value: string | number | boolean | Date | null | undefined): strin
   const text = typeof value === "string" && FORMULA_START.test(raw) ? `'${raw}` : raw;
 
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** A multi-select answer as one cell: option keys joined with "; ", empty when absent. */
+function joined(keys: string[] | null | undefined): string {
+  return keys === null || keys === undefined ? "" : keys.join("; ");
 }
 
 /** Derives the intent group label, or empty when there is no feedback. */
@@ -117,6 +131,15 @@ function rowValues({ request, shipment, feedback }: IExportRow): string[] {
     request.hydrationGoal,
     request.hydrationGoalOther,
     request.runClub,
+    joined(request.trainingTypes),
+    request.trainingOther,
+    request.trainingPrimary,
+    request.heardFrom,
+    request.heardFromOther,
+    joined(request.whyReasons),
+    request.whyOther,
+    joined(request.hopes),
+    request.hopesOther,
     request.willShare,
     request.createdAt,
     request.paidAt,
@@ -127,7 +150,7 @@ function rowValues({ request, shipment, feedback }: IExportRow): string[] {
     feedback?.sessionType,
     feedback?.sessionLength,
     feedback?.tasteRating,
-    feedback?.felt,
+    joined(feedback?.felt),
     feedback?.feltOther,
     feedback?.wouldReachAgain,
     intentOf(feedback),

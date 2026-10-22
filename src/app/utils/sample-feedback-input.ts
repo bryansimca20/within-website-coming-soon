@@ -12,6 +12,7 @@ import {
   WOULD_REACH_AGAIN,
   type WouldReachAgain,
 } from "./sample-options";
+import { multiChoice } from "./sample-request-input";
 import { normalizeEmail } from "./subscriber-input";
 
 /** Raw, untrusted check-in values as they arrive from the form. */
@@ -36,7 +37,7 @@ export interface ISampleFeedbackValues {
   sessionType: FeedbackSession;
   sessionLength: SessionLength;
   tasteRating: number;
-  felt: FeedbackFelt;
+  felt: FeedbackFelt[];
   feltOther: string | null;
   wouldReachAgain: WouldReachAgain;
   comment: string | null;
@@ -96,7 +97,7 @@ const feedbackSchema = z.object({
     .regex(/^\d+$/)
     .transform(Number)
     .pipe(z.number().int().min(TASTE_MIN).max(TASTE_MAX)),
-  felt: z.enum(FEEDBACK_FELT),
+  felt: multiChoice(FEEDBACK_FELT),
   feltOther: z
     .string()
     .trim()
@@ -142,7 +143,7 @@ export function parseSampleFeedbackInput(input: ISampleFeedbackInput): ParsedSam
     return { ok: false, field: "email", message: FEEDBACK_FIELD_ERROR.email };
   }
 
-  if (data.felt === "other" && data.feltOther === null) {
+  if (data.felt.includes("other") && data.feltOther === null) {
     return { ok: false, field: "feltOther", message: FEEDBACK_FIELD_ERROR.feltOther };
   }
 
@@ -155,7 +156,7 @@ export function parseSampleFeedbackInput(input: ISampleFeedbackInput): ParsedSam
       sessionLength: data.sessionLength,
       tasteRating: data.tasteRating,
       felt: data.felt,
-      feltOther: data.felt === "other" ? data.feltOther : null,
+      feltOther: data.felt.includes("other") ? data.feltOther : null,
       wouldReachAgain: data.wouldReachAgain,
       comment: data.comment,
     },

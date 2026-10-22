@@ -29,7 +29,7 @@ function feedback(patch: Partial<ISampleFeedbackValues> = {}): ISampleFeedbackVa
     sessionType: "long_run",
     sessionLength: "over_90",
     tasteRating: 4,
-    felt: "less_cramping",
+    felt: ["less_cramping"],
     feltOther: null,
     wouldReachAgain: "yes_definitely",
     comment: "Salty in a good way.",

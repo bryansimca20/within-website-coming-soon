@@ -58,6 +58,23 @@ describe("parseSampleFeedbackInput", () => {
     expect(parseWith({ felt: "other", feltOther: "" })).toMatchObject({ ok: false, field: "feltOther" });
   });
 
+  test("felt accepts several answers", () => {
+    const parsed = parseWith({ felt: "more_energy,felt_hydrated" });
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.felt).toEqual(["more_energy", "felt_hydrated"]);
+  });
+
+  test("felt needs at least one known answer", () => {
+    expect(parseWith({ felt: "" })).toMatchObject({ ok: false, field: "felt" });
+    expect(parseWith({ felt: "more_energy,flying" })).toMatchObject({ ok: false, field: "felt" });
+  });
+
+  test("requires the free text when other is one of several", () => {
+    expect(parseWith({ felt: "more_energy,other", feltOther: "" })).toMatchObject({ ok: false, field: "feltOther" });
+  });
+
   test("rejects a comment over 1000 characters", () => {
     expect(parseWith({ comment: "x".repeat(1001) })).toMatchObject({ ok: false, field: "comment" });
   });

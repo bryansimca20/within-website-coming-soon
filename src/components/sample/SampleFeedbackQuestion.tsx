@@ -2,7 +2,10 @@ import type { ISampleFeedbackInput, SampleFeedbackField } from "@/app/utils/samp
 import { FEEDBACK_FELT, FEEDBACK_SESSION, SESSION_LENGTH, WOULD_REACH_AGAIN } from "@/app/utils/sample-options";
 import { WaitlistField } from "@/components/waitlist/WaitlistField";
 
+import { splitChoices } from "@/app/utils/sample-request-input";
+
 import { SampleChoiceGroup } from "./SampleChoiceGroup";
+import { SampleMultiChoiceGroup } from "./SampleMultiChoiceGroup";
 import { OPTION_LABEL, SAMPLE_COPY } from "./utils/sample-copy";
 
 const { feedback: copy } = SAMPLE_COPY;
@@ -42,8 +45,8 @@ export function SampleFeedbackQuestion({ field, values, onChange, error }: Sampl
   if (field === "felt") {
     return (
       <div className="flex flex-col gap-4">
-        <SampleChoiceGroup name="felt" legend={copy.questions.felt} options={options(FEEDBACK_FELT, OPTION_LABEL.felt)} value={values.felt} onChange={(felt) => onChange({ felt })} error={values.felt === "other" ? undefined : error} />
-        {values.felt === "other" && (
+        <SampleMultiChoiceGroup name="felt" legend={copy.questions.felt} options={options(FEEDBACK_FELT, OPTION_LABEL.felt)} value={values.felt} onChange={(felt) => onChange({ felt })} error={splitChoices(values.felt).includes("other") && values.feltOther.trim() === "" ? undefined : error} />
+        {splitChoices(values.felt).includes("other") && (
           <WaitlistField id="feltOther" name="feltOther" label={copy.questions.feltOther} value={values.feltOther} onValueChange={(feltOther) => onChange({ feltOther })} onValueBlur={() => undefined} error={error} />
         )}
       </div>

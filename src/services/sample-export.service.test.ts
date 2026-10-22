@@ -43,7 +43,7 @@ describe("buildSampleCsv", () => {
         sessionType: "long_run",
         sessionLength: "over_90",
         tasteRating: 5,
-        felt: "less_cramping",
+        felt: ["less_cramping", "felt_hydrated"],
         feltOther: null,
         wouldReachAgain: "yes_definitely",
         comment: 'Salty, in a "good" way',
@@ -57,6 +57,17 @@ describe("buildSampleCsv", () => {
     const columns = header.split(",");
 
     expect(row).toContain('"Salty, in a ""good"" way"');
+    expect(row.split(",")[columns.indexOf("training_types")]).toBe("running; hyrox");
+    expect(row.split(",")[columns.indexOf("training_primary")]).toBe("running");
+    expect(row.split(",")[columns.indexOf("why_reasons")]).toBe("sweat_heat; no_sugar");
+    expect(row.split(",")[columns.indexOf("hopes")]).toBe("less_cramping; felt_hydrated");
+    expect(row.split(",")[columns.indexOf("felt")]).toBe("less_cramping; felt_hydrated");
+
+    const oldForm = { ...request, trainingTypes: null, trainingPrimary: null, heardFrom: null, whyReasons: null, hopes: null, mainSport: "running", trainWhere: "outdoors" };
+    const oldRow = buildSampleCsv([{ request: oldForm, shipment: null, feedback: null }]).slice(1).split("\r\n")[1].split(",");
+    expect(oldRow[columns.indexOf("main_sport")]).toBe("running");
+    expect(oldRow[columns.indexOf("training_types")]).toBe("");
+    expect(oldRow[columns.indexOf("hopes")]).toBe("");
     expect(row.split(",")[columns.indexOf("box")]).toBe("B01-001");
     expect(row).toContain(",fanny,");
     expect(row).toContain(",hot,");

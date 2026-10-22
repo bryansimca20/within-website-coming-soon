@@ -12,6 +12,8 @@ interface SampleChoiceGroupProps<T extends string> {
   isScale?: boolean;
   /** Keeps the legend for screen readers only, when a heading above already asks the question. */
   isLegendHidden?: boolean;
+  /** One full-width chip per row, for answers that read as sentences. */
+  isStacked?: boolean;
 }
 
 /** Single-choice question as chips: native radios, visually hidden, so keyboard and screen readers work as usual. */
@@ -24,20 +26,21 @@ export function SampleChoiceGroup<T extends string>({
   error,
   isScale = false,
   isLegendHidden = false,
+  isStacked = false,
 }: SampleChoiceGroupProps<T>) {
   const errorId = `${name}-error`;
 
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-2.5 border-0 p-0" aria-describedby={error === undefined ? undefined : errorId}>
       <legend className={cn("mb-2.5 p-0 text-[15px] leading-[22px] font-semibold", isLegendHidden && "sr-only")}>{legend}</legend>
-      <div className={cn("flex flex-wrap gap-2", isScale && "grid grid-cols-5")}>
+      <div className={cn("flex flex-wrap gap-2", isScale && "grid grid-cols-5", isStacked && "flex-col flex-nowrap")}>
         {options.map((option) => {
           const id = `${name}-${option.value}`;
           return (
             <label
               key={option.value}
               htmlFor={id}
-              className="relative flex min-h-11 cursor-pointer items-center justify-center border border-brand-ink px-4 text-[15px] leading-5 transition-[background-color,color,transform] duration-150 ease-brand active:scale-[0.97] has-checked:bg-brand-ink has-checked:text-brand-mist has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-ink motion-reduce:transition-none"
+              className={cn("relative flex min-h-11 cursor-pointer items-center border", isStacked ? "justify-start py-2.5 text-left" : "justify-center", "border-brand-ink px-4 text-[15px] leading-5 transition-[background-color,color,transform] duration-150 ease-brand active:scale-[0.97] has-checked:bg-brand-ink has-checked:text-brand-mist has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-ink motion-reduce:transition-none")}
             >
               <input
                 id={id}

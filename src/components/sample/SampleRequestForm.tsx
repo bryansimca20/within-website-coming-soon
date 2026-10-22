@@ -21,11 +21,11 @@ import { cn } from "@/lib/utils";
 import { SampleIntro } from "./SampleIntro";
 import { SampleNotice } from "./SampleNotice";
 import { SampleStepContact } from "./SampleStepContact";
-import { SampleStepGoal } from "./SampleStepGoal";
 import { SampleStepIndicator } from "./SampleStepIndicator";
 import { SampleStepSessions } from "./SampleStepSessions";
 import { SampleStepShipping } from "./SampleStepShipping";
-import { SampleStepSport } from "./SampleStepSport";
+import { SampleStepTraining } from "./SampleStepTraining";
+import { SampleStepWithin } from "./SampleStepWithin";
 import { readStoredAttribution, storeAttribution } from "./utils/attribution-storage";
 import { SampleEvent, trackSampleEvent } from "./utils/sample-analytics";
 import { formatPayButton, SAMPLE_COPY } from "./utils/sample-copy";
@@ -40,9 +40,9 @@ const ATTRIBUTION_KEYS = Object.keys(ATTRIBUTION_FIELDS) as Array<keyof IAttribu
 const STEPS: SampleStep[] = [1, 2, 3, 4, 5];
 const STEP_SCREENS: Record<SampleStep, (props: ISampleStepProps) => JSX.Element> = {
   1: SampleStepContact,
-  2: SampleStepSport,
+  2: SampleStepTraining,
   3: SampleStepSessions,
-  4: SampleStepGoal,
+  4: SampleStepWithin,
   5: SampleStepShipping,
 };
 

@@ -1,11 +1,12 @@
 import type {
   FeedbackFelt,
   FeedbackSession,
-  HydrationGoal,
-  MainSport,
+  HeardFrom,
+  Hope,
   SessionLength,
   SessionsPerWeek,
-  TrainWhere,
+  TrainingType,
+  WhyReason,
   WouldReachAgain,
 } from "@/app/utils/sample-options";
 
@@ -27,24 +28,47 @@ export function choiceOptions<T extends string>(keys: readonly T[], labels: Reco
 
 /** Answer labels per option set, keyed by the stored option key. */
 export const OPTION_LABEL: {
-  mainSport: Record<MainSport, string>;
+  trainingType: Record<TrainingType, string>;
   sessionsPerWeek: Record<SessionsPerWeek, string>;
   sessionLength: Record<SessionLength, string>;
-  trainWhere: Record<TrainWhere, string>;
-  hydrationGoal: Record<HydrationGoal, string>;
+  heardFrom: Record<HeardFrom, string>;
+  whyReason: Record<WhyReason, string>;
+  hope: Record<Hope, string>;
   feedbackSession: Record<FeedbackSession, string>;
   felt: Record<FeedbackFelt, string>;
   wouldReachAgain: Record<WouldReachAgain, string>;
 } = {
-  mainSport: { running: "Running", cycling: "Cycling", gym: "Gym", padel: "Padel", other: "Other" },
+  trainingType: {
+    running: "Running",
+    hyrox: "Hyrox / hybrid",
+    gym: "Gym / strength",
+    cycling: "Cycling",
+    padel: "Padel",
+    other: "Other",
+  },
   sessionsPerWeek: { one_to_two: "1 to 2", three_to_four: "3 to 4", five_plus: "5+" },
   sessionLength: { under_45: "Under 45 min", from_45_to_90: "45 to 90 min", over_90: "90+ min" },
-  trainWhere: { outdoors: "Mostly outdoors", mix: "A mix", indoors: "Mostly indoors" },
-  hydrationGoal: {
-    energy: "More energy",
-    cramps: "Fewer cramps",
-    recovery: "Better recovery",
-    hydration: "Just staying hydrated",
+  heardFrom: {
+    friend: "A friend or someone I train with",
+    founding_member: "A WITHIN founding member",
+    instagram: "Instagram",
+    community: "My club, crew or community",
+    other: "Other",
+  },
+  whyReason: {
+    sweat_heat: "I sweat a lot in the heat",
+    cramps_fade: "I get cramps or fade on long sessions",
+    current_drink: "My current drink doesn't work well enough",
+    no_sugar: "I want something without sugar",
+    recommended: "Someone I trust recommended it",
+    local_brand: "I like trying new local brands",
+    other: "Other",
+  },
+  hope: {
+    more_energy: "More energy",
+    less_cramping: "Fewer cramps",
+    faster_recovery: "Faster recovery",
+    felt_hydrated: "Feel properly hydrated",
     other: "Other",
   },
   feedbackSession: { long_run: "Long run", short_run: "Short run", gym: "Gym", padel: "Padel", other: "Other" },
@@ -52,6 +76,7 @@ export const OPTION_LABEL: {
     more_energy: "More energy",
     less_cramping: "Less cramping",
     faster_recovery: "Faster recovery",
+    felt_hydrated: "Felt properly hydrated",
     no_difference: "No difference",
     other: "Other",
   },
@@ -75,13 +100,13 @@ export const SAMPLE_COPY = {
     cta: "Claim my samples",
     note: "Takes about 2 minutes. You see the shipping cost before you pay.",
   },
-  steps: ["About you", "Your sport", "Your sessions", "Your goal", "Shipping"] as const,
+  steps: ["About you", "Your training", "Your sessions", "You and WITHIN", "Shipping"] as const,
   stepCounter: (step: number) => `Step ${step} of 5`,
   headings: {
     contact: "Who are the samples for?",
-    sport: "What do you train for?",
-    sessions: "How do you train?",
-    goal: "What do you want most from your hydration?",
+    training: "How do you train?",
+    sessions: "How much do you train?",
+    within: "What brings you to WITHIN?",
     shipping: "Where should we send it?",
   },
   continue: "Continue",
@@ -89,15 +114,16 @@ export const SAMPLE_COPY = {
   opening: "Opening payment",
   payShipping: "Pay shipping",
   training: {
-    mainSport: "Main sport",
-    mainSportOther: "Which sport?",
-    sessionsPerWeek: "Sessions per week",
-    sessionLength: "Typical session length",
-    trainWhere: "Where you usually train",
-    hydrationGoal: "What you want most from your hydration",
-    hydrationGoalOther: "Tell us more",
-    runClub: "Run club or community (optional)",
-    runClubPlaceholder: "Club name",
+    trainingTypes: "Pick all that apply.",
+    trainingPrimary: "Which do you do most?",
+    runClub: "Club, crew or community (optional)",
+    runClubPlaceholder: "Club or crew name",
+    sessionsPerWeek: "How many times a week do you train, all together?",
+    sessionLength: "How long is a typical session?",
+    heardFrom: "How did you hear about us?",
+    whyReasons: "Why do you want to try it? Pick all that apply.",
+    hopes: "What do you hope it does for you? Pick all that apply.",
+    other: "Tell us more",
   },
   delivery: {
     fullName: "Name",
@@ -171,7 +197,7 @@ export const SAMPLE_COPY = {
       sessionType: "What session did you take it on?",
       sessionLength: "How long was it?",
       tasteRating: "How did it taste?",
-      felt: "How did you feel during and after?",
+      felt: "How did you feel during and after? Pick all that apply.",
       feltOther: "Tell us more",
       wouldReachAgain: "Would you reach for it again on your next long or hot session?",
       comment: "Anything you'd like to tell us? (optional)",
