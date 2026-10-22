@@ -9,7 +9,8 @@ import type { ISampleStepProps } from "./utils/sample-form-types";
 
 const { delivery } = SAMPLE_COPY;
 
-const MIN_QUERY = 3;
+/** Indonesian postal codes are five digits; searching on the full code returns the right area. */
+const MIN_QUERY = 5;
 const DEBOUNCE_MS = 400;
 
 /** Area autocomplete: type three characters, pause, pick one. A pick fills the five address fields. */
@@ -99,14 +100,16 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
     <div>
       <div className={error === undefined ? "border-b border-brand-muted pt-2 pb-1.5" : "border-b-2 border-brand-error pt-2 pb-[5px]"}>
         <label htmlFor={inputId} className="text-[13px] leading-[18px] text-brand-muted">
-          {delivery.area}
+          {delivery.postalCode}
         </label>
         <input
           id={inputId}
           value={query}
-          onChange={(event) => setQuery(event.currentTarget.value)}
+          onChange={(event) => setQuery(event.currentTarget.value.replace(/\D/g, "").slice(0, 5))}
           placeholder={delivery.areaPlaceholder}
-          autoComplete="off"
+          inputMode="numeric"
+          autoComplete="postal-code"
+          maxLength={5}
           aria-invalid={error !== undefined}
           className="m-0 w-full appearance-none rounded-none border-0 bg-transparent px-0 py-1 text-base leading-6 outline-none placeholder:text-brand-muted"
         />
