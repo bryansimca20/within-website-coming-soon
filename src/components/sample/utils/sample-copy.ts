@@ -120,7 +120,7 @@ export const SAMPLE_COPY = {
     deliveryNote: "Note for the courier (optional)",
     deliveryNotePlaceholder: "Gate code, landmark",
     willShare: "I promise to share my feedback after trying it.",
-    willShareNote: "Your feedback matters. Your samples come with a QR code that opens a short form. It takes less than 30 seconds.",
+    willShareNote: "Your samples come with a QR code that opens a short feedback form. It takes less than 30 seconds.",
     consent: "Add me to the WITHIN waitlist and send me launch updates.",
   },
   shipping: {

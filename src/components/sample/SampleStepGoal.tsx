@@ -1,14 +1,13 @@
 import { HYDRATION_GOAL } from "@/app/utils/sample-options";
-import { WaitlistField } from "@/components/waitlist/WaitlistField";
 
 import { SampleChoiceGroup } from "./SampleChoiceGroup";
 import { SampleOtherReveal } from "./SampleOtherReveal";
 import { SampleStepHeading } from "./SampleStepHeading";
+import { SampleTextArea } from "./SampleTextArea";
 import { choiceOptions, OPTION_LABEL, SAMPLE_COPY } from "./utils/sample-copy";
 import type { ISampleStepProps } from "./utils/sample-form-types";
 
 const { training } = SAMPLE_COPY;
-const noop = () => undefined;
 
 /** Step 4: what the visitor wants most from hydration. The question is the heading. */
 export function SampleStepGoal({ values, errors, onChange }: ISampleStepProps) {
@@ -20,9 +19,9 @@ export function SampleStepGoal({ values, errors, onChange }: ISampleStepProps) {
           options={choiceOptions(HYDRATION_GOAL, OPTION_LABEL.hydrationGoal)}
           value={values.hydrationGoal} onChange={(hydrationGoal) => onChange({ hydrationGoal })} error={errors.hydrationGoal} />
         <SampleOtherReveal isOpen={values.hydrationGoal === "other"}>
-          <WaitlistField id="hydrationGoalOther" name="hydrationGoalOther" label={training.hydrationGoalOther} value={values.hydrationGoalOther}
-            onValueChange={(hydrationGoalOther) => onChange({ hydrationGoalOther })} onValueBlur={noop} error={errors.hydrationGoalOther}
-          inputProps={{ maxLength: 100 }} />
+          <SampleTextArea id="hydrationGoalOther" name="hydrationGoalOther" label={training.hydrationGoalOther} value={values.hydrationGoalOther}
+            onValueChange={(hydrationGoalOther) => onChange({ hydrationGoalOther })} error={errors.hydrationGoalOther}
+            textAreaProps={{ maxLength: 100 }} />
         </SampleOtherReveal>
       </div>
     </div>

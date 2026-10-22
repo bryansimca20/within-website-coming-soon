@@ -7,7 +7,6 @@ import { EASE } from "@/components/coming-soon/Reveal";
 import type { ICourierOption } from "@/services/biteship.service";
 
 import { formatRupiah, SAMPLE_COPY } from "./utils/sample-copy";
-import { sampleDevRates } from "./utils/sample-dev-fixtures";
 import type { ISampleStepProps } from "./utils/sample-form-types";
 
 const { shipping } = SAMPLE_COPY;
@@ -21,8 +20,6 @@ interface IAreaRates {
 }
 
 async function fetchRates(areaId: string): Promise<RatesState> {
-  const devRates = sampleDevRates();
-  if (devRates !== null) return { kind: "ready", options: devRates };
   try {
     const response = await fetch("/api/sample/rates", {
       method: "POST",

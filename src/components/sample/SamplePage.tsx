@@ -1,4 +1,3 @@
-import { SampleDevDataToggle } from "./SampleDevDataToggle";
 import { SampleNotice } from "./SampleNotice";
 import { SampleRequestForm } from "./SampleRequestForm";
 import { SampleShell } from "./SampleShell";
@@ -21,7 +20,6 @@ export function SamplePage({ claimed, capacity, snapScriptUrl }: SamplePageProps
         <>
           <SampleSnapScript src={snapScriptUrl} />
           <SampleRequestForm />
-          <SampleDevDataToggle />
         </>
       ) : (
         <SampleNotice kind="full" />

@@ -5,7 +5,6 @@ import { useEffect, useId, useState } from "react";
 import type { IBiteshipArea } from "@/services/biteship.service";
 
 import { SAMPLE_COPY } from "./utils/sample-copy";
-import { sampleDevAreas } from "./utils/sample-dev-fixtures";
 import type { ISampleStepProps } from "./utils/sample-form-types";
 
 const { delivery } = SAMPLE_COPY;
@@ -30,11 +29,6 @@ export function SampleAreaSearch({ values, errors, onChange }: ISampleStepProps)
     const timer = window.setTimeout(async () => {
       setIsSearching(true);
       try {
-        const devAreas = sampleDevAreas();
-        if (devAreas !== null) {
-          setAreas(devAreas);
-          return;
-        }
         const response = await fetch(`/api/sample/areas?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal });
         const payload: { areas?: IBiteshipArea[] } = await response.json();
         setAreas(payload.areas ?? []);

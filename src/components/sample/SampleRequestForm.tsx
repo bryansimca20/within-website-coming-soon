@@ -30,7 +30,6 @@ import { readStoredAttribution, storeAttribution } from "./utils/attribution-sto
 import { SampleEvent, trackSampleEvent } from "./utils/sample-analytics";
 import { formatPayButton, SAMPLE_COPY } from "./utils/sample-copy";
 import type { ISampleStepProps, SampleFieldErrors } from "./utils/sample-form-types";
-import { sampleDevValues } from "./utils/sample-dev-fixtures";
 import { openSnap } from "./utils/snap";
 import { SAMPLE_ALERT_FADE, SAMPLE_STEP_SLIDE } from "./utils/sample-motion";
 import { useSampleStepHistory } from "./utils/use-sample-step-history";
@@ -56,7 +55,7 @@ function currentAttribution(): IAttribution {
 export function SampleRequestForm() {
   const router = useRouter();
   const { screen, direction, goForward, goBack, returnTo } = useSampleStepHistory();
-  const [values, setValues] = useState<ISampleRequestInput>(() => sampleDevValues() ?? EMPTY_SAMPLE_REQUEST_INPUT);
+  const [values, setValues] = useState<ISampleRequestInput>(EMPTY_SAMPLE_REQUEST_INPUT);
   const [errors, setErrors] = useState<SampleFieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [ending, setEnding] = useState<Ending>(null);
