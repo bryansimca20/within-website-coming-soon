@@ -1,4 +1,5 @@
 import { GENERIC_ERROR_MESSAGE } from "./subscribe-state";
+import type { FeedbackEligibility } from "./feedback-eligibility";
 import type { SampleRequestField } from "./sample-request-input";
 
 export { GENERIC_ERROR_MESSAGE };
@@ -43,6 +44,12 @@ export type ReopenPaymentState =
 export enum FeedbackOutcome {
   Success = "success",
   Error = "error",
+}
+
+/** What the QR path's email check hands back: whether to continue, and the name to greet. */
+export interface IFeedbackEmailCheck {
+  eligibility: FeedbackEligibility;
+  firstName: string | null;
 }
 
 /** What the feedback action hands back to the form. */

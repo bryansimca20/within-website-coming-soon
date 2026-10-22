@@ -193,6 +193,10 @@ export const SAMPLE_COPY = {
     headlineNamed: (name: string) => `How did it go, ${name}?`,
     emailLabel: "The email you claimed your samples with",
     emailPlaceholder: "you@email.com",
+    emailNotFound: "We couldn't find samples claimed with this email. Use the email you claimed them with.",
+    emailNotShipped: "Your samples haven't shipped yet. Come back once you've tried them.",
+    emailAlreadyGiven: "We already have your feedback. Thank you.",
+    checking: "Checking",
     progress: (step: number, total: number) => `${step} of ${total}`,
     questions: {
       sessionType: "What session did you take it on?",

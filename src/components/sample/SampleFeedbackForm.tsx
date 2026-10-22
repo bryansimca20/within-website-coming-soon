@@ -2,7 +2,9 @@
 
 import { type FormEvent, useState, useTransition } from "react";
 
+import { checkFeedbackEmailAction } from "@/app/actions/check-feedback-email.action";
 import { submitFeedbackAction } from "@/app/actions/submit-feedback.action";
+import { FeedbackEligibility } from "@/app/utils/feedback-eligibility";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
 import {
   EMPTY_SAMPLE_FEEDBACK_INPUT,
@@ -24,6 +26,14 @@ import { SAMPLE_COPY } from "./utils/sample-copy";
 const { feedback: copy } = SAMPLE_COPY;
 const TOTAL = FEEDBACK_QUESTION_ORDER.length;
 
+/** What the email screen says when an email can't continue. */
+const EMAIL_MESSAGE: Record<FeedbackEligibility, string> = {
+  [FeedbackEligibility.Ok]: "",
+  [FeedbackEligibility.NotFound]: copy.emailNotFound,
+  [FeedbackEligibility.NotShipped]: copy.emailNotShipped,
+  [FeedbackEligibility.AlreadyGiven]: copy.emailAlreadyGiven,
+};
+
 interface SampleFeedbackFormProps {
   /** The personal link's token, already matched to a request on the server. Null skips nothing. */
   code: string | null;
@@ -38,6 +48,7 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
   const [isDone, setIsDone] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [renderedAt] = useState(() => String(Date.now()));
+  const [greetName, setGreetName] = useState(firstName);
 
   if (isDone) return <SampleFeedbackThanks />;
 
@@ -65,6 +76,22 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
       setError(message);
       return;
     }
+    if (field === "email") {
+      startTransition(async () => {
+        try {
+          const check = await checkFeedbackEmailAction(values.email);
+          if (check.eligibility !== FeedbackEligibility.Ok) {
+            setError(EMAIL_MESSAGE[check.eligibility]);
+            return;
+          }
+          setGreetName(check.firstName);
+          setIndex(0);
+        } catch {
+          setError(GENERIC_ERROR_MESSAGE);
+        }
+      });
+      return;
+    }
     if (!isLast) {
       setIndex(index + 1);
       return;
@@ -80,6 +107,7 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
           setIsDone(true);
           return;
         }
+        if (result.field === "email" && code === null) setIndex(-1);
         setError(result.message);
       } catch {
         setError(GENERIC_ERROR_MESSAGE);
@@ -92,7 +120,7 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
       <div className="flex flex-col gap-2">
         <p className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted">{copy.label}</p>
         <h1 className="m-0 text-[32px] leading-9 font-normal tracking-[-0.02em]">
-          {firstName === null ? copy.headline : copy.headlineNamed(firstName)}
+          {greetName === null ? copy.headline : copy.headlineNamed(greetName)}
         </h1>
       </div>
       {index >= 0 && <SampleFeedbackProgress step={index + 1} total={TOTAL} />}
@@ -118,7 +146,7 @@ export function SampleFeedbackForm({ code, firstName }: SampleFeedbackFormProps)
         )}
         <button type="submit" disabled={isPending}
           className="flex h-14 flex-1 cursor-pointer items-center justify-between bg-brand-ink px-5 text-base font-semibold text-brand-mist transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] disabled:opacity-60 motion-reduce:transition-none">
-          <span>{isLast ? (isPending ? copy.submitting : copy.submit) : SAMPLE_COPY.continue}</span>
+          <span>{isLast ? (isPending ? copy.submitting : copy.submit) : field === "email" && isPending ? copy.checking : SAMPLE_COPY.continue}</span>
           <WaitlistArrowGlyph />
         </button>
       </div>

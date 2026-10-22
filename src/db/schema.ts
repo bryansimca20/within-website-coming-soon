@@ -114,6 +114,8 @@ export const sampleRequests = pgTable(
     paidAt: timestamptz("paid_at"),
     shippedAt: timestamptz("shipped_at"),
     deliveredAt: timestamptz("delivered_at"),
+    // Set once the 7-day check-in reminder went out, so it is never sent twice.
+    feedbackReminderSentAt: timestamptz("feedback_reminder_sent_at"),
     adminNote: text("admin_note"),
   },
   (table) => [

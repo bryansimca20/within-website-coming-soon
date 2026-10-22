@@ -1,12 +1,16 @@
 import "server-only";
 
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lte } from "drizzle-orm";
 
+import { FeedbackEligibility, feedbackEligibility } from "@/app/utils/feedback-eligibility";
 import type { ISampleFeedbackValues } from "@/app/utils/sample-feedback-input";
 import type { SampleDatabase } from "@/db/database";
 import { sampleFeedback, type SampleFeedbackRow, type SampleRequest, sampleRequests } from "@/db/schema";
 
 import { ACTIVE_STATUSES, SampleRequestService } from "./sample-request.service";
+
+/** The check-in reminder goes out this long after delivery. */
+const REMINDER_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** The check-in answers: matching them to a request and keeping one row per box. */
 export class SampleFeedbackService {
@@ -33,6 +37,49 @@ export class SampleFeedbackService {
       .limit(1);
 
     return request ?? null;
+  }
+
+  /** The QR path's gate: does this email have samples on the way or delivered, and no check-in yet? */
+  static async checkEmail(
+    db: SampleDatabase,
+    email: string
+  ): Promise<{ eligibility: FeedbackEligibility; firstName: string | null; request: SampleRequest | null }> {
+    const requests = await db
+      .select()
+      .from(sampleRequests)
+      .where(eq(sampleRequests.email, email.trim().toLowerCase()))
+      .orderBy(desc(sampleRequests.createdAt));
+    const request = requests.find((row) => row.status === "shipped" || row.status === "delivered") ?? requests[0] ?? null;
+    if (request === null) {
+      return { eligibility: FeedbackEligibility.NotFound, firstName: null, request: null };
+    }
+    const hasFeedback = (await SampleFeedbackService.forRequest(db, request.id)) !== null;
+    const eligibility = feedbackEligibility(request.status, hasFeedback);
+
+    return { eligibility, firstName: eligibility === FeedbackEligibility.Ok ? request.firstName : null, request };
+  }
+
+  /** Delivered at least seven days before `now`, no check-in yet, and not reminded before. */
+  static async dueReminders(db: SampleDatabase, now: Date): Promise<SampleRequest[]> {
+    const cutoff = new Date(now.getTime() - REMINDER_AFTER_MS);
+    const rows = await db
+      .select({ request: sampleRequests })
+      .from(sampleRequests)
+      .leftJoin(sampleFeedback, eq(sampleFeedback.requestId, sampleRequests.id))
+      .where(
+        and(
+          eq(sampleRequests.status, "delivered"),
+          lte(sampleRequests.deliveredAt, cutoff),
+          isNull(sampleRequests.feedbackReminderSentAt),
+          isNull(sampleFeedback.id)
+        )
+      );
+
+    return rows.map((row) => row.request);
+  }
+
+  static async markReminderSent(db: SampleDatabase, requestId: string, sentAt: Date): Promise<void> {
+    await db.update(sampleRequests).set({ feedbackReminderSentAt: sentAt }).where(eq(sampleRequests.id, requestId));
   }
 
   /** One row per request: a repeat submission replaces the answers and keeps the first `createdAt`. */

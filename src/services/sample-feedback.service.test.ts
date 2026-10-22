@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { ISampleFeedbackValues } from "@/app/utils/sample-feedback-input";
 import type { SampleDatabase } from "@/db/database";
-import { sampleFeedback } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+import { FeedbackEligibility } from "@/app/utils/feedback-eligibility";
+import { sampleFeedback, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
@@ -105,5 +108,62 @@ describe("SampleFeedbackService.upsert", () => {
 
     expect((await SampleFeedbackService.forRequest(db, request.id))?.wouldReachAgain).toBe("yes_definitely");
     expect(await SampleFeedbackService.forRequest(db, "00000000-0000-0000-0000-000000000000")).toBeNull();
+  });
+});
+
+const DAY = 24 * 60 * 60 * 1000;
+
+async function withStatus(email: string, status: "shipped" | "delivered", deliveredAt: Date | null = null) {
+  const paid = await paidRequest(email);
+  const [updated] = await db.update(sampleRequests).set({ status, deliveredAt }).where(eq(sampleRequests.id, paid.id)).returning();
+  return updated;
+}
+
+describe("SampleFeedbackService.checkEmail", () => {
+  test("an email with no order is not found", async () => {
+    expect(await SampleFeedbackService.checkEmail(db, "nobody@example.com")).toMatchObject({ eligibility: FeedbackEligibility.NotFound, firstName: null });
+  });
+
+  test("a paid order that has not shipped is not ready", async () => {
+    await paidRequest("a@example.com");
+    expect((await SampleFeedbackService.checkEmail(db, "a@example.com")).eligibility).toBe(FeedbackEligibility.NotShipped);
+  });
+
+  test("a shipped order may give feedback, and is greeted by first name", async () => {
+    await withStatus("a@example.com", "shipped");
+    expect(await SampleFeedbackService.checkEmail(db, "A@Example.com")).toMatchObject({ eligibility: FeedbackEligibility.Ok, firstName: "Fanny" });
+  });
+
+  test("a delivered order wins over a newer lapsed hold for the same email", async () => {
+    const hold = await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW);
+    if (hold.kind !== "claimed") throw new Error(hold.kind);
+    await SampleRequestService.markExpiredIfLapsed(db, hold.request, minutesAfter(2000));
+    await withStatus("a@example.com", "delivered", NOW);
+    await db.update(sampleRequests).set({ createdAt: minutesAfter(9000) }).where(eq(sampleRequests.id, hold.request.id));
+
+    expect((await SampleFeedbackService.checkEmail(db, "a@example.com")).eligibility).toBe(FeedbackEligibility.Ok);
+  });
+
+  test("feedback already given is reported", async () => {
+    const request = await withStatus("a@example.com", "delivered", NOW);
+    await SampleFeedbackService.upsert(db, request.id, feedback(), request.email, NOW);
+
+    expect((await SampleFeedbackService.checkEmail(db, "a@example.com")).eligibility).toBe(FeedbackEligibility.AlreadyGiven);
+  });
+});
+
+describe("SampleFeedbackService.dueReminders", () => {
+  test("only delivered 7+ days ago, no feedback, not yet reminded", async () => {
+    const due = await withStatus("due@example.com", "delivered", new Date(NOW.getTime() - 8 * DAY));
+    await withStatus("recent@example.com", "delivered", new Date(NOW.getTime() - 6 * DAY));
+    const answered = await withStatus("answered@example.com", "delivered", new Date(NOW.getTime() - 9 * DAY));
+    await SampleFeedbackService.upsert(db, answered.id, feedback(), answered.email, NOW);
+    const reminded = await withStatus("reminded@example.com", "delivered", new Date(NOW.getTime() - 9 * DAY));
+    await SampleFeedbackService.markReminderSent(db, reminded.id, NOW);
+    await withStatus("shipped@example.com", "shipped");
+
+    const rows = await SampleFeedbackService.dueReminders(db, NOW);
+
+    expect(rows.map((row) => row.id)).toEqual([due.id]);
   });
 });

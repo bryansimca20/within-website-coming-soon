@@ -32,6 +32,15 @@ describe("renderSampleEmail", () => {
     expect(email.subject).toBe("You're in. No. 042 of Batch 01.");
   });
 
+  test("the feedback reminder links the personal check-in in html and text", () => {
+    const email = renderSampleEmail(SampleEmailKind.FeedbackReminder, CONTEXT);
+
+    expect(email.subject).toBe("How did your samples go? No. 042.");
+    expect(email.html).toContain(CONTEXT.feedbackUrl);
+    expect(email.text).toContain(CONTEXT.feedbackUrl);
+    expect(email.text).toContain("less than 30 seconds");
+  });
+
   test("the shipped email carries the waybill and tracking link", () => {
     const email = renderSampleEmail(SampleEmailKind.Shipped, CONTEXT);
 

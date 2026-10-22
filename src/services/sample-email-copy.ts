@@ -30,6 +30,14 @@ export const SAMPLE_EMAIL_COPY = {
     ],
     button: "Tell us how it went",
   },
+  feedbackReminder: {
+    subject: "How did your samples go? {box}.",
+    paragraphs: [
+      "It has been a week since your samples arrived. If you've tried them on a few sessions, we'd love to hear how it went.",
+      "It takes less than 30 seconds, and it helps us get the launch right.",
+    ],
+    button: "Tell us how it went",
+  },
   feedbackReceived: {
     subject: "Thank you. {box}.",
     paragraphs: [

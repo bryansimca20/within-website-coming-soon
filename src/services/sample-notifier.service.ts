@@ -66,6 +66,10 @@ export class SampleNotifier {
     return SampleNotifier.send(SampleEmailKind.FeedbackReceived, request, batch, null);
   }
 
+  static sendFeedbackReminder(request: SampleRequest, batch: SampleBatch): Promise<boolean> {
+    return SampleNotifier.send(SampleEmailKind.FeedbackReminder, request, batch, null);
+  }
+
   /** Sends by kind, for the admin's resend buttons. */
   static sendKind(
     kind: SampleEmailKind,

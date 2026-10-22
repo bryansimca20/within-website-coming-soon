@@ -2,12 +2,13 @@ import { SITE_URL } from "@/lib/site";
 
 import { SAMPLE_EMAIL_COPY } from "./sample-email-copy";
 
-/** The four moments a sampler hears from WITHIN. */
+/** The moments a sampler hears from WITHIN. */
 export enum SampleEmailKind {
   Paid = "paid",
   Shipped = "shipped",
   Delivered = "delivered",
   FeedbackReceived = "feedback-received",
+  FeedbackReminder = "feedback-reminder",
 }
 
 /** Everything a template needs; the notifier builds it from the request and shipment rows. */
@@ -115,6 +116,14 @@ function blocksFor(kind: SampleEmailKind, context: ISampleEmailContext): IEmailB
     ];
   }
 
+  if (kind === SampleEmailKind.FeedbackReminder) {
+    return [
+      ...copy.feedbackReminder.paragraphs.map((text) => ({ kind: "paragraph" as const, text })),
+      { kind: "button", text: copy.feedbackReminder.button, href: context.feedbackUrl },
+      { kind: "paragraph", text: copy.rewardLine },
+    ];
+  }
+
   return [
     { kind: "paragraph", text: copy.feedbackReceived.paragraphs[0] },
     { kind: "paragraph", text: copy.rewardLine },
@@ -127,6 +136,7 @@ const SUBJECT: Record<SampleEmailKind, string> = {
   [SampleEmailKind.Shipped]: SAMPLE_EMAIL_COPY.shipped.subject,
   [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered.subject,
   [SampleEmailKind.FeedbackReceived]: SAMPLE_EMAIL_COPY.feedbackReceived.subject,
+  [SampleEmailKind.FeedbackReminder]: SAMPLE_EMAIL_COPY.feedbackReminder.subject,
 };
 
 /** Renders one of the four emails for a sampler. Pure: no sending, no database. */

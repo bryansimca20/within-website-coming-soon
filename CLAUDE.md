@@ -63,6 +63,7 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
 | `BITESHIP_WEBHOOK_TOKEN` | Secret `?token=` on the Biteship webhook URL (Biteship signs nothing) |
 | `SAMPLE_ORIGIN_CONTACT_NAME`, `_PHONE`, `_ADDRESS`, `_AREA_ID`, `_POSTAL_CODE`, `_NOTE` | The BSD office as Biteship origin (all prefixed `SAMPLE_ORIGIN_`) |
 | `RESEND_API_KEY`, `SAMPLE_EMAIL_FROM`, `SAMPLE_EMAIL_REPLY_TO` | Sampler emails through Resend |
+| `CRON_SECRET` | Vercel Cron sends it as `Authorization: Bearer …`; `/api/cron/feedback-reminders` refuses anything else |
 
 - Every URL the sampling program emits (emails, the Snap finish callback, the card's QR target
   `/sample/feedback`) is built from `SITE_URL` (`NEXT_PUBLIC_SITE_URL`). Set it per environment.
@@ -416,7 +417,7 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 
 - A request's 24-hour hold is ours; a Midtrans attempt lapsing (QRIS defaults to 15 minutes)
   ends only that attempt. `pending_payment` becomes `expired` lazily, whenever the count or a
-  status page is read. No cron.
+  status page is read. The only cron is the check-in reminder (below).
 - Webhook bodies are stored in `sample_webhook_events` before processing and every webhook is
   answered 200 once stored. Midtrans is trusted only after its SHA512 signature; Biteship
   bodies are never trusted, the order is re-fetched. A paid request is never moved backwards,
@@ -425,8 +426,13 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 - `MidtransService.createSnapTransaction`, `BiteshipService.createOrder` and
   `EmailService.send` never throw; they log and return null or false. A thrown error there
   once left unpaid holds occupying slots.
-- The feedback form reports success whether or not the email matched, so it never reveals who
-  requested a box. Unmatched answers are kept and listed in admin.
+- The check-in has two doors. The personal link (`?code=`, in the delivered and reminder emails and on
+  the status page) identifies the sampler outright. The card's QR asks for the email first: it must
+  belong to a shipped or delivered order with no check-in yet, or the form says why it can't go on.
+  That does reveal whether an email claimed samples; the founder accepted it on 2026-10-22. Older
+  unmatched rows are still listed in admin.
+- One check-in reminder goes out 7 days after delivery, from the daily Vercel Cron in `vercel.json`
+  (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it.
 - Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels
   live in `src/components/sample/utils/sample-copy.ts`; email copy in
   `src/services/sample-email-copy.ts`.
