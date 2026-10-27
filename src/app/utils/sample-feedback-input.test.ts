@@ -6,13 +6,15 @@ import {
   type ISampleFeedbackInput,
   parseSampleFeedbackInput,
   readSampleFeedbackInput,
+  validateFeedbackStep,
 } from "./sample-feedback-input";
 
 const VALID_INPUT: ISampleFeedbackInput = {
   code: "AbCdEfGhIjKlMnOpQrStUvWx",
   email: "",
-  sessionType: "long_run",
-  sessionLength: "over_90",
+  sessionType: "running,padel",
+  sessionTypeOther: "",
+  sessionLength: "under_45,over_90",
   tasteRating: "4",
   felt: "less_cramping",
   feltOther: "",
@@ -34,6 +36,23 @@ describe("parseSampleFeedbackInput", () => {
     expect(parsed.value.email).toBeNull();
     expect(parsed.value.tasteRating).toBe(4);
     expect(parsed.value.comment).toBe("Salty in a good way.");
+    expect(parsed.value.sessionType).toEqual(["running", "padel"]);
+    expect(parsed.value.sessionLength).toEqual(["under_45", "over_90"]);
+    expect(parsed.value.sessionTypeOther).toBeNull();
+  });
+
+  test("sessions and lengths need at least one known answer", () => {
+    expect(parseWith({ sessionType: "" })).toMatchObject({ ok: false, field: "sessionType" });
+    expect(parseWith({ sessionType: "long_run" })).toMatchObject({ ok: false, field: "sessionType" });
+    expect(parseWith({ sessionLength: "" })).toMatchObject({ ok: false, field: "sessionLength" });
+  });
+
+  test("an Other session needs its description", () => {
+    expect(parseWith({ sessionType: "running,other", sessionTypeOther: "" })).toMatchObject({ ok: false, field: "sessionTypeOther" });
+    const parsed = parseWith({ sessionType: "other", sessionTypeOther: "Futsal match" });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.sessionTypeOther).toBe("Futsal match");
   });
 
   test("accepts an email with no code and lowercases it", () => {
@@ -112,5 +131,25 @@ describe("FEEDBACK_QUESTION_ORDER", () => {
 describe("readSampleFeedbackInput", () => {
   test("reads every field as an empty string from an empty form", () => {
     expect(readSampleFeedbackInput(new FormData())).toEqual(EMPTY_SAMPLE_FEEDBACK_INPUT);
+  });
+});
+
+describe("validateFeedbackStep", () => {
+  const EMPTY = { ...VALID_INPUT, sessionType: "", sessionLength: "", tasteRating: "", felt: "", wouldReachAgain: "" };
+
+  test("checks only its own question, ignoring later empty ones", () => {
+    expect(validateFeedbackStep("sessionType", { ...EMPTY, sessionType: "running" })).toBeNull();
+    expect(validateFeedbackStep("sessionType", EMPTY)).toMatchObject({ field: "sessionType" });
+  });
+
+  test("an Other answer needs its text on its own screen", () => {
+    expect(validateFeedbackStep("sessionType", { ...EMPTY, sessionType: "running,other" })).toMatchObject({ field: "sessionTypeOther" });
+    expect(validateFeedbackStep("felt", { ...EMPTY, felt: "other" })).toMatchObject({ field: "feltOther" });
+    expect(validateFeedbackStep("felt", { ...EMPTY, felt: "other", feltOther: "Calmer" })).toBeNull();
+  });
+
+  test("the comment is optional but capped", () => {
+    expect(validateFeedbackStep("comment", { ...EMPTY, comment: "" })).toBeNull();
+    expect(validateFeedbackStep("comment", { ...EMPTY, comment: "x".repeat(1001) })).toMatchObject({ field: "comment" });
   });
 });

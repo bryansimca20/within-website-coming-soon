@@ -40,8 +40,9 @@ describe("buildSampleCsv", () => {
       {
         code: null,
         email: null,
-        sessionType: "long_run",
-        sessionLength: "over_90",
+        sessionType: ["running", "padel"],
+        sessionTypeOther: null,
+        sessionLength: ["under_45", "over_90"],
         tasteRating: 5,
         felt: ["less_cramping", "felt_hydrated"],
         feltOther: null,
@@ -62,6 +63,8 @@ describe("buildSampleCsv", () => {
     expect(row.split(",")[columns.indexOf("why_reasons")]).toBe("sweat_heat; no_sugar");
     expect(row.split(",")[columns.indexOf("hopes")]).toBe("less_cramping; felt_hydrated");
     expect(row.split(",")[columns.indexOf("felt")]).toBe("less_cramping; felt_hydrated");
+    expect(row.split(",")[columns.indexOf("feedback_session")]).toBe("running; padel");
+    expect(row.split(",")[columns.indexOf("feedback_length")]).toBe("under_45; over_90");
 
     const oldForm = { ...request, trainingTypes: null, trainingPrimary: null, heardFrom: null, whyReasons: null, hopes: null, mainSport: "running", trainWhere: "outdoors" };
     const oldRow = buildSampleCsv([{ request: oldForm, shipment: null, feedback: null }]).slice(1).split("\r\n")[1].split(",");

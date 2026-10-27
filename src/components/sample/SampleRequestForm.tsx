@@ -149,7 +149,7 @@ export function SampleRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="mx-auto flex w-full max-w-[560px] flex-col gap-8">
-      <SampleStepIndicator step={screen} onBack={goBack} />
+      <SampleStepIndicator step={screen} labels={SAMPLE_COPY.steps} counter={SAMPLE_COPY.stepCounter} onBack={goBack} />
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.div key={screen} custom={direction} variants={SAMPLE_STEP_SLIDE} initial="enter" animate="center" exit="exit" className={SAMPLE_ALERT_FADE}>
           <StepScreen values={values} errors={errors} onChange={change} />

@@ -41,6 +41,15 @@ describe("SampleRequestService.claim", () => {
     expect(request.consentedAt).toEqual(NOW);
   });
 
+  test("the consent time is kept only when they asked for the launch email", async () => {
+    const yes = await SampleRequestService.claim(db, "b01", sampleValues({ email: "yes@example.com", wantsLaunchEmail: true }), NOW);
+    const no = await SampleRequestService.claim(db, "b01", sampleValues({ email: "no@example.com", wantsLaunchEmail: false }), NOW);
+    if (yes.kind !== "claimed" || no.kind !== "claimed") throw new Error("not claimed");
+
+    expect(yes.request.consentedAt).toEqual(NOW);
+    expect(no.request.consentedAt).toBeNull();
+  });
+
   test("box numbers count up", async () => {
     await claimed("a@example.com");
     const second = await claimed("b@example.com");

@@ -21,7 +21,8 @@ export interface IPrelaunchSubscriber {
   lastName: string | null;
   email: string;
   instagramHandle: string | null;
-  consentedAt: string;
+  /** When they agreed to marketing email; null saves the customer without subscribing them. */
+  consentedAt: string | null;
   /** Tags beyond the two every pre-launch signup carries, such as `sampling-b01` or `ref-fanny`. */
   extraTags?: string[];
 }
@@ -32,7 +33,7 @@ interface ICustomerInput {
   firstName: string;
   lastName?: string;
   tags: string[];
-  emailMarketingConsent: {
+  emailMarketingConsent?: {
     marketingState: "SUBSCRIBED";
     marketingOptInLevel: "SINGLE_OPT_IN";
     consentUpdatedAt: string;
@@ -74,7 +75,7 @@ const CREATE_CUSTOMER_MUTATION = `
   }
 `;
 
-/** Writes pre-launch signups into Shopify as customers with email marketing consent. */
+/** Writes pre-launch signups into Shopify as customers; with email marketing consent only when they gave it. */
 export class ShopifyCustomerService {
   /** Builds the `customerCreate` input. Consent is set inline so no unsubscribed window exists. */
   static buildCustomerInput(subscriber: IPrelaunchSubscriber): ICustomerInput {
@@ -82,12 +83,15 @@ export class ShopifyCustomerService {
       email: subscriber.email,
       firstName: subscriber.firstName,
       tags: [...new Set([...PRELAUNCH_TAGS, ...(subscriber.extraTags ?? [])])],
-      emailMarketingConsent: {
+    };
+
+    if (subscriber.consentedAt !== null) {
+      input.emailMarketingConsent = {
         marketingState: "SUBSCRIBED",
         marketingOptInLevel: "SINGLE_OPT_IN",
         consentUpdatedAt: subscriber.consentedAt,
-      },
-    };
+      };
+    }
 
     if (subscriber.lastName !== null) {
       input.lastName = subscriber.lastName;

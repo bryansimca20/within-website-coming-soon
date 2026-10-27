@@ -66,11 +66,12 @@ describe("renderSampleEmail", () => {
     expect(email.text).toContain(CONTEXT.feedbackUrl);
   });
 
-  test("the feedback email carries the reward line", () => {
-    const email = renderSampleEmail(SampleEmailKind.FeedbackReceived, CONTEXT);
-
-    expect(email.html).toContain(SAMPLE_EMAIL_COPY.rewardLine);
-    expect(email.text).toContain(SAMPLE_EMAIL_COPY.rewardLine);
+  test("the thank-you and reminder emails make no priority promise", () => {
+    for (const kind of [SampleEmailKind.FeedbackReceived, SampleEmailKind.FeedbackReminder]) {
+      const email = renderSampleEmail(kind, CONTEXT);
+      expect(email.text).not.toContain(SAMPLE_EMAIL_COPY.rewardLine);
+      expect(email.text.toLowerCase()).not.toContain("priority");
+    }
   });
 
   test("escapes html in the first name", () => {

@@ -118,7 +118,7 @@ export class SampleRequestService {
         .from(sampleRequests)
         .where(eq(sampleRequests.batchId, batchId));
       const boxNumber = (highest?.boxNumber ?? 0) + 1;
-      const { attribution, ...rest } = values;
+      const { attribution, wantsLaunchEmail, ...rest } = values;
 
       const [request] = await tx
         .insert(sampleRequests)
@@ -134,7 +134,7 @@ export class SampleRequestService {
           boxNumber,
           accessToken: generateAccessToken(),
           status: "pending_payment",
-          consentedAt: now,
+          consentedAt: wantsLaunchEmail ? now : null,
           createdAt: now,
           expiresAt: new Date(now.getTime() + batch.paymentWindowMinutes * MS_PER_MINUTE),
         })

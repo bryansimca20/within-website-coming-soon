@@ -98,8 +98,14 @@ describe("parseSampleRequestInput", () => {
     expect(parseWith({ hopes: "other", hopesOther: "Sleep better" }).ok).toBe(true);
   });
 
-  test("requires consent", () => {
-    expect(parseWith({ consent: "" })).toMatchObject({ ok: false, field: "consent" });
+  test("the launch email is optional and recorded as a yes or no", () => {
+    const declined = parseWith({ consent: "" });
+    expect(declined.ok).toBe(true);
+    if (declined.ok) expect(declined.value.wantsLaunchEmail).toBe(false);
+
+    const accepted = parseWith({ consent: "on" });
+    expect(accepted.ok).toBe(true);
+    if (accepted.ok) expect(accepted.value.wantsLaunchEmail).toBe(true);
   });
 
   test("rejects a shipping fee that is not a positive integer", () => {
@@ -161,9 +167,8 @@ describe("validateSampleStep", () => {
     expect(new Set(owned).size).toBe(owned.length);
   });
 
-  test("step 1 asks for contact and consent, not phone", () => {
+  test("step 1 asks for contact only: no phone, and the launch email is optional", () => {
     expect(Object.keys(validateSampleStep(1, EMPTY_SAMPLE_REQUEST_INPUT)).sort()).toEqual([
-      "consent",
       "email",
       "fullName",
       "instagramHandle",

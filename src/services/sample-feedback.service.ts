@@ -93,6 +93,7 @@ export class SampleFeedbackService {
     const answers = {
       email: email.toLowerCase(),
       sessionType: values.sessionType,
+      sessionTypeOther: values.sessionTypeOther,
       sessionLength: values.sessionLength,
       tasteRating: values.tasteRating,
       felt: values.felt,

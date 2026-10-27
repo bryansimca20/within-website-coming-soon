@@ -2,24 +2,26 @@ import { z } from "zod";
 
 import {
   FEEDBACK_FELT,
-  FEEDBACK_SESSION,
   type FeedbackFelt,
-  type FeedbackSession,
   SESSION_LENGTH,
   type SessionLength,
+  TRAINING_TYPE,
+  type TrainingType,
   TASTE_MAX,
   TASTE_MIN,
   WOULD_REACH_AGAIN,
   type WouldReachAgain,
 } from "./sample-options";
-import { multiChoice } from "./sample-request-input";
+import { multiChoice, splitChoices } from "./sample-request-input";
 import { normalizeEmail } from "./subscriber-input";
 
 /** Raw, untrusted check-in values as they arrive from the form. */
 export interface ISampleFeedbackInput {
   code: string;
   email: string;
+  /** Comma-joined option keys: three sachets can go on different sessions. */
   sessionType: string;
+  sessionTypeOther: string;
   sessionLength: string;
   tasteRating: string;
   felt: string;
@@ -34,8 +36,9 @@ export type SampleFeedbackField = keyof ISampleFeedbackInput;
 export interface ISampleFeedbackValues {
   code: string | null;
   email: string | null;
-  sessionType: FeedbackSession;
-  sessionLength: SessionLength;
+  sessionType: TrainingType[];
+  sessionTypeOther: string | null;
+  sessionLength: SessionLength[];
   tasteRating: number;
   felt: FeedbackFelt[];
   feltOther: string | null;
@@ -51,6 +54,7 @@ export const EMPTY_SAMPLE_FEEDBACK_INPUT: ISampleFeedbackInput = {
   code: "",
   email: "",
   sessionType: "",
+  sessionTypeOther: "",
   sessionLength: "",
   tasteRating: "",
   felt: "",
@@ -73,8 +77,9 @@ export const FEEDBACK_QUESTION_ORDER: SampleFeedbackField[] = [
 export const FEEDBACK_FIELD_ERROR: Record<SampleFeedbackField, string> = {
   code: "",
   email: "Add the email you requested your box with.",
-  sessionType: "Pick the session you took it on.",
-  sessionLength: "Pick how long it was.",
+  sessionType: "Pick what you took it on.",
+  sessionTypeOther: "Tell us what you took it on.",
+  sessionLength: "Pick how long your sessions were.",
   tasteRating: "Rate the taste from 1 to 5.",
   felt: "Pick how you felt.",
   feltOther: "Tell us how you felt.",
@@ -89,8 +94,13 @@ const FIELD_NAMES = Object.keys(EMPTY_SAMPLE_FEEDBACK_INPUT) as SampleFeedbackFi
 const feedbackSchema = z.object({
   code: z.string().transform((value) => (ACCESS_TOKEN_PATTERN.test(value.trim()) ? value.trim() : null)),
   email: z.string().transform((value) => (value.trim() === "" ? null : normalizeEmail(value))),
-  sessionType: z.enum(FEEDBACK_SESSION),
-  sessionLength: z.enum(SESSION_LENGTH),
+  sessionType: multiChoice(TRAINING_TYPE),
+  sessionTypeOther: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((value) => (value === "" ? null : value)),
+  sessionLength: multiChoice(SESSION_LENGTH),
   tasteRating: z
     .string()
     .trim()
@@ -126,6 +136,29 @@ export function readSampleFeedbackInput(formData: FormData): ISampleFeedbackInpu
   return input;
 }
 
+/** The questions with an "Other" answer, and the text field that describes it. */
+const OTHER_TEXT: Partial<Record<SampleFeedbackField, SampleFeedbackField>> = {
+  sessionType: "sessionTypeOther",
+  felt: "feltOther",
+};
+
+/** One screen's check: only this question (and its "Other" text), so later empty questions don't hide it. */
+export function validateFeedbackStep(
+  field: SampleFeedbackField,
+  input: ISampleFeedbackInput
+): { field: SampleFeedbackField; message: string } | null {
+  const shape = feedbackSchema.shape;
+  if (field in shape && !shape[field as keyof typeof shape].safeParse(input[field]).success) {
+    return { field, message: FEEDBACK_FIELD_ERROR[field] };
+  }
+  const other = OTHER_TEXT[field];
+  if (other !== undefined && splitChoices(input[field]).includes("other")) {
+    const text = input[other].trim();
+    if (text === "" || text.length > 100) return { field: other, message: FEEDBACK_FIELD_ERROR[other] };
+  }
+  return null;
+}
+
 /** Validates a check-in. A malformed code is dropped, not an error; then an email must be present. */
 export function parseSampleFeedbackInput(input: ISampleFeedbackInput): ParsedSampleFeedback {
   const result = feedbackSchema.safeParse(input);
@@ -143,6 +176,9 @@ export function parseSampleFeedbackInput(input: ISampleFeedbackInput): ParsedSam
     return { ok: false, field: "email", message: FEEDBACK_FIELD_ERROR.email };
   }
 
+  if (data.sessionType.includes("other") && data.sessionTypeOther === null) {
+    return { ok: false, field: "sessionTypeOther", message: FEEDBACK_FIELD_ERROR.sessionTypeOther };
+  }
   if (data.felt.includes("other") && data.feltOther === null) {
     return { ok: false, field: "feltOther", message: FEEDBACK_FIELD_ERROR.feltOther };
   }
@@ -153,6 +189,7 @@ export function parseSampleFeedbackInput(input: ISampleFeedbackInput): ParsedSam
       code: data.code,
       email: data.email,
       sessionType: data.sessionType,
+      sessionTypeOther: data.sessionType.includes("other") ? data.sessionTypeOther : null,
       sessionLength: data.sessionLength,
       tasteRating: data.tasteRating,
       felt: data.felt,

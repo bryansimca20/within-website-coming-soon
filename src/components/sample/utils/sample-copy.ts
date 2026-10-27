@@ -1,6 +1,5 @@
 import type {
   FeedbackFelt,
-  FeedbackSession,
   HeardFrom,
   Hope,
   SessionLength,
@@ -34,7 +33,6 @@ export const OPTION_LABEL: {
   heardFrom: Record<HeardFrom, string>;
   whyReason: Record<WhyReason, string>;
   hope: Record<Hope, string>;
-  feedbackSession: Record<FeedbackSession, string>;
   felt: Record<FeedbackFelt, string>;
   wouldReachAgain: Record<WouldReachAgain, string>;
 } = {
@@ -71,7 +69,6 @@ export const OPTION_LABEL: {
     felt_hydrated: "Feel properly hydrated",
     other: "Other",
   },
-  feedbackSession: { long_run: "Long run", short_run: "Short run", gym: "Gym", padel: "Padel", other: "Other" },
   felt: {
     more_energy: "More energy",
     less_cramping: "Less cramping",
@@ -148,7 +145,7 @@ export const SAMPLE_COPY = {
     deliveryNotePlaceholder: "Gate code, landmark",
     willShare: "I promise to share my feedback after trying it.",
     willShareNote: "Your samples come with a QR code that opens a short feedback form. It takes less than 30 seconds.",
-    consent: "Add me to the WITHIN waitlist and send me launch updates.",
+    consent: "Email me when WITHIN launches.",
   },
   shipping: {
     pickArea: "Pick your area to see courier prices.",
@@ -188,30 +185,41 @@ export const SAMPLE_COPY = {
     waybill: (id: string) => `Waybill ${id}`,
   },
   feedback: {
-    label: "ONE THING WE ASK",
     headline: "How did it go?",
     headlineNamed: (name: string) => `How did it go, ${name}?`,
-    emailLabel: "The email you claimed your samples with",
+    emailHeadline: "Thanks for trying WITHIN.",
+    emailIntro: "First, let's verify it's you with the email you claimed your samples with. Then six quick questions, less than 30 seconds.",
+    emailLabel: "Email",
+    emailButton: "Start your feedback",
     emailPlaceholder: "you@email.com",
     emailNotFound: "We couldn't find samples claimed with this email. Use the email you claimed them with.",
     emailNotShipped: "Your samples haven't shipped yet. Come back once you've tried them.",
     emailAlreadyGiven: "We already have your feedback. Thank you.",
     checking: "Checking",
-    progress: (step: number, total: number) => `${step} of ${total}`,
+    steps: ["Your sessions", "Session length", "Taste", "How you felt", "Next time", "Anything else"] as const,
+    stepCounter: (step: number) => `Question ${step} of 6`,
+    pickAll: "Pick all that apply.",
     questions: {
-      sessionType: "What session did you take it on?",
-      sessionLength: "How long was it?",
+      sessionType: "What did you take them on?",
+      sessionTypeOther: "Tell us more",
+      sessionLength: "How long were those sessions?",
       tasteRating: "How did it taste?",
-      felt: "How did you feel during and after? Pick all that apply.",
+      felt: "How did you feel during and after?",
       feltOther: "Tell us more",
       wouldReachAgain: "Would you reach for it again on your next long or hot session?",
-      comment: "Anything you'd like to tell us? (optional)",
+      comment: "Anything you'd like to tell us?",
+      commentLabel: "Optional",
     },
     tasteLow: "Not for me",
     tasteHigh: "Loved it",
-    submit: "Send",
+    submit: "Send feedback",
     submitting: "Sending",
     thanksHeadline: "Thank you.",
-    thanksBody: "Your feedback shapes the launch. As thanks, you have priority on the first production batch.",
+    thanksHeadlineNamed: (name: string) => `Thank you, ${name}.`,
+    thanksBody: [
+      "You were one of the first 100 people to train with WITHIN, and you took the time to tell us how it really went.",
+      "We're a small team in Jakarta, and we read every answer ourselves. Yours helps us make WITHIN better, before anyone else gets to try it.",
+      "Thank you for being part of the very start of this.",
+    ],
   },
 } as const;

@@ -92,6 +92,8 @@ export interface ISampleRequestValues {
   district: string;
   postalCode: string;
   willShare: boolean;
+  /** Ticked "Email me when WITHIN launches": the only marketing consent a sampler gives. */
+  wantsLaunchEmail: boolean;
   courierCompany: string;
   courierType: string;
   courierServiceName: string;
@@ -171,7 +173,7 @@ export const SAMPLE_FIELD_ERROR: Record<SampleRequestField, string> = {
   district: "Pick your area from the list.",
   postalCode: "Pick your area from the list.",
   willShare: "",
-  consent: "Tick the box to join the waitlist.",
+  consent: "",
   courierCompany: "Pick a courier.",
   courierType: "Pick a courier.",
   courierServiceName: "Pick a courier.",
@@ -296,7 +298,7 @@ const sampleRequestShape = z.object({
     district: requiredText,
     postalCode: z.string().trim().regex(/^\d{5}$/),
     willShare: z.string().transform((value) => value === "on"),
-    consent: z.literal("on"),
+    consent: z.string().transform((value) => value === "on"),
     courierCompany: requiredText,
     courierType: requiredText,
     courierServiceName: requiredText,
@@ -425,6 +427,7 @@ export function parseSampleRequestInput(input: ISampleRequestInput): ParsedSampl
       district: data.district,
       postalCode: data.postalCode,
       willShare: data.willShare,
+      wantsLaunchEmail: data.consent,
       courierCompany: data.courierCompany,
       courierType: data.courierType,
       courierServiceName: data.courierServiceName,

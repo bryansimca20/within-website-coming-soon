@@ -41,7 +41,8 @@ export const SAMPLE_EMAIL_COPY = {
   feedbackReceived: {
     subject: "Thank you. {box}.",
     paragraphs: [
-      "We read every answer. Yours shapes what we say at launch, and how the next batch is made.",
+      "We're a small team in Jakarta, and we read every answer ourselves. Yours helps us make WITHIN better, before anyone else gets to try it.",
+      "Thank you for being part of the very start of this.",
       "Watch Instagram for the launch, then your inbox.",
     ],
   },

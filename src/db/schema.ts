@@ -93,7 +93,8 @@ export const sampleRequests = pgTable(
     postalCode: text("postal_code").notNull(),
     // The two checkboxes.
     willShare: boolean("will_share").notNull().default(false),
-    consentedAt: timestamptz("consented_at").notNull(),
+    // When they ticked "Email me when WITHIN launches"; null when they didn't.
+    consentedAt: timestamptz("consented_at"),
     // Where the request came from.
     ref: text("ref"),
     utmSource: text("utm_source"),
@@ -176,8 +177,10 @@ export const sampleFeedback = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     requestId: uuid("request_id").references(() => sampleRequests.id),
     email: text("email").notNull(),
-    sessionType: text("session_type").notNull(),
-    sessionLength: text("session_length").notNull(),
+    // Check-in answers are pick-all since 2026-10-22: three sachets can go on different sessions.
+    sessionType: text("session_type").array().notNull(),
+    sessionTypeOther: text("session_type_other"),
+    sessionLength: text("session_length").array().notNull(),
     tasteRating: integer("taste_rating").notNull(),
     felt: text("felt").array().notNull(),
     feltOther: text("felt_other"),

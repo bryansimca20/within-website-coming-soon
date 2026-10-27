@@ -404,7 +404,8 @@ Batch 01: 100 boxes of three sachets, free, the sampler pays the courier. Spec a
        │                                same-email unpaid hold replaced, paid duplicate refused,
        │                                capacity checked, next box number taken
        ├─ SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
-       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-b01, ref-<slug>
+       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-b01, ref-<slug>;
+                                        SUBSCRIBED only if they ticked the optional launch email
 /sample/r/[token]                       status page; "Pay now" = reopenPaymentAction
 POST /api/webhooks/midtrans             signature checked, attempt updated, paid email once
 admin "Book selected"                   SampleShipmentService.bookRun, one Biteship order each
@@ -438,6 +439,10 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   `src/services/sample-email-copy.ts`.
 - `/sample*` runs the WITHIN brand system from `/` (and scrolls). `/admin` runs Transparency
   Lab tokens and `components/ui/button.tsx`. Both are `noindex` and out of the sitemap.
+- The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches.").
+  Ticking it is the only marketing consent a sampler gives: it sets
+  `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder,
+  thanks) go to every sampler regardless.
 - `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`.
 
 When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /

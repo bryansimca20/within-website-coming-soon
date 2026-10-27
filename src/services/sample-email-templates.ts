@@ -120,15 +120,10 @@ function blocksFor(kind: SampleEmailKind, context: ISampleEmailContext): IEmailB
     return [
       ...copy.feedbackReminder.paragraphs.map((text) => ({ kind: "paragraph" as const, text })),
       { kind: "button", text: copy.feedbackReminder.button, href: context.feedbackUrl },
-      { kind: "paragraph", text: copy.rewardLine },
     ];
   }
 
-  return [
-    { kind: "paragraph", text: copy.feedbackReceived.paragraphs[0] },
-    { kind: "paragraph", text: copy.rewardLine },
-    { kind: "paragraph", text: copy.feedbackReceived.paragraphs[1] },
-  ];
+  return copy.feedbackReceived.paragraphs.map((text) => ({ kind: "paragraph" as const, text }));
 }
 
 const SUBJECT: Record<SampleEmailKind, string> = {

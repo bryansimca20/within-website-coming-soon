@@ -27,6 +27,20 @@ describe("ShopifyCustomerService.buildCustomerInput", () => {
     });
   });
 
+  test("a sampler who skipped the launch email is saved without marketing consent", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: null,
+      email: "bryan@example.com",
+      instagramHandle: null,
+      consentedAt: null,
+      extraTags: ["sampling-b01"],
+    });
+
+    expect(input.emailMarketingConsent).toBeUndefined();
+    expect(input.tags).toEqual(["prelaunch", "coming-soon", "sampling-b01"]);
+  });
+
   test("omits the metafields key entirely when no handle was given", () => {
     const input = ShopifyCustomerService.buildCustomerInput({
       firstName: "Bryan",

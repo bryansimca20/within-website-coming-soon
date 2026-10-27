@@ -1,0 +1,3 @@
+ALTER TABLE "sample_feedback" ALTER COLUMN "session_type" SET DATA TYPE text[] USING ARRAY[CASE "session_type" WHEN 'long_run' THEN 'running' WHEN 'short_run' THEN 'running' ELSE "session_type" END];--> statement-breakpoint
+ALTER TABLE "sample_feedback" ALTER COLUMN "session_length" SET DATA TYPE text[] USING ARRAY["session_length"];--> statement-breakpoint
+ALTER TABLE "sample_feedback" ADD COLUMN "session_type_other" text;

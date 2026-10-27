@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 
 import {
   FEEDBACK_FELT,
-  FEEDBACK_SESSION,
   HEARD_FROM,
   HOPE,
   SESSION_LENGTH,
@@ -22,7 +21,6 @@ describe("OPTION_LABEL", () => {
     ["heardFrom", HEARD_FROM],
     ["whyReason", WHY_REASON],
     ["hope", HOPE],
-    ["feedbackSession", FEEDBACK_SESSION],
     ["felt", FEEDBACK_FELT],
     ["wouldReachAgain", WOULD_REACH_AGAIN],
   ] as const)("labels every %s key", (group, keys) => {

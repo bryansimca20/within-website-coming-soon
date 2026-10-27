@@ -88,7 +88,7 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
         lastName: values.lastName,
         email: values.email,
         instagramHandle: values.instagramHandle,
-        consentedAt: now.toISOString(),
+        consentedAt: values.wantsLaunchEmail ? now.toISOString() : null,
         extraTags: [`${SAMPLING_TAG_PREFIX}${batch.id}`, ...(ref !== null && isRosterSlug(ref) ? [buildReferralTag(ref)] : [])],
       });
       await SampleRequestService.setShopifyOutcome(db, request.id, outcome);

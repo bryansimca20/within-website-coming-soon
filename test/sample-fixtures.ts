@@ -31,6 +31,7 @@ export function sampleValues(patch: Partial<ISampleRequestValues> = {}): ISample
     district: "Pesanggrahan",
     postalCode: "12250",
     willShare: true,
+    wantsLaunchEmail: true,
     courierCompany: "jne",
     courierType: "reg",
     courierServiceName: "JNE Reguler",

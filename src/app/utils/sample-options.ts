@@ -45,8 +45,6 @@ export type TrainWhere = (typeof TRAIN_WHERE)[number];
 export const HYDRATION_GOAL = ["energy", "cramps", "recovery", "hydration", "other"] as const;
 export type HydrationGoal = (typeof HYDRATION_GOAL)[number];
 
-export const FEEDBACK_SESSION = ["long_run", "short_run", "gym", "padel", "other"] as const;
-export type FeedbackSession = (typeof FEEDBACK_SESSION)[number];
 
 export const FEEDBACK_FELT = [
   "more_energy",

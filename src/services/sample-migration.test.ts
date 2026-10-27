@@ -38,8 +38,10 @@ describe("training questions migration", () => {
 
     await migrate(db, { migrationsFolder: "./drizzle" });
 
-    const feedback = await pg.query<{ felt: string[] }>("SELECT felt FROM sample_feedback");
-    expect(feedback.rows[0]?.felt).toEqual(["more_energy"]);
+    const feedback = await pg.query<{ felt: string[]; session_type: string[]; session_length: string[] }>(
+      "SELECT felt, session_type, session_length FROM sample_feedback"
+    );
+    expect(feedback.rows[0]).toEqual({ felt: ["more_energy"], session_type: ["running"], session_length: ["over_90"] });
 
     const request = await pg.query<{ main_sport: string; training_types: string[] | null; hopes: string[] | null }>(
       "SELECT main_sport, training_types, hopes FROM sample_requests"
