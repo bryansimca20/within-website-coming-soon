@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { MouseEvent } from "react";
 
 import { cn } from "@/lib/utils";
@@ -25,6 +26,22 @@ export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
 
   return (
     <div className={cn("flex flex-none flex-col", className)}>
+      {/* Offer strip fused to the top of the button; the bottle breaks out above it. Multiply drops the render's white ground;
+          `isolate` keeps that blend inside the strip, or fractional-scale screens fringe its edges with the button's orange. */}
+      <div className="isolate flex h-10 justify-center bg-brand-mist px-4 desk:h-12">
+        <div className="relative flex min-w-0 items-center pl-10 desk:pl-12">
+          <Image
+            src="/waitlist/bottle-still.webp"
+            alt=""
+            width={840}
+            height={1280}
+            className="absolute bottom-0 -left-1 h-16 w-auto mix-blend-multiply desk:h-[76px]"
+          />
+          <p className="m-0 truncate text-xs leading-4 font-bold tracking-[0.06em] desk:text-sm">
+            {WAITLIST_COPY.ctaOffer}
+          </p>
+        </div>
+      </div>
       <button
         type="button"
         aria-haspopup="dialog"

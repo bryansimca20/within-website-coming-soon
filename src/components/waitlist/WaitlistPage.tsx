@@ -81,7 +81,7 @@ export function WaitlistPage() {
         <WaitlistCta
           isJoined={isJoined}
           onOpen={openFromCta}
-          className="pt-3 desk:col-start-1 desk:row-start-3 desk:max-w-[460px] desk:pt-8"
+          className="pt-6 desk:col-start-1 desk:row-start-3 desk:max-w-[460px] desk:pt-12"
         />
       </div>
       <WaitlistFeatureDialog
