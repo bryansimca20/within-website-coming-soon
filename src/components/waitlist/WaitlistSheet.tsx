@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ISubscriberInput } from "@/app/utils/subscriber-input";
 
+import { WaitlistBottle } from "./WaitlistBottle";
 import { WaitlistForm } from "./WaitlistForm";
 import { WaitlistCloseGlyph } from "./svg/WaitlistGlyphs";
 import { WAITLIST_COPY } from "./utils/waitlist-copy";
@@ -28,7 +29,7 @@ interface WaitlistSheetProps {
 }
 
 /**
- * The waitlist form: a bottom sheet on phones, a centred 480px modal on desktop. It owns the typed
+ * The waitlist form: a bottom sheet on phones, a centred two-column modal on desktop with the free bottle beside the form. It owns the typed
  * values so they survive closing it and "Edit my details".
  */
 export function WaitlistSheet({ isOpen, onOpenChange, onJoined, triggerRef }: WaitlistSheetProps) {
@@ -66,16 +67,16 @@ export function WaitlistSheet({ isOpen, onOpenChange, onJoined, triggerRef }: Wa
         <DialogPopup
           finalFocus={pickFinalFocus}
           initialFocus={pickInitialFocus}
-          className="inset-x-0 bottom-0 max-h-dvh gap-4 overflow-y-auto border-t-[6px] border-brand-ink bg-white px-4 pt-5 pb-[max(24px,env(safe-area-inset-bottom))] text-brand-ink data-ending-style:translate-y-full data-starting-style:translate-y-full desk:inset-x-auto desk:top-1/2 desk:bottom-auto desk:left-1/2 desk:w-[calc(100vw-48px)] desk:max-w-[480px] desk:-translate-x-1/2 desk:-translate-y-1/2 desk:gap-5 desk:border-t-8 desk:px-8 desk:pt-7 desk:pb-8 desk:data-ending-style:-translate-y-1/2 desk:data-ending-style:opacity-0 desk:data-starting-style:-translate-y-1/2 desk:data-starting-style:scale-[0.96] desk:data-starting-style:opacity-0 desk:data-ending-style:scale-[0.96]"
+          className="inset-x-0 bottom-0 max-h-dvh gap-4 overflow-y-auto border-t-[6px] border-brand-ink bg-white px-4 pt-5 pb-[max(24px,env(safe-area-inset-bottom))] text-brand-ink data-ending-style:translate-y-full data-starting-style:translate-y-full desk:inset-x-auto desk:top-1/2 desk:bottom-auto desk:left-1/2 desk:w-[calc(100vw-48px)] desk:grid desk:max-w-[880px] desk:-translate-x-1/2 desk:-translate-y-1/2 desk:grid-cols-2 desk:grid-rows-[auto_1fr] desk:gap-x-10 desk:gap-y-5desk:border-t-8 desk:px-8 desk:pt-7 desk:pb-8 desk:data-ending-style:-translate-y-1/2 desk:data-ending-style:opacity-0 desk:data-starting-style:-translate-y-1/2 desk:data-starting-style:scale-[0.96] desk:data-starting-style:opacity-0 desk:data-ending-style:scale-[0.96]"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1 desk:gap-1.5">
-              <p className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted">
-                {sheet.label}
-              </p>
               <DialogTitle className="m-0 text-[26px] leading-[30px] font-normal tracking-[-0.01em] desk:text-[32px] desk:leading-9">
                 {sheet.title}
               </DialogTitle>
+              <p className="m-0 mt-1 text-sm leading-5 text-pretty desk:text-base desk:leading-6">
+                {sheet.offer.body}
+              </p>
             </div>
             <DialogClose
               aria-label={WAITLIST_COPY.close}
@@ -84,6 +85,8 @@ export function WaitlistSheet({ isOpen, onOpenChange, onJoined, triggerRef }: Wa
               <WaitlistCloseGlyph className="size-5" />
             </DialogClose>
           </div>
+          {/* The bottle is the centrepiece: under the title on phones, its own left column on desktop. */}
+          <WaitlistBottle className="h-[min(300px,34vh)] w-full desk:col-start-1 desk:row-span-2 desk:row-start-1 desk:h-[min(560px,64vh)] desk:self-center" />
           <WaitlistForm
             values={values}
             onValuesChange={setValues}
