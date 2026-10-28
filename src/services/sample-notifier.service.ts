@@ -4,15 +4,7 @@ import type { SampleBatch, SampleRequest, SampleShipment } from "@/db/schema";
 import { SITE_URL } from "@/lib/site";
 
 import { EmailService } from "./email.service";
-import { SampleRequestService } from "./sample-request.service";
 import { type ISampleEmailContext, renderSampleEmail, SampleEmailKind } from "./sample-email-templates";
-
-/** "JNE Reguler" as stored becomes courier "JNE" and service "Reguler", so the email never repeats the courier. */
-function splitCourier(courierServiceName: string, fallback: string): { name: string; service: string } {
-  const [first, ...rest] = courierServiceName.trim().split(/\s+/);
-
-  return rest.length === 0 ? { name: fallback, service: courierServiceName } : { name: first, service: rest.join(" ") };
-}
 
 /** The URLs and words a template needs, from the stored rows. */
 export function buildSampleEmailContext(
@@ -22,7 +14,6 @@ export function buildSampleEmailContext(
 ): ISampleEmailContext {
   return {
     firstName: request.firstName,
-    boxWord: SampleRequestService.boxWord(request.boxNumber),
     batchLabel: batch.label,
     statusUrl: `${SITE_URL}/sample/r/${request.accessToken}`,
     feedbackUrl: `${SITE_URL}/sample/feedback?code=${request.accessToken}`,
@@ -30,14 +21,15 @@ export function buildSampleEmailContext(
       shipment === null
         ? null
         : {
-            ...splitCourier(request.courierServiceName, shipment.courierCompany.toUpperCase()),
+            name: request.courierServiceName,
+            eta: request.shippingEta,
             waybillId: shipment.waybillId,
             trackingLink: shipment.trackingLink,
           },
   };
 }
 
-/** Sends the four sampler emails. Each returns whether Resend accepted it. */
+/** Sends the five sampler emails. Each returns whether Resend accepted it. */
 export class SampleNotifier {
   private static async send(
     kind: SampleEmailKind,

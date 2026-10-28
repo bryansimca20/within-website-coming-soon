@@ -1,49 +1,62 @@
 /**
- * Every line of the four sampler emails. One screen each, brand voice: short, plain, no hype.
- * `{box}` is "No. 042", `{batch}` is "Batch 01"; the templates fill them in.
+ * Every line of the five sampler emails, in the order a sampler receives them. One voice: short,
+ * warm, plain, no hype. `{name}` is the sampler's first name, `{batch}` the batch label ("Batch 01").
  */
 export const SAMPLE_EMAIL_COPY = {
-  rewardLine: "As thanks, you have priority on the first production batch.",
-  signature: "WITHIN, Jakarta",
-  statusLabel: "Your samples, any time:",
+  footer: "You're getting this because you requested a WITHIN sample at within.id. Reply to this email with any question and a person will answer.",
+  place: "JAKARTA",
   paid: {
-    subject: "You're in. {box} of {batch}.",
+    subject: "{name}, you're in for {batch}",
+    preheader: "A note from the small team making WITHIN in Jakarta.",
+    headline: "Thank you, {name}.",
     paragraphs: [
-      "Your samples are yours. Three sachets of WITHIN, before anyone else gets them.",
-      "We pack and ship in runs from our office in BSD. You will hear from us again when the courier has it, with the tracking number.",
-      "One thing we ask in return: after a few sessions, tell us how it went. Your samples come with a QR code that opens a short form. It takes less than 30 seconds.",
+      "For a long time, WITHIN was something only we had tried. Today that changes. You're one of the first people outside our team to try it.",
+      "Use them in your training, then tell us honestly how it went. It's the only thing we ask.",
+      "We'll let you know when they're on the way.",
     ],
+    button: "See your samples",
   },
   shipped: {
-    subject: "Your samples are on their way. {box}.",
-    intro: "The courier has your samples.",
-    courierWithWaybill: "{courier} {service}, waybill {waybill}.",
-    courierWithoutWaybill: "{courier} {service}. The waybill number follows once the courier scans it.",
-    trackLabel: "Track it:",
-    tip: "Best on sessions over 45 minutes. One sachet in 500 to 1000 ml of water. Less water for a saltier mix, more for a lighter one.",
+    subject: "{name}, your samples are on the way",
+    preheaderWithWaybill: "{courier} has them. Waybill {waybill}.",
+    preheaderWithEta: "{courier} has them. Arriving in {eta}.",
+    preheaderPlain: "Your samples are with the courier.",
+    headline: "They're on the way, {name}.",
+    withCourierAndEta: "Your samples are with {courier} and should reach you in {eta}.",
+    withCourier: "Your samples are with {courier}.",
+    withoutCourier: "Your samples are with the courier.",
+    waybillLabel: "WAYBILL",
+    waybillPending: "Your waybill number will follow as soon as the courier scans the parcel.",
+    button: "Track your samples",
   },
   delivered: {
-    subject: "Your samples have landed. {box}.",
+    subject: "{name}, your samples have arrived",
+    preheader: "Try them on your next few sessions, then tell us how it went.",
+    headline: "It's here, {name}.",
     paragraphs: [
-      "Your samples are there. Open them when you train, not before.",
-      "After a few sessions, tell us how it went. Taste, how you felt, whether you would reach for it again. It is the only thing we ask.",
+      "Your samples have arrived. Try them on your next few sessions.",
+      "Then tell us honestly how it went, with the button below or the QR code on the card. It takes less than 30 seconds, and it's the only thing we ask.",
     ],
     button: "Tell us how it went",
   },
   feedbackReminder: {
-    subject: "How did your samples go? {box}.",
+    subject: "{name}, how did your samples go?",
+    preheader: "Less than 30 seconds, whenever you're ready.",
+    headline: "How did it go, {name}?",
     paragraphs: [
-      "It has been a week since your samples arrived. If you've tried them on a few sessions, we'd love to hear how it went.",
-      "It takes less than 30 seconds, and it helps us get the launch right.",
+      "It's been a week since your samples arrived. If you've tried them in your training, we'd like to hear how it went.",
+      "It takes less than 30 seconds. If you haven't tried them yet, there's no rush. This link keeps working.",
     ],
     button: "Tell us how it went",
   },
   feedbackReceived: {
-    subject: "Thank you. {box}.",
+    subject: "{name}, thank you for telling us",
+    preheader: "We read every answer ourselves.",
+    headline: "Thanks for telling us, {name}.",
     paragraphs: [
-      "We're a small team in Jakarta, and we read every answer ourselves. Yours helps us make WITHIN better, before anyone else gets to try it.",
-      "Thank you for being part of the very start of this.",
-      "Watch Instagram for the launch, then your inbox.",
+      "We read every answer ourselves. Yours helps us get WITHIN right before it launches.",
+      "Until then, watch Instagram for the launch.",
     ],
+    button: "Follow @withinrecovery",
   },
 } as const;

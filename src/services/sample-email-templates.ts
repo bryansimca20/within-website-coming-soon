@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/lib/site";
+import { INSTAGRAM_URL, SITE_URL } from "@/lib/site";
 
 import { SAMPLE_EMAIL_COPY } from "./sample-email-copy";
 
@@ -14,13 +14,13 @@ export enum SampleEmailKind {
 /** Everything a template needs; the notifier builds it from the request and shipment rows. */
 export interface ISampleEmailContext {
   firstName: string;
-  boxWord: string;
   batchLabel: string;
   statusUrl: string;
   feedbackUrl: string;
+  /** Set once a shipment exists. `name` is the courier service as the sampler chose it ("JNE Reguler"). */
   courier: {
     name: string;
-    service: string;
+    eta: string | null;
     waybillId: string | null;
     trackingLink: string | null;
   } | null;
@@ -43,101 +43,127 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function fill(template: string, context: ISampleEmailContext): string {
-  return template.replace("{box}", context.boxWord).replace("{batch}", context.batchLabel);
-}
-
-interface IEmailBlock {
-  kind: "paragraph" | "link" | "button";
-  text: string;
-  href?: string;
+/** One email in the shared "note" layout: label, headline, paragraphs, an optional waybill box, one button. */
+interface INoteEmail {
+  subject: string;
+  preheader: string;
+  headline: string;
+  paragraphs: string[];
+  waybill?: { label: string; value: string | null; pending: string };
+  button: { label: string; href: string; isPrimary: boolean };
 }
 
 const INK = "#191919";
+const MIST = "#f2f2f2";
 const MUTED = "#6b6b6b";
 const ORANGE = "#ff8326";
+const LINE = "#dcdcdc";
+const FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const MONO = "'SFMono-Regular',Menlo,Consolas,monospace";
 
-function renderHtml(subject: string, context: ISampleEmailContext, blocks: IEmailBlock[]): string {
-  const body = blocks
-    .map((block) => {
-      if (block.kind === "paragraph") {
-        return `<p style="margin:0 0 16px;font-size:16px;line-height:24px;color:${INK}">${escapeHtml(block.text)}</p>`;
-      }
-      const href = escapeHtml(block.href ?? "");
-      if (block.kind === "button") {
-        return `<p style="margin:8px 0 24px"><a href="${href}" style="display:inline-block;background:${ORANGE};color:${INK};text-decoration:none;font-weight:600;font-size:16px;line-height:24px;padding:14px 24px">${escapeHtml(block.text)}</a></p>`;
-      }
-      return `<p style="margin:0 0 16px;font-size:14px;line-height:20px;color:${MUTED}">${escapeHtml(block.text)}<br><a href="${href}" style="color:${INK}">${href}</a></p>`;
-    })
+function fill(template: string, values: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
+}
+
+function renderHtml(email: INoteEmail, batchLabel: string): string {
+  const paragraphs = email.paragraphs
+    .map((text) => `<p style="margin:0 0 16px;font-family:${FONT};font-size:17px;line-height:26px;color:${INK};">${escapeHtml(text)}</p>`)
     .join("");
+  const waybill =
+    email.waybill === undefined
+      ? ""
+      : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:${MIST};"><tr><td style="padding:14px 16px;">` +
+        `<div style="font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};padding-bottom:4px;">${escapeHtml(email.waybill.label)}</div>` +
+        (email.waybill.value === null
+          ? `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:${INK};">${escapeHtml(email.waybill.pending)}</div>`
+          : `<div style="font-family:${MONO};font-size:18px;line-height:24px;font-weight:500;color:${INK};letter-spacing:0.02em;">${escapeHtml(email.waybill.value)}</div>`) +
+        `</td></tr></table>`;
+  const { button } = email;
+  const buttonHtml =
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td style="background:${button.isPrimary ? ORANGE : INK};">` +
+    `<a href="${escapeHtml(button.href)}" style="display:block;padding:16px 20px;font-family:${FONT};font-size:16px;line-height:20px;font-weight:600;color:${button.isPrimary ? INK : MIST};text-decoration:none;">` +
+    `${escapeHtml(button.label)}<span style="float:right;">&rarr;</span></a></td></tr></table>`;
+  const logo = escapeHtml(`${SITE_URL}/brand/within-logotype.png`);
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head><body style="margin:0;padding:0;background:#ffffff"><div style="max-width:520px;margin:0 auto;padding:32px 20px;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:${INK}"><p style="margin:0 0 28px"><img src="${escapeHtml(`${SITE_URL}/brand/within-logotype.png`)}" alt="WITHIN" height="18" style="height:18px;width:auto;display:block"></p><p style="margin:0 0 16px;font-size:16px;line-height:24px">${escapeHtml(context.firstName)},</p>${body}<p style="margin:28px 0 0;font-size:12px;line-height:16px;letter-spacing:0.06em;color:${MUTED}">${escapeHtml(SAMPLE_EMAIL_COPY.signature)}</p></div></body></html>`;
+  return (
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(email.subject)}</title></head>` +
+    `<body style="margin:0;padding:0;background:${MIST};">` +
+    `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(email.preheader)}</div>` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MIST};"><tr><td align="center" style="padding:24px 12px;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-top:6px solid ${INK};"><tr><td style="padding:32px 28px 28px;">` +
+    `<p style="margin:0 0 10px;font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(`SAMPLE ${batchLabel}`.toUpperCase())}</p>` +
+    `<h1 style="margin:0 0 20px;font-family:${FONT};font-size:30px;line-height:36px;font-weight:400;letter-spacing:-0.02em;color:${INK};">${escapeHtml(email.headline)}</h1>` +
+    paragraphs + waybill + buttonHtml +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid ${LINE};"><tr>` +
+    `<td style="padding-top:12px;"><img src="${logo}" alt="WITHIN" height="13" style="height:13px;width:auto;display:block;border:0;"></td>` +
+    `<td align="right" style="padding-top:12px;font-family:${FONT};font-size:12px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(SAMPLE_EMAIL_COPY.place)}</td></tr></table>` +
+    `</td></tr></table>` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;"><tr><td style="padding:16px 28px;font-family:${FONT};font-size:12px;line-height:18px;color:${MUTED};">${escapeHtml(SAMPLE_EMAIL_COPY.footer)}</td></tr></table>` +
+    `</td></tr></table></body></html>`
+  );
 }
 
-function renderText(context: ISampleEmailContext, blocks: IEmailBlock[]): string {
-  const lines = blocks.map((block) => (block.href === undefined ? block.text : `${block.text}\n${block.href}`));
+function renderText(email: INoteEmail): string {
+  const waybill =
+    email.waybill === undefined ? [] : [email.waybill.value === null ? email.waybill.pending : `${email.waybill.label}: ${email.waybill.value}`];
 
-  return [`${context.firstName},`, ...lines, SAMPLE_EMAIL_COPY.signature].join("\n\n");
+  return [email.headline, ...email.paragraphs, ...waybill, `${email.button.label}: ${email.button.href}`, `WITHIN, ${SAMPLE_EMAIL_COPY.place}`, SAMPLE_EMAIL_COPY.footer].join("\n\n");
 }
 
-function blocksFor(kind: SampleEmailKind, context: ISampleEmailContext): IEmailBlock[] {
-  const copy = SAMPLE_EMAIL_COPY;
-  const statusLink: IEmailBlock = { kind: "link", text: copy.statusLabel, href: context.statusUrl };
+function shippedEmail(context: ISampleEmailContext, name: Record<string, string>): INoteEmail {
+  const copy = SAMPLE_EMAIL_COPY.shipped;
+  const { courier } = context;
+  const values = { ...name, courier: courier?.name ?? "", eta: courier?.eta ?? "", waybill: courier?.waybillId ?? "" };
+  const intro = courier === null ? copy.withoutCourier : courier.eta ? copy.withCourierAndEta : copy.withCourier;
+  const preheader =
+    courier === null ? copy.preheaderPlain : courier.waybillId ? copy.preheaderWithWaybill : courier.eta ? copy.preheaderWithEta : copy.preheaderPlain;
 
-  if (kind === SampleEmailKind.Paid) {
-    return [...copy.paid.paragraphs.map((text) => ({ kind: "paragraph" as const, text })), statusLink];
-  }
-
-  if (kind === SampleEmailKind.Shipped) {
-    const courier = context.courier;
-    const courierLine =
+  return {
+    subject: fill(copy.subject, values),
+    preheader: fill(preheader, values),
+    headline: fill(copy.headline, values),
+    paragraphs: [fill(intro, values)],
+    waybill:
       courier === null
-        ? null
-        : (courier.waybillId === null ? copy.shipped.courierWithoutWaybill : copy.shipped.courierWithWaybill)
-            .replace("{courier}", courier.name)
-            .replace("{service}", courier.service)
-            .replace("{waybill}", courier.waybillId ?? "");
-    const blocks: IEmailBlock[] = [{ kind: "paragraph", text: copy.shipped.intro }];
-    if (courierLine !== null) {
-      blocks.push({ kind: "paragraph", text: courierLine });
-    }
-    if (courier?.trackingLink) {
-      blocks.push({ kind: "link", text: copy.shipped.trackLabel, href: courier.trackingLink });
-    }
-    blocks.push({ kind: "paragraph", text: copy.shipped.tip }, statusLink);
-    return blocks;
-  }
-
-  if (kind === SampleEmailKind.Delivered) {
-    return [
-      ...copy.delivered.paragraphs.map((text) => ({ kind: "paragraph" as const, text })),
-      { kind: "button", text: copy.delivered.button, href: context.feedbackUrl },
-      { kind: "paragraph", text: copy.rewardLine },
-    ];
-  }
-
-  if (kind === SampleEmailKind.FeedbackReminder) {
-    return [
-      ...copy.feedbackReminder.paragraphs.map((text) => ({ kind: "paragraph" as const, text })),
-      { kind: "button", text: copy.feedbackReminder.button, href: context.feedbackUrl },
-    ];
-  }
-
-  return copy.feedbackReceived.paragraphs.map((text) => ({ kind: "paragraph" as const, text }));
+        ? undefined
+        : { label: `${courier.name} · ${copy.waybillLabel}`.toUpperCase(), value: courier.waybillId, pending: copy.waybillPending },
+    // Without a tracking link yet, the status page is where the waybill and tracking show up.
+    button: { label: copy.button, href: courier?.trackingLink ?? context.statusUrl, isPrimary: true },
+  };
 }
 
-const SUBJECT: Record<SampleEmailKind, string> = {
-  [SampleEmailKind.Paid]: SAMPLE_EMAIL_COPY.paid.subject,
-  [SampleEmailKind.Shipped]: SAMPLE_EMAIL_COPY.shipped.subject,
-  [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered.subject,
-  [SampleEmailKind.FeedbackReceived]: SAMPLE_EMAIL_COPY.feedbackReceived.subject,
-  [SampleEmailKind.FeedbackReminder]: SAMPLE_EMAIL_COPY.feedbackReminder.subject,
-};
+function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmail {
+  const name = { name: context.firstName, batch: context.batchLabel };
+  if (kind === SampleEmailKind.Shipped) {
+    return shippedEmail(context, name);
+  }
 
-/** Renders one of the four emails for a sampler. Pure: no sending, no database. */
+  const copy = {
+    [SampleEmailKind.Paid]: SAMPLE_EMAIL_COPY.paid,
+    [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered,
+    [SampleEmailKind.FeedbackReminder]: SAMPLE_EMAIL_COPY.feedbackReminder,
+    [SampleEmailKind.FeedbackReceived]: SAMPLE_EMAIL_COPY.feedbackReceived,
+  }[kind];
+  const href = {
+    [SampleEmailKind.Paid]: context.statusUrl,
+    [SampleEmailKind.Delivered]: context.feedbackUrl,
+    [SampleEmailKind.FeedbackReminder]: context.feedbackUrl,
+    [SampleEmailKind.FeedbackReceived]: INSTAGRAM_URL,
+  }[kind];
+
+  return {
+    subject: fill(copy.subject, name),
+    preheader: fill(copy.preheader, name),
+    headline: fill(copy.headline, name),
+    paragraphs: copy.paragraphs.map((text) => fill(text, name)),
+    // Following on Instagram is optional, so the thank-you email's button is ink, not the orange of a main action.
+    button: { label: copy.button, href, isPrimary: kind !== SampleEmailKind.FeedbackReceived },
+  };
+}
+
+/** Renders one of the five emails for a sampler. Pure: no sending, no database. */
 export function renderSampleEmail(kind: SampleEmailKind, context: ISampleEmailContext): IRenderedEmail {
-  const subject = fill(SUBJECT[kind], context);
-  const blocks = blocksFor(kind, context);
+  const email = noteFor(kind, context);
 
-  return { subject, html: renderHtml(subject, context, blocks), text: renderText(context, blocks) };
+  return { subject: email.subject, html: renderHtml(email, context.batchLabel), text: renderText(email) };
 }

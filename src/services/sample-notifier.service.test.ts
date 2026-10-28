@@ -5,14 +5,25 @@ import type { SampleBatch, SampleRequest, SampleShipment } from "@/db/schema";
 import { buildSampleEmailContext } from "./sample-notifier.service";
 
 describe("buildSampleEmailContext", () => {
-  test("splits the stored courier service into courier and service", () => {
+  test("passes the courier as the sampler chose it, with its estimate and the shipment's waybill", () => {
     const context = buildSampleEmailContext(
-      { firstName: "Fanny", boxNumber: 42, accessToken: "t", courierServiceName: "JNE Reguler" } as SampleRequest,
+      { firstName: "Fanny", accessToken: "t", courierServiceName: "JNE Reguler", shippingEta: "1 to 2 days" } as SampleRequest,
       { label: "Batch 01" } as SampleBatch,
-      { courierCompany: "jne", waybillId: "W1", trackingLink: null } as SampleShipment
+      { waybillId: "W1", trackingLink: null } as SampleShipment
     );
 
-    expect(context.courier).toMatchObject({ name: "JNE", service: "Reguler" });
-    expect(context.boxWord).toBe("No. 042");
+    expect(context.courier).toEqual({ name: "JNE Reguler", eta: "1 to 2 days", waybillId: "W1", trackingLink: null });
+    expect(context.batchLabel).toBe("Batch 01");
+    expect(context).not.toHaveProperty("boxWord");
+  });
+
+  test("has no courier before a shipment exists", () => {
+    const context = buildSampleEmailContext(
+      { firstName: "Fanny", accessToken: "t", courierServiceName: "JNE Reguler", shippingEta: "1 to 2 days" } as SampleRequest,
+      { label: "Batch 01" } as SampleBatch,
+      null
+    );
+
+    expect(context.courier).toBeNull();
   });
 });
