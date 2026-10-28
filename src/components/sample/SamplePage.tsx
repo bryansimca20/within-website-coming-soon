@@ -1,29 +1,28 @@
+import type { SamplePageState } from "@/services/sample-request.service";
+
+import { SampleComingSoon } from "./SampleComingSoon";
 import { SampleNotice } from "./SampleNotice";
 import { SampleRequestForm } from "./SampleRequestForm";
 import { SampleShell } from "./SampleShell";
 import { SampleSnapScript } from "./SampleSnapScript";
 
 interface SamplePageProps {
-  /** Null when no batch is open. */
-  claimed: number | null;
-  capacity: number;
+  state: SamplePageState;
   snapScriptUrl: string;
 }
 
-/** `/sample`: the intro and the five-step request, or the closed notice once the batch is claimed. */
-export function SamplePage({ claimed, capacity, snapScriptUrl }: SamplePageProps) {
-  const isOpen = claimed !== null && claimed < capacity;
-
+/** `/sample`: coming soon before the batch opens, the intro and five-step request while it's open, the claimed notice after. */
+export function SamplePage({ state, snapScriptUrl }: SamplePageProps) {
   return (
-    <SampleShell isWide={isOpen}>
-      {isOpen ? (
+    <SampleShell isWide={state.kind !== "closed"}>
+      {state.kind === "upcoming" && <SampleComingSoon />}
+      {state.kind === "open" && (
         <>
           <SampleSnapScript src={snapScriptUrl} />
           <SampleRequestForm />
         </>
-      ) : (
-        <SampleNotice kind="full" />
       )}
+      {state.kind === "closed" && <SampleNotice kind="full" />}
     </SampleShell>
   );
 }

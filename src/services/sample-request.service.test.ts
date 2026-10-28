@@ -107,7 +107,7 @@ describe("SampleRequestService.claim", () => {
   });
 
   test("a closed batch refuses every claim", async () => {
-    await SampleRequestService.updateBatch(db, "b01", { isOpen: false });
+    await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
 
     expect(await SampleRequestService.claim(db, "b01", sampleValues(), NOW)).toEqual({ kind: "closed" });
     expect(await SampleRequestService.getOpenBatch(db)).toBeNull();
@@ -198,5 +198,41 @@ describe("SampleRequestService admin reads", () => {
     const summary = await SampleRequestService.summary(db, "b01");
 
     expect(summary).toMatchObject({ pending_payment: 1, paid: 1, shipped: 0, delivered: 0, expired: 0, cancelled: 0 });
+  });
+});
+
+describe("SampleRequestService.pageState", () => {
+  test("a coming-soon batch shows coming soon, even after it has taken requests", async () => {
+    await claimed("a@example.com");
+    await SampleRequestService.updateBatch(db, "b01", { phase: "upcoming" });
+
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "upcoming" });
+  });
+
+  test("an open batch with room is open, with its live count", async () => {
+    await claimed("a@example.com");
+
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "open", claimed: 1, capacity: 100 });
+  });
+
+  test("an open batch that is full shows closed", async () => {
+    await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
+    await claimed("a@example.com");
+
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed" });
+  });
+
+  test("a closed batch shows closed, even before any request", async () => {
+    await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
+
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed" });
+  });
+
+  test("only an open batch takes requests", async () => {
+    for (const phase of ["upcoming", "closed"] as const) {
+      await SampleRequestService.updateBatch(db, "b01", { phase });
+      expect(await SampleRequestService.claim(db, "b01", sampleValues(), NOW)).toEqual({ kind: "closed" });
+      expect(await SampleRequestService.getOpenBatch(db)).toBeNull();
+    }
   });
 });

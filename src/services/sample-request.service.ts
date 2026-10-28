@@ -7,6 +7,7 @@ import { generateAccessToken } from "@/app/utils/token";
 import type { SampleDatabase } from "@/db/database";
 import {
   type SampleBatch,
+  type SampleBatchPhase,
   sampleBatches,
   type SampleRequest,
   type SampleRequestStatus,
@@ -19,6 +20,9 @@ export type ClaimResult =
   | { kind: "full" }
   | { kind: "already-requested"; request: SampleRequest }
   | { kind: "closed" };
+
+/** What `/sample` shows. */
+export type SamplePageState = { kind: "upcoming" } | { kind: "open"; claimed: number; capacity: number } | { kind: "closed" };
 
 /** Statuses that own a box for good: a second request from the same email is refused. */
 export const ACTIVE_STATUSES: SampleRequestStatus[] = ["paid", "shipped", "delivered"];
@@ -35,11 +39,25 @@ export class SampleRequestService {
     const [batch] = await db
       .select()
       .from(sampleBatches)
-      .where(eq(sampleBatches.isOpen, true))
+      .where(eq(sampleBatches.phase, "open"))
       .orderBy(sampleBatches.createdAt)
       .limit(1);
 
     return batch ?? null;
+  }
+
+  /** What `/sample` shows: the batch's phase as set in admin, except an open batch that is full shows closed. */
+  static async pageState(db: SampleDatabase, now: Date): Promise<SamplePageState> {
+    const [batch] = await db.select().from(sampleBatches).orderBy(sampleBatches.createdAt).limit(1);
+    if (batch === undefined) {
+      return { kind: "closed" };
+    }
+    if (batch.phase !== "open") {
+      return { kind: batch.phase };
+    }
+    const claimed = await SampleRequestService.countClaimed(db, batch.id, now);
+
+    return claimed < batch.capacity ? { kind: "open", claimed, capacity: batch.capacity } : { kind: "closed" };
   }
 
   /** Writes `expired` on every hold whose window has passed. Returns how many it closed. */
@@ -88,7 +106,7 @@ export class SampleRequestService {
   ): Promise<ClaimResult> {
     return db.transaction(async (tx) => {
       const [batch] = await tx.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).for("update");
-      if (batch === undefined || !batch.isOpen) {
+      if (batch === undefined || batch.phase !== "open") {
         return { kind: "closed" };
       }
 
@@ -221,7 +239,7 @@ export class SampleRequestService {
   static async updateBatch(
     db: SampleDatabase,
     batchId: string,
-    patch: { capacity?: number; isOpen?: boolean }
+    patch: { capacity?: number; phase?: SampleBatchPhase }
   ): Promise<void> {
     await db.update(sampleBatches).set(patch).where(eq(sampleBatches.id, batchId));
   }

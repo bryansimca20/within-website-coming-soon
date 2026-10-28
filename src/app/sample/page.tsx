@@ -5,16 +5,9 @@ import { SampleRequestService } from "@/services/sample-request.service";
 
 export const dynamic = "force-dynamic";
 
-/** `/sample`: reads the open batch and its live count on every request. */
+/** `/sample`: reads the batch on every request, so the admin "Taking requests" switch applies at once. */
 export default async function SampleRoute() {
-  const batch = await SampleRequestService.getOpenBatch(db);
-  const claimed = batch === null ? null : await SampleRequestService.countClaimed(db, batch.id, new Date());
+  const state = await SampleRequestService.pageState(db, new Date());
 
-  return (
-    <SamplePage
-      claimed={claimed}
-      capacity={batch?.capacity ?? 100}
-      snapScriptUrl={MidtransService.snapScriptUrl(MidtransService.environment())}
-    />
-  );
+  return <SamplePage state={state} snapScriptUrl={MidtransService.snapScriptUrl(MidtransService.environment())} />;
 }

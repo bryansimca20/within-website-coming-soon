@@ -154,6 +154,14 @@ export const SAMPLE_COPY = {
     failed: "Could not load courier prices.",
     retry: "Try again",
   },
+  upcoming: {
+    label: "SAMPLE BATCH 01",
+    headline: "Samples are coming soon.",
+    why: "Before WITHIN goes on sale, 100 people who train in the heat get to try it first.",
+    when: "Requests aren't open yet. Join the waitlist and you'll hear as soon as they are.",
+    cta: "Join the waitlist",
+    notePrefix: "Or follow ",
+  },
   closed: {
     headline: "Batch 01 is claimed.",
     body: "Every sample in this batch is spoken for. Join the waitlist and hear first when the next batch opens.",

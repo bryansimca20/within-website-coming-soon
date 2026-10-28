@@ -4,8 +4,8 @@ import { sampleBatches } from "./schema";
 import { makeTestDb } from "../../test/sample-db";
 
 describe("sample schema", () => {
-  test("migrations apply and seed Batch 01", async () => {
-    const { db, pg } = await makeTestDb();
+  test("migrations apply and seed Batch 01 as coming soon", async () => {
+    const { db, pg } = await makeTestDb({ batchPhase: "upcoming" });
 
     const batches = await db.select().from(sampleBatches);
 
@@ -14,7 +14,7 @@ describe("sample schema", () => {
       id: "b01",
       label: "Batch 01",
       capacity: 100,
-      isOpen: true,
+      phase: "upcoming",
       paymentWindowMinutes: 1440,
     });
 

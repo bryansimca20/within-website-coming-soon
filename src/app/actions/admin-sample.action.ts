@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import type { AdminActionResult, ShipRunState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
-import { sampleBatches, sampleRequests } from "@/db/schema";
+import { sampleBatches, sampleBatchPhaseEnum, sampleRequests } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin-session";
 import { BiteshipService } from "@/services/biteship.service";
 import { SampleAdminDataService } from "@/services/sample-admin-data.service";
@@ -122,9 +122,10 @@ export async function updateBatchAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const batchId = String(formData.get("batchId") ?? "");
   const capacity = Number(formData.get("capacity"));
-  const isOpen = formData.get("isOpen") === "on";
+  const phaseValue = formData.get("phase");
+  const phase = sampleBatchPhaseEnum.enumValues.find((value) => value === phaseValue);
   await SampleRequestService.updateBatch(db, batchId, {
-    isOpen,
+    ...(phase === undefined ? {} : { phase }),
     ...(Number.isInteger(capacity) && capacity > 0 && capacity <= 10_000 ? { capacity } : {}),
   });
   revalidate();

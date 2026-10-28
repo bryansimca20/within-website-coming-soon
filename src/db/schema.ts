@@ -31,6 +31,9 @@ export const samplePaymentStatusEnum = pgEnum("sample_payment_status", [
   "failure",
 ]);
 
+/** A batch's public state, set by a founder in admin. */
+export const sampleBatchPhaseEnum = pgEnum("sample_batch_phase", ["upcoming", "open", "closed"]);
+
 /** Who sent a stored webhook body. */
 export const webhookProviderEnum = pgEnum("webhook_provider", ["midtrans", "biteship"]);
 
@@ -41,7 +44,8 @@ export const sampleBatches = pgTable("sample_batches", {
   id: text("id").primaryKey(),
   label: text("label").notNull(),
   capacity: integer("capacity").notNull(),
-  isOpen: boolean("is_open").notNull().default(true),
+  /** What `/sample` shows: coming soon, the request form (falls back to closed once full), or closed. */
+  phase: sampleBatchPhaseEnum("phase").notNull().default("upcoming"),
   paymentWindowMinutes: integer("payment_window_minutes").notNull().default(1440),
   createdAt: timestamptz("created_at").notNull().defaultNow(),
 });
@@ -212,3 +216,4 @@ export type SampleFeedbackRow = typeof sampleFeedback.$inferSelect;
 export type SampleWebhookEvent = typeof sampleWebhookEvents.$inferSelect;
 export type SampleRequestStatus = (typeof sampleRequestStatusEnum.enumValues)[number];
 export type SamplePaymentStatus = (typeof samplePaymentStatusEnum.enumValues)[number];
+export type SampleBatchPhase = (typeof sampleBatchPhaseEnum.enumValues)[number];
