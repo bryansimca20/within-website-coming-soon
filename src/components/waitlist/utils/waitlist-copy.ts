@@ -39,6 +39,7 @@ export const WAITLIST_COPY = {
     "Electrolytes for training, recovery, and everything that comes after. Dosed to the milligram. Made in Indonesia. Built for the heat.",
   sachetAlt: "WITHIN orange electrolyte sachet",
   cta: "Join the waitlist",
+  ctaOffer: "FREE BOTTLE · FIRST 50 ORDERS",
   ctaJoined: "You are on the list",
   close: "Close",
   facts: {
@@ -62,8 +63,11 @@ export const WAITLIST_COPY = {
     sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8072971/",
   },
   sheet: {
-    label: "THE WAITLIST",
-    title: "Hear first when we launch.",
+    title: "A free WITHIN bottle for the first 50.",
+    offer: {
+      body: "Join the list. Be one of the first 50 from it to order at launch, and a 550 ml WITHIN bottle comes with your order.",
+      bottleAlt: "Black 550 ml WITHIN squeeze bottle",
+    },
     nameLabel: "Name",
     namePlaceholder: "Your name",
     emailLabel: "Email",
