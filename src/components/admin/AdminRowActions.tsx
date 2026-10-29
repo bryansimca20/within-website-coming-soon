@@ -17,7 +17,7 @@ const RESEND: Array<{ kind: SampleEmailKind; label: string }> = [
   { kind: SampleEmailKind.Paid, label: "Resend paid" },
   { kind: SampleEmailKind.Shipped, label: "Resend shipped" },
   { kind: SampleEmailKind.Delivered, label: "Resend delivered" },
-  { kind: SampleEmailKind.FeedbackReceived, label: "Resend thanks" },
+  { kind: SampleEmailKind.FeedbackReminder, label: "Resend reminder" },
 ];
 
 /** Email resends and the Biteship refresh, each reporting its own result. */

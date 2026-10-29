@@ -57,6 +57,13 @@
       "when": 1793179070663,
       "tag": "0007_single_open_batch",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793285281955,
+      "tag": "0008_sample_reviews",
+      "breakpoints": true
     }
   ]
 }

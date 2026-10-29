@@ -1,5 +1,5 @@
 /**
- * Every line of the five sampler emails, in the order a sampler receives them. One voice: short,
+ * Every line of the four sampler emails, in the order a sampler receives them. One voice: short,
  * warm, plain, no hype. `{name}` is the sampler's first name, `{batch}` the batch label ("Batch 01").
  */
 export const SAMPLE_EMAIL_COPY = {
@@ -35,28 +35,18 @@ export const SAMPLE_EMAIL_COPY = {
     headline: "It's here, {name}.",
     paragraphs: [
       "Your samples have arrived. Try them on your next few sessions.",
-      "Then tell us honestly how it went, with the button below or the QR code on the card. It takes less than 30 seconds, and it's the only thing we ask.",
+      "Then tell us honestly how it went, with the button below or the QR code on the card. It takes under a minute, and it's the only thing we ask.",
     ],
     button: "Tell us how it went",
   },
   feedbackReminder: {
-    subject: "{name}, how did your samples go?",
-    preheader: "Less than 30 seconds, whenever you're ready.",
-    headline: "How did it go, {name}?",
-    paragraphs: [
-      "It's been a week since your samples arrived. If you've tried them in your training, we'd like to hear how it went.",
-      "It takes less than 30 seconds. If you haven't tried them yet, there's no rush. This link keeps working.",
-    ],
-    button: "Tell us how it went",
-  },
-  feedbackReceived: {
-    subject: "{name}, thank you for telling us",
-    preheader: "We read every answer ourselves.",
-    headline: "Thanks for telling us, {name}.",
-    paragraphs: [
-      "We read every answer ourselves. Yours helps us get WITHIN right before it launches.",
-      "Until then, watch Instagram for the launch.",
-    ],
-    button: "Follow @withinrecovery",
+    subject: "{name}, how were your samples?",
+    preheader: "Tap a star to rate them. It takes under a minute.",
+    headline: "How were your samples, {name}?",
+    paragraphs: ["It's been a week since they arrived. Tap a star to rate them, then tell us how it went."],
+    starLabel: "{stars} out of 5",
+    low: "Poor",
+    high: "Excellent",
+    note: "Haven't tried them yet? No rush. These links keep working.",
   },
 } as const;

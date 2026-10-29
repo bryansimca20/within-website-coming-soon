@@ -1,18 +1,15 @@
 "use server";
 
 import { checkBotId } from "botid/server";
-import { eq } from "drizzle-orm";
 
 import { FeedbackEligibility } from "@/app/utils/feedback-eligibility";
-import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD, isHoneypotTripped } from "@/app/utils/honeypot";
-import { parseSampleFeedbackInput, readSampleFeedbackInput } from "@/app/utils/sample-feedback-input";
-import { FeedbackOutcome, type FeedbackState, GENERIC_ERROR_MESSAGE } from "@/app/utils/sample-state";
-import { db } from "@/db/client";
-import { sampleBatches } from "@/db/schema";
-import { SampleFeedbackService } from "@/services/sample-feedback.service";
-import { SampleNotifier } from "@/services/sample-notifier.service";
 import { readFormField } from "@/app/utils/form-field";
+import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD, isHoneypotTripped } from "@/app/utils/honeypot";
+import { parseReviewInput, readSampleFeedbackInput } from "@/app/utils/sample-feedback-input";
+import { FeedbackOutcome, type FeedbackState, GENERIC_ERROR_MESSAGE } from "@/app/utils/sample-state";
 import { SAMPLE_COPY } from "@/components/sample/utils/sample-copy";
+import { db } from "@/db/client";
+import { SampleFeedbackService } from "@/services/sample-feedback.service";
 
 const EMAIL_MESSAGE: Record<Exclude<FeedbackEligibility, FeedbackEligibility.Ok>, string> = {
   [FeedbackEligibility.NotFound]: SAMPLE_COPY.feedback.emailNotFound,
@@ -20,10 +17,13 @@ const EMAIL_MESSAGE: Record<Exclude<FeedbackEligibility, FeedbackEligibility.Ok>
   [FeedbackEligibility.AlreadyGiven]: SAMPLE_COPY.feedback.emailAlreadyGiven,
 };
 
+/** A honeypot hit is told it worked; this id matches no row, so its later screens change nothing. */
+const DECOY_FEEDBACK_ID = "00000000-0000-4000-8000-000000000000";
 
 /**
- * Stores a check-in. The personal link's code identifies the sampler outright. Without one (the
- * card's QR), the email must belong to a shipped or delivered order with no check-in yet.
+ * Saves the first screen: rating and review. Coming back to it edits the saved row by its id. Otherwise
+ * the personal link's code identifies the sampler, or (the card's QR) the email must belong to a shipped
+ * or delivered order with no review yet.
  */
 export async function submitFeedbackAction(formData: FormData): Promise<FeedbackState> {
   const verification = await checkBotId();
@@ -37,19 +37,25 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
       now: Date.now(),
     })
   ) {
-    return { outcome: FeedbackOutcome.Success };
+    return { outcome: FeedbackOutcome.Success, feedbackId: DECOY_FEEDBACK_ID };
   }
 
-  const parsed = parseSampleFeedbackInput(readSampleFeedbackInput(formData));
+  const parsed = parseReviewInput(readSampleFeedbackInput(formData));
   if (!parsed.ok) {
     return { outcome: FeedbackOutcome.Error, message: parsed.message, field: parsed.field };
   }
+  const { code, email, feedbackId, rating, review } = parsed.value;
 
   try {
     const now = new Date();
-    let request = await SampleFeedbackService.resolveRequest(db, { code: parsed.value.code, email: null });
-    if (request === null && parsed.value.email !== null) {
-      const check = await SampleFeedbackService.checkEmail(db, parsed.value.email);
+    if (feedbackId !== null) {
+      const edited = await SampleFeedbackService.addToReview(db, feedbackId, { rating, review }, now);
+      if (edited !== null) return { outcome: FeedbackOutcome.Success, feedbackId: edited.id };
+    }
+
+    let request = await SampleFeedbackService.resolveRequest(db, { code, email: null });
+    if (request === null && email !== null) {
+      const check = await SampleFeedbackService.checkEmail(db, email);
       if (check.eligibility !== FeedbackEligibility.Ok) {
         return { outcome: FeedbackOutcome.Error, message: EMAIL_MESSAGE[check.eligibility], field: "email" };
       }
@@ -58,15 +64,9 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
     if (request === null) {
       return { outcome: FeedbackOutcome.Error, message: SAMPLE_COPY.feedback.emailNotFound, field: "email" };
     }
-    const email = request.email;
-    await SampleFeedbackService.upsert(db, request.id, parsed.value, email, now);
+    const saved = await SampleFeedbackService.saveReview(db, request.id, { rating, review }, request.email, now);
 
-    const [batch] = await db.select().from(sampleBatches).where(eq(sampleBatches.id, request.batchId)).limit(1);
-    if (batch !== undefined) {
-      await SampleNotifier.sendFeedbackReceived(request, batch);
-    }
-
-    return { outcome: FeedbackOutcome.Success };
+    return { outcome: FeedbackOutcome.Success, feedbackId: saved.id };
   } catch (error) {
     console.error("[submit-feedback] unexpected failure", error);
     return { outcome: FeedbackOutcome.Error, message: GENERIC_ERROR_MESSAGE, field: null };

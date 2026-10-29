@@ -63,10 +63,14 @@ export const REGISTRATION_CSV_COLUMNS = [
   "delivered_at",
   "waybill",
   "shipment_status",
+  "rating",
+  "review",
+  "headline",
   "feedback_session",
   "feedback_session_other",
   "feedback_length",
   "taste",
+  "effectiveness",
   "felt",
   "felt_other",
   "would_reach_again",
@@ -95,9 +99,9 @@ function joined(keys: string[] | null | undefined): string {
   return keys === null || keys === undefined ? "" : keys.join("; ");
 }
 
-/** Derives the intent group label, or empty when there is no feedback. */
+/** Derives the intent group label, or empty when there is no answer (the review flow does not ask it). */
 function intentOf(feedback: SampleFeedbackRow | null): string {
-  return feedback === null ? "" : groupIntent(feedback.wouldReachAgain as WouldReachAgain);
+  return feedback?.wouldReachAgain == null ? "" : groupIntent(feedback.wouldReachAgain as WouldReachAgain);
 }
 
 function rowValues({ request, shipment, feedback }: IExportRow): string[] {
@@ -154,10 +158,14 @@ function rowValues({ request, shipment, feedback }: IExportRow): string[] {
     request.deliveredAt,
     shipment?.waybillId,
     shipment?.status,
+    feedback?.rating,
+    feedback?.review,
+    feedback?.headline,
     joined(feedback?.sessionType),
     feedback?.sessionTypeOther,
     joined(feedback?.sessionLength),
     feedback?.tasteRating,
+    feedback?.effectiveness,
     joined(feedback?.felt),
     feedback?.feltOther,
     feedback?.wouldReachAgain,
@@ -186,12 +194,16 @@ export const FEEDBACK_CSV_COLUMNS = [
   "box",
   "email",
   "name",
+  "rating",
+  "review",
+  "headline",
+  "taste",
+  "effectiveness",
+  "felt",
+  "felt_other",
   "session_type",
   "session_type_other",
   "session_length",
-  "taste",
-  "felt",
-  "felt_other",
   "would_reach_again",
   "intent",
   "comment",
@@ -209,12 +221,16 @@ export function buildFeedbackCsv(rows: IFeedbackExportRow[], batchLabel: string)
         SampleRequestService.boxLabel(request.batchId, request.boxNumber),
         feedback.email,
         request.fullName,
+        feedback.rating,
+        feedback.review,
+        feedback.headline,
+        feedback.tasteRating,
+        feedback.effectiveness,
+        joined(feedback.felt),
+        feedback.feltOther,
         joined(feedback.sessionType),
         feedback.sessionTypeOther,
         joined(feedback.sessionLength),
-        feedback.tasteRating,
-        joined(feedback.felt),
-        feedback.feltOther,
         feedback.wouldReachAgain,
         intentOf(feedback),
         feedback.comment,

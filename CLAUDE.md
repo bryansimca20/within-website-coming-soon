@@ -436,8 +436,16 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   belong to a shipped or delivered order with no check-in yet, or the form says why it can't go on.
   That does reveal whether an email claimed samples; the founder accepted it on 2026-10-22. Older
   unmatched rows are still listed in admin.
+- Since 2026-10-29 the check-in is a review in four screens: stars + review (required), headline (optional,
+  skippable), taste + effectiveness (1 to 5), how they felt. The first screen saves the row
+  (`submitFeedbackAction`); each later one adds to it by its id (`addToFeedbackAction`), only within two hours
+  of the last save, so leaving early still leaves a review. Rows from the old six-question form keep
+  `session_type`, `session_length`, `would_reach_again` and `comment`; new rows leave them null, so intent
+  is empty for them. Nothing publishes reviews yet; the share note under the first screen is the notice.
 - One check-in reminder goes out 7 days after delivery, from the daily Vercel Cron in `vercel.json`
-  (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it.
+  (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it. It carries
+  five text stars (U+2606), each linking `?code=…&rating=N`, which pre-fills the stars. There is no
+  thank-you email any more; the thank-you screen carries the Instagram follow.
 - Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels
   live in `src/components/sample/utils/sample-copy.ts`; email copy in
   `src/services/sample-email-copy.ts`.
@@ -445,8 +453,8 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   Lab tokens and `components/ui/button.tsx`. Both are `noindex` and out of the sitemap.
 - The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches.").
   Ticking it is the only marketing consent a sampler gives: it sets
-  `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder,
-  thanks) go to every sampler regardless.
+  `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder)
+  go to every sampler regardless.
 - `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`.
 
 **Batches** (`SampleBatchService`, design `docs/superpowers/specs/2026-10-28-sample-batches-and-admin-design.md`)

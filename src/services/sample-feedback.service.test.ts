@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import type { ISampleFeedbackValues } from "@/app/utils/sample-feedback-input";
 import type { SampleDatabase } from "@/db/database";
 import { eq } from "drizzle-orm";
 
@@ -25,21 +24,7 @@ afterEach(async () => {
   await close();
 });
 
-function feedback(patch: Partial<ISampleFeedbackValues> = {}): ISampleFeedbackValues {
-  return {
-    code: null,
-    email: null,
-    sessionType: ["running"],
-    sessionTypeOther: null,
-    sessionLength: ["over_90"],
-    tasteRating: 4,
-    felt: ["less_cramping"],
-    feltOther: null,
-    wouldReachAgain: "yes_definitely",
-    comment: "Salty in a good way.",
-    ...patch,
-  };
-}
+const REVIEW = { rating: 4, review: "Salty in a good way." };
 
 async function paidRequest(email: string) {
   const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW);
@@ -75,40 +60,57 @@ describe("SampleFeedbackService.resolveRequest", () => {
   });
 });
 
-describe("SampleFeedbackService.upsert", () => {
-  test("a second submission for the same request updates the first row", async () => {
+describe("SampleFeedbackService.saveReview", () => {
+  test("a second review for the same request replaces the first and keeps what was added since", async () => {
     const request = await paidRequest("a@example.com");
 
-    const first = await SampleFeedbackService.upsert(db, request.id, feedback({ tasteRating: 3 }), request.email, NOW);
-    const second = await SampleFeedbackService.upsert(
-      db,
-      request.id,
-      feedback({ tasteRating: 5 }),
-      request.email,
-      minutesAfter(10)
-    );
+    const first = await SampleFeedbackService.saveReview(db, request.id, { rating: 3, review: "Fine." }, request.email, NOW);
+    await SampleFeedbackService.addToReview(db, first.id, { tasteRating: 5 }, minutesAfter(1));
+    const second = await SampleFeedbackService.saveReview(db, request.id, { rating: 5, review: "Better." }, request.email, minutesAfter(10));
 
     expect(second.id).toBe(first.id);
-    expect(second.tasteRating).toBe(5);
+    expect(second).toMatchObject({ rating: 5, review: "Better.", tasteRating: 5 });
     expect(second.createdAt).toEqual(NOW);
     expect(second.updatedAt).toEqual(minutesAfter(10));
     expect(await db.select().from(sampleFeedback)).toHaveLength(1);
   });
 
-  test("an unmatched submission is stored with its email and no request", async () => {
-    const row = await SampleFeedbackService.upsert(db, null, feedback(), "stranger@example.com", NOW);
+  test("an unmatched review is stored with its email and no request", async () => {
+    const row = await SampleFeedbackService.saveReview(db, null, REVIEW, "Stranger@example.com", NOW);
 
     expect(row.requestId).toBeNull();
     expect(row.email).toBe("stranger@example.com");
     expect(await SampleFeedbackService.listUnmatched(db)).toHaveLength(1);
   });
 
-  test("reads back the feedback for a request", async () => {
+  test("reads back the review for a request", async () => {
     const request = await paidRequest("a@example.com");
-    await SampleFeedbackService.upsert(db, request.id, feedback(), request.email, NOW);
+    await SampleFeedbackService.saveReview(db, request.id, REVIEW, request.email, NOW);
 
-    expect((await SampleFeedbackService.forRequest(db, request.id))?.wouldReachAgain).toBe("yes_definitely");
+    expect((await SampleFeedbackService.forRequest(db, request.id))?.review).toBe("Salty in a good way.");
     expect(await SampleFeedbackService.forRequest(db, "00000000-0000-0000-0000-000000000000")).toBeNull();
+  });
+});
+
+describe("SampleFeedbackService.addToReview", () => {
+  test("each later screen adds its own fields", async () => {
+    const request = await paidRequest("a@example.com");
+    const saved = await SampleFeedbackService.saveReview(db, request.id, REVIEW, request.email, NOW);
+
+    await SampleFeedbackService.addToReview(db, saved.id, { headline: "New long-run drink" }, minutesAfter(1));
+    await SampleFeedbackService.addToReview(db, saved.id, { tasteRating: 5, effectiveness: 4 }, minutesAfter(2));
+    const done = await SampleFeedbackService.addToReview(db, saved.id, { felt: ["more_energy"], feltOther: null }, minutesAfter(3));
+
+    expect(done).toMatchObject({ rating: 4, review: "Salty in a good way.", headline: "New long-run drink", tasteRating: 5, effectiveness: 4, felt: ["more_energy"] });
+  });
+
+  test("refuses an unknown id and a review left alone for over two hours", async () => {
+    const request = await paidRequest("a@example.com");
+    const saved = await SampleFeedbackService.saveReview(db, request.id, REVIEW, request.email, NOW);
+
+    expect(await SampleFeedbackService.addToReview(db, "00000000-0000-0000-0000-000000000000", { tasteRating: 5 }, minutesAfter(1))).toBeNull();
+    expect(await SampleFeedbackService.addToReview(db, saved.id, { tasteRating: 5 }, minutesAfter(121))).toBeNull();
+    expect((await SampleFeedbackService.forRequest(db, request.id))?.tasteRating).toBeNull();
   });
 });
 
@@ -147,7 +149,7 @@ describe("SampleFeedbackService.checkEmail", () => {
 
   test("feedback already given is reported", async () => {
     const request = await withStatus("a@example.com", "delivered", NOW);
-    await SampleFeedbackService.upsert(db, request.id, feedback(), request.email, NOW);
+    await SampleFeedbackService.saveReview(db, request.id, REVIEW, request.email, NOW);
 
     expect((await SampleFeedbackService.checkEmail(db, "a@example.com")).eligibility).toBe(FeedbackEligibility.AlreadyGiven);
   });
@@ -158,7 +160,7 @@ describe("SampleFeedbackService.dueReminders", () => {
     const due = await withStatus("due@example.com", "delivered", new Date(NOW.getTime() - 8 * DAY));
     await withStatus("recent@example.com", "delivered", new Date(NOW.getTime() - 6 * DAY));
     const answered = await withStatus("answered@example.com", "delivered", new Date(NOW.getTime() - 9 * DAY));
-    await SampleFeedbackService.upsert(db, answered.id, feedback(), answered.email, NOW);
+    await SampleFeedbackService.saveReview(db, answered.id, REVIEW, answered.email, NOW);
     const reminded = await withStatus("reminded@example.com", "delivered", new Date(NOW.getTime() - 9 * DAY));
     await SampleFeedbackService.markReminderSent(db, reminded.id, NOW);
     await withStatus("shipped@example.com", "shipped");

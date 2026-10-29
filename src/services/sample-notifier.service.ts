@@ -29,7 +29,7 @@ export function buildSampleEmailContext(
   };
 }
 
-/** Sends the five sampler emails. Each returns whether Resend accepted it. */
+/** Sends the four sampler emails. Each returns whether Resend accepted it. */
 export class SampleNotifier {
   private static async send(
     kind: SampleEmailKind,
@@ -52,10 +52,6 @@ export class SampleNotifier {
 
   static sendDelivered(request: SampleRequest, batch: SampleBatch, shipment: SampleShipment): Promise<boolean> {
     return SampleNotifier.send(SampleEmailKind.Delivered, request, batch, shipment);
-  }
-
-  static sendFeedbackReceived(request: SampleRequest, batch: SampleBatch): Promise<boolean> {
-    return SampleNotifier.send(SampleEmailKind.FeedbackReceived, request, batch, null);
   }
 
   static sendFeedbackReminder(request: SampleRequest, batch: SampleBatch): Promise<boolean> {

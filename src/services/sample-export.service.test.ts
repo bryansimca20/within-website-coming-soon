@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
+import { sampleFeedback } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { NOW, sampleValues } from "../../test/sample-fixtures";
@@ -35,24 +36,22 @@ describe("buildRegistrationsCsv", () => {
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     const request = await SampleRequestService.markPaid(db, claim.request.id, NOW);
     if (request === null) throw new Error("not paid");
-    const feedback = await SampleFeedbackService.upsert(
-      db,
-      request.id,
-      {
-        code: null,
-        email: null,
+    // An answer from the old six-question check-in, still exported as it was.
+    const [feedback] = await db
+      .insert(sampleFeedback)
+      .values({
+        requestId: request.id,
+        email: request.email,
         sessionType: ["running", "padel"],
-        sessionTypeOther: null,
         sessionLength: ["under_45", "over_90"],
         tasteRating: 5,
         felt: ["less_cramping", "felt_hydrated"],
-        feltOther: null,
         wouldReachAgain: "yes_definitely",
         comment: 'Salty, in a "good" way',
-      },
-      request.email,
-      NOW
-    );
+        createdAt: NOW,
+        updatedAt: NOW,
+      })
+      .returning();
 
     const csv = buildRegistrationsCsv([{ request, shipment: null, feedback }], "Batch 01");
     const [header, row] = csv.slice(1).split("\r\n");
@@ -100,25 +99,15 @@ describe("buildRegistrationsCsv formula injection", () => {
 });
 
 describe("per-batch exports", () => {
-  const ANSWERS = {
-    code: null,
-    email: null,
-    sessionType: ["running"],
-    sessionTypeOther: null,
-    sessionLength: ["over_90"],
-    tasteRating: 4,
-    felt: ["less_cramping"],
-    feltOther: null,
-    wouldReachAgain: "probably" as const,
-    comment: "=1+1",
-  };
+  const REVIEW = { rating: 4, review: "=1+1" };
 
   async function paidWithFeedback(batchId: string, email: string) {
     const claim = await SampleRequestService.claim(db, batchId, sampleValues({ email }), NOW);
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     const request = await SampleRequestService.markPaid(db, claim.request.id, NOW);
     if (request === null) throw new Error("not paid");
-    await SampleFeedbackService.upsert(db, request.id, ANSWERS as never, email, NOW);
+    const saved = await SampleFeedbackService.saveReview(db, request.id, REVIEW, email, NOW);
+    await SampleFeedbackService.addToReview(db, saved.id, { headline: "Easy", tasteRating: 5, effectiveness: 3, felt: ["less_cramping"] }, NOW);
     return request;
   }
 
@@ -133,7 +122,7 @@ describe("per-batch exports", () => {
     if (!second.ok) throw new Error(second.message);
     await SampleBatchService.setPhase(db, second.batch.id, "open");
     await paidWithFeedback("b02", "b@example.com");
-    await SampleFeedbackService.upsert(db, null, ANSWERS as never, "stranger@example.com", NOW);
+    await SampleFeedbackService.saveReview(db, null, REVIEW, "stranger@example.com", NOW);
 
     const exported = await SampleExportService.loadBatch(db, "b01");
 
@@ -154,7 +143,12 @@ describe("per-batch exports", () => {
     expect(columns.slice(0, 4)).toEqual(["batch", "box", "email", "name"]);
     expect(cells[columns.indexOf("batch")]).toBe("Batch 01");
     expect(cells[columns.indexOf("box")]).toBe("B01-001");
-    expect(cells[columns.indexOf("comment")]).toBe("'=1+1");
-    expect(cells[columns.indexOf("intent")]).toBe("warm");
+    expect(cells[columns.indexOf("review")]).toBe("'=1+1");
+    expect(cells[columns.indexOf("rating")]).toBe("4");
+    expect(cells[columns.indexOf("headline")]).toBe("Easy");
+    expect(cells[columns.indexOf("taste")]).toBe("5");
+    expect(cells[columns.indexOf("effectiveness")]).toBe("3");
+    expect(cells[columns.indexOf("felt")]).toBe("less_cramping");
+    expect(cells[columns.indexOf("intent")]).toBe("");
   });
 });

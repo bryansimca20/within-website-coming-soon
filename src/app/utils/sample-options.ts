@@ -59,6 +59,6 @@ export type FeedbackFelt = (typeof FEEDBACK_FELT)[number];
 export const WOULD_REACH_AGAIN = ["yes_definitely", "probably", "not_sure", "not_for_me"] as const;
 export type WouldReachAgain = (typeof WOULD_REACH_AGAIN)[number];
 
-/** Taste is scored 1 to 5. */
-export const TASTE_MIN = 1;
-export const TASTE_MAX = 5;
+/** The overall rating, taste and effectiveness are each scored 1 to 5. */
+export const SCORE_MIN = 1;
+export const SCORE_MAX = 5;

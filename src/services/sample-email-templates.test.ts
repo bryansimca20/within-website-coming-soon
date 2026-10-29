@@ -1,7 +1,5 @@
 import { describe, expect, test } from "vitest";
 
-import { INSTAGRAM_URL } from "@/lib/site";
-
 import { type ISampleEmailContext, renderSampleEmail, SampleEmailKind } from "./sample-email-templates";
 
 const CONTEXT: ISampleEmailContext = {
@@ -24,8 +22,7 @@ describe("renderSampleEmail", () => {
     [SampleEmailKind.Paid, "Fanny, you're in for Batch 01", "Thank you, Fanny."],
     [SampleEmailKind.Shipped, "Fanny, your samples are on the way", "They're on the way, Fanny."],
     [SampleEmailKind.Delivered, "Fanny, your samples have arrived", "It's here, Fanny."],
-    [SampleEmailKind.FeedbackReminder, "Fanny, how did your samples go?", "How did it go, Fanny?"],
-    [SampleEmailKind.FeedbackReceived, "Fanny, thank you for telling us", "Thanks for telling us, Fanny."],
+    [SampleEmailKind.FeedbackReminder, "Fanny, how were your samples?", "How were your samples, Fanny?"],
   ])("%s opens with the name in the subject and the headline", (kind, subject, headline) => {
     const email = renderSampleEmail(kind, CONTEXT);
 
@@ -80,19 +77,26 @@ describe("renderSampleEmail", () => {
     expect(email.html).not.toContain("null");
   });
 
-  test.each([SampleEmailKind.Delivered, SampleEmailKind.FeedbackReminder])("%s links the personal check-in", (kind) => {
-    const email = renderSampleEmail(kind, CONTEXT);
+  test("the delivered email links the personal review with a button", () => {
+    const email = renderSampleEmail(SampleEmailKind.Delivered, CONTEXT);
 
     expect(email.html).toContain(CONTEXT.feedbackUrl);
-    expect(email.text).toContain(CONTEXT.feedbackUrl);
-    expect(email.text).toContain("less than 30 seconds");
+    expect(email.text).toContain(`Tell us how it went: ${CONTEXT.feedbackUrl}`);
+    expect(email.text).toContain("under a minute");
   });
 
-  test("the thank-you email points to Instagram", () => {
-    const email = renderSampleEmail(SampleEmailKind.FeedbackReceived, CONTEXT);
+  test("the reminder has five stars, each opening the review with its rating, and no button", () => {
+    const email = renderSampleEmail(SampleEmailKind.FeedbackReminder, CONTEXT);
 
-    expect(email.html).toContain(INSTAGRAM_URL);
-    expect(email.text).toContain(INSTAGRAM_URL);
+    for (let stars = 1; stars <= 5; stars += 1) {
+      const href = `${CONTEXT.feedbackUrl}&rating=${stars}`;
+      expect(email.html).toContain(`href="${href.replace("&", "&amp;")}"`);
+      expect(email.html).toContain(`aria-label="${stars} out of 5"`);
+      expect(email.text).toContain(`${stars} out of 5: ${href}`);
+    }
+    expect(email.html.match(/&#9734;/g)).toHaveLength(5);
+    expect(email.html).not.toContain("&rarr;");
+    expect(email.text).toContain("These links keep working.");
   });
 
   test("escapes html in the first name", () => {

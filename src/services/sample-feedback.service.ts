@@ -1,9 +1,9 @@
 import "server-only";
 
-import { and, desc, eq, inArray, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
 import { FeedbackEligibility, feedbackEligibility } from "@/app/utils/feedback-eligibility";
-import type { ISampleFeedbackValues } from "@/app/utils/sample-feedback-input";
+import type { ISampleFeedbackExtras } from "@/app/utils/sample-feedback-input";
 import type { SampleDatabase } from "@/db/database";
 import { sampleFeedback, type SampleFeedbackRow, type SampleRequest, sampleRequests } from "@/db/schema";
 
@@ -11,6 +11,9 @@ import { ACTIVE_STATUSES, SampleRequestService } from "./sample-request.service"
 
 /** The check-in reminder goes out this long after delivery. */
 const REMINDER_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** The later screens can add to a review only this long after its last save. */
+const EDIT_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 /** The check-in answers: matching them to a request and keeping one row per box. */
 export class SampleFeedbackService {
@@ -82,26 +85,15 @@ export class SampleFeedbackService {
     await db.update(sampleRequests).set({ feedbackReminderSentAt: sentAt }).where(eq(sampleRequests.id, requestId));
   }
 
-  /** One row per request: a repeat submission replaces the answers and keeps the first `createdAt`. */
-  static async upsert(
+  /** One row per request: the first screen's rating and review. A repeat replaces them and keeps the rest. */
+  static async saveReview(
     db: SampleDatabase,
     requestId: string | null,
-    values: ISampleFeedbackValues,
+    review: { rating: number; review: string },
     email: string,
     now: Date
   ): Promise<SampleFeedbackRow> {
-    const answers = {
-      email: email.toLowerCase(),
-      sessionType: values.sessionType,
-      sessionTypeOther: values.sessionTypeOther,
-      sessionLength: values.sessionLength,
-      tasteRating: values.tasteRating,
-      felt: values.felt,
-      feltOther: values.feltOther,
-      wouldReachAgain: values.wouldReachAgain,
-      comment: values.comment,
-      updatedAt: now,
-    };
+    const answers = { email: email.toLowerCase(), rating: review.rating, review: review.review, updatedAt: now };
 
     if (requestId !== null) {
       const existing = await SampleFeedbackService.forRequest(db, requestId);
@@ -117,6 +109,25 @@ export class SampleFeedbackService {
       .returning();
 
     return inserted;
+  }
+
+  /**
+   * Adds to a review saved within the last two hours, by the id only its author's browser holds.
+   * Returns null for an unknown or stale id. shortcut: id-as-capability, move to a signed token if ids ever leave the browser.
+   */
+  static async addToReview(
+    db: SampleDatabase,
+    feedbackId: string,
+    patch: ISampleFeedbackExtras & { rating?: number; review?: string },
+    now: Date
+  ): Promise<SampleFeedbackRow | null> {
+    const [updated] = await db
+      .update(sampleFeedback)
+      .set({ ...patch, updatedAt: now })
+      .where(and(eq(sampleFeedback.id, feedbackId), gte(sampleFeedback.updatedAt, new Date(now.getTime() - EDIT_WINDOW_MS))))
+      .returning();
+
+    return updated ?? null;
   }
 
   static async forRequest(db: SampleDatabase, requestId: string): Promise<SampleFeedbackRow | null> {

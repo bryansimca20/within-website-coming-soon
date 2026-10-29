@@ -1,4 +1,4 @@
-import { INSTAGRAM_URL, SITE_URL } from "@/lib/site";
+import { SITE_URL } from "@/lib/site";
 
 import { SAMPLE_EMAIL_COPY } from "./sample-email-copy";
 
@@ -7,7 +7,6 @@ export enum SampleEmailKind {
   Paid = "paid",
   Shipped = "shipped",
   Delivered = "delivered",
-  FeedbackReceived = "feedback-received",
   FeedbackReminder = "feedback-reminder",
 }
 
@@ -43,15 +42,26 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-/** One email in the shared "note" layout: label, headline, paragraphs, an optional waybill box, one button. */
+/** Five tappable stars, each opening the review with that rating filled in, plus a line underneath. */
+interface IStarRow {
+  hrefFor: (stars: number) => string;
+  low: string;
+  high: string;
+  note: string;
+}
+
+/** One email in the shared "note" layout: label, headline, paragraphs, then an optional waybill box, star row or button. */
 interface INoteEmail {
   subject: string;
   preheader: string;
   headline: string;
   paragraphs: string[];
   waybill?: { label: string; value: string | null; pending: string };
-  button: { label: string; href: string; isPrimary: boolean };
+  stars?: IStarRow;
+  button?: { label: string; href: string; isPrimary: boolean };
 }
+
+const STAR_COUNT = 5;
 
 const INK = "#191919";
 const MIST = "#f2f2f2";
@@ -80,9 +90,11 @@ function renderHtml(email: INoteEmail, batchLabel: string): string {
         `</td></tr></table>`;
   const { button } = email;
   const buttonHtml =
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td style="background:${button.isPrimary ? ORANGE : INK};">` +
-    `<a href="${escapeHtml(button.href)}" style="display:block;padding:16px 20px;font-family:${FONT};font-size:16px;line-height:20px;font-weight:600;color:${button.isPrimary ? INK : MIST};text-decoration:none;">` +
-    `${escapeHtml(button.label)}<span style="float:right;">&rarr;</span></a></td></tr></table>`;
+    button === undefined
+      ? ""
+      : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td style="background:${button.isPrimary ? ORANGE : INK};">` +
+        `<a href="${escapeHtml(button.href)}" style="display:block;padding:16px 20px;font-family:${FONT};font-size:16px;line-height:20px;font-weight:600;color:${button.isPrimary ? INK : MIST};text-decoration:none;">` +
+        `${escapeHtml(button.label)}<span style="float:right;">&rarr;</span></a></td></tr></table>`;
   const logo = escapeHtml(`${SITE_URL}/brand/within-logotype.png`);
 
   return (
@@ -93,7 +105,7 @@ function renderHtml(email: INoteEmail, batchLabel: string): string {
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-top:6px solid ${INK};"><tr><td style="padding:32px 28px 28px;">` +
     `<p style="margin:0 0 10px;font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(`SAMPLE ${batchLabel}`.toUpperCase())}</p>` +
     `<h1 style="margin:0 0 20px;font-family:${FONT};font-size:30px;line-height:36px;font-weight:400;letter-spacing:-0.02em;color:${INK};">${escapeHtml(email.headline)}</h1>` +
-    paragraphs + waybill + buttonHtml +
+    paragraphs + waybill + (email.stars === undefined ? "" : renderStars(email.stars)) + buttonHtml +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid ${LINE};"><tr>` +
     `<td style="padding-top:12px;"><img src="${logo}" alt="WITHIN" height="13" style="height:13px;width:auto;display:block;border:0;"></td>` +
     `<td align="right" style="padding-top:12px;font-family:${FONT};font-size:12px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(SAMPLE_EMAIL_COPY.place)}</td></tr></table>` +
@@ -103,11 +115,53 @@ function renderHtml(email: INoteEmail, batchLabel: string): string {
   );
 }
 
+/** The star row as html: outline stars as plain text (U+2606), which every mail client shows without images. */
+function renderStars(stars: IStarRow): string {
+  const cells = Array.from({ length: STAR_COUNT }, (_, index) => {
+    const count = index + 1;
+    const label = escapeHtml(fill(SAMPLE_EMAIL_COPY.feedbackReminder.starLabel, { stars: String(count) }));
+    return (
+      `<td align="center" style="padding:0 2px;"><a href="${escapeHtml(stars.hrefFor(count))}" title="${label}" aria-label="${label}" ` +
+      `style="display:block;width:52px;font-family:Arial,Helvetica,sans-serif;font-size:44px;line-height:52px;color:${INK};text-decoration:none;">&#9734;</a></td>`
+    );
+  }).join("");
+
+  return (
+    `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:8px auto 0;"><tr>${cells}</tr></table>` +
+    `<table role="presentation" cellpadding="0" cellspacing="0" align="center" width="280" style="margin:2px auto 20px;"><tr>` +
+    `<td style="font-family:${FONT};font-size:12px;line-height:16px;color:${MUTED};">${escapeHtml(stars.low)}</td>` +
+    `<td align="right" style="font-family:${FONT};font-size:12px;line-height:16px;color:${MUTED};">${escapeHtml(stars.high)}</td></tr></table>` +
+    `<p style="margin:0 0 4px;font-family:${FONT};font-size:14px;line-height:21px;color:${MUTED};">${escapeHtml(stars.note)}</p>`
+  );
+}
+
 function renderText(email: INoteEmail): string {
   const waybill =
     email.waybill === undefined ? [] : [email.waybill.value === null ? email.waybill.pending : `${email.waybill.label}: ${email.waybill.value}`];
+  const { stars } = email;
+  const starLines =
+    stars === undefined
+      ? []
+      : [
+          Array.from({ length: STAR_COUNT }, (_, index) => `${fill(SAMPLE_EMAIL_COPY.feedbackReminder.starLabel, { stars: String(index + 1) })}: ${stars.hrefFor(index + 1)}`).join("\n"),
+          stars.note,
+        ];
+  const button = email.button === undefined ? [] : [`${email.button.label}: ${email.button.href}`];
 
-  return [email.headline, ...email.paragraphs, ...waybill, `${email.button.label}: ${email.button.href}`, `WITHIN, ${SAMPLE_EMAIL_COPY.place}`, SAMPLE_EMAIL_COPY.footer].join("\n\n");
+  return [email.headline, ...email.paragraphs, ...waybill, ...starLines, ...button, `WITHIN, ${SAMPLE_EMAIL_COPY.place}`, SAMPLE_EMAIL_COPY.footer].join("\n\n");
+}
+
+/** The check-in reminder: tap a star, land on the review with it filled in. */
+function reminderEmail(context: ISampleEmailContext, name: Record<string, string>): INoteEmail {
+  const copy = SAMPLE_EMAIL_COPY.feedbackReminder;
+
+  return {
+    subject: fill(copy.subject, name),
+    preheader: fill(copy.preheader, name),
+    headline: fill(copy.headline, name),
+    paragraphs: copy.paragraphs.map((text) => fill(text, name)),
+    stars: { hrefFor: (stars) => `${context.feedbackUrl}&rating=${stars}`, low: copy.low, high: copy.high, note: copy.note },
+  };
 }
 
 function shippedEmail(context: ISampleEmailContext, name: Record<string, string>): INoteEmail {
@@ -137,31 +191,23 @@ function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmai
   if (kind === SampleEmailKind.Shipped) {
     return shippedEmail(context, name);
   }
+  if (kind === SampleEmailKind.FeedbackReminder) {
+    return reminderEmail(context, name);
+  }
 
-  const copy = {
-    [SampleEmailKind.Paid]: SAMPLE_EMAIL_COPY.paid,
-    [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered,
-    [SampleEmailKind.FeedbackReminder]: SAMPLE_EMAIL_COPY.feedbackReminder,
-    [SampleEmailKind.FeedbackReceived]: SAMPLE_EMAIL_COPY.feedbackReceived,
-  }[kind];
-  const href = {
-    [SampleEmailKind.Paid]: context.statusUrl,
-    [SampleEmailKind.Delivered]: context.feedbackUrl,
-    [SampleEmailKind.FeedbackReminder]: context.feedbackUrl,
-    [SampleEmailKind.FeedbackReceived]: INSTAGRAM_URL,
-  }[kind];
+  const copy = kind === SampleEmailKind.Paid ? SAMPLE_EMAIL_COPY.paid : SAMPLE_EMAIL_COPY.delivered;
+  const href = kind === SampleEmailKind.Paid ? context.statusUrl : context.feedbackUrl;
 
   return {
     subject: fill(copy.subject, name),
     preheader: fill(copy.preheader, name),
     headline: fill(copy.headline, name),
     paragraphs: copy.paragraphs.map((text) => fill(text, name)),
-    // Following on Instagram is optional, so the thank-you email's button is ink, not the orange of a main action.
-    button: { label: copy.button, href, isPrimary: kind !== SampleEmailKind.FeedbackReceived },
+    button: { label: copy.button, href, isPrimary: true },
   };
 }
 
-/** Renders one of the five emails for a sampler. Pure: no sending, no database. */
+/** Renders one of the four emails for a sampler. Pure: no sending, no database. */
 export function renderSampleEmail(kind: SampleEmailKind, context: ISampleEmailContext): IRenderedEmail {
   const email = noteFor(kind, context);
 

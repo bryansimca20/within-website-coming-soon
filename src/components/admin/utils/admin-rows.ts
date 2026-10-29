@@ -45,7 +45,7 @@ export function toAdminRow(request: SampleRequest, shipment: SampleShipment | nu
     shipmentStatus: shipment?.status ?? null,
     waybillId: shipment?.waybillId ?? null,
     needsAttention,
-    intent: feedback === null ? null : groupIntent(feedback.wouldReachAgain as WouldReachAgain),
+    intent: feedback?.wouldReachAgain == null ? null : groupIntent(feedback.wouldReachAgain as WouldReachAgain),
     source: resolveSource({
       ref: request.ref,
       utmSource: request.utmSource,

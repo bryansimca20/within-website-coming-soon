@@ -178,21 +178,28 @@ export const sampleShipments = pgTable("sample_shipments", {
   updatedAt: timestamptz("updated_at").notNull().defaultNow(),
 });
 
-/** The check-in answers. `requestId` is null when the typed email matched nobody. */
+/**
+ * The check-in answers. `requestId` is null when the typed email matched nobody. Since 2026-10-29 it is a
+ * review saved step by step: rating and review first, the rest filled in later (or never).
+ */
 export const sampleFeedback = pgTable(
   "sample_feedback",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     requestId: uuid("request_id").references(() => sampleRequests.id),
     email: text("email").notNull(),
-    // Check-in answers are pick-all since 2026-10-22: three sachets can go on different sessions.
-    sessionType: text("session_type").array().notNull(),
-    sessionTypeOther: text("session_type_other"),
-    sessionLength: text("session_length").array().notNull(),
-    tasteRating: integer("taste_rating").notNull(),
-    felt: text("felt").array().notNull(),
+    rating: integer("rating"),
+    review: text("review"),
+    headline: text("headline"),
+    tasteRating: integer("taste_rating"),
+    effectiveness: integer("effectiveness"),
+    felt: text("felt").array(),
     feltOther: text("felt_other"),
-    wouldReachAgain: text("would_reach_again").notNull(),
+    // The old six-question check-in only; the review flow leaves them null.
+    sessionType: text("session_type").array(),
+    sessionTypeOther: text("session_type_other"),
+    sessionLength: text("session_length").array(),
+    wouldReachAgain: text("would_reach_again"),
     comment: text("comment"),
     createdAt: timestamptz("created_at").notNull().defaultNow(),
     updatedAt: timestamptz("updated_at").notNull().defaultNow(),

@@ -52,7 +52,7 @@ export interface IFeedbackEmailCheck {
   firstName: string | null;
 }
 
-/** What the feedback action hands back to the form. */
+/** What the review actions hand back. `feedbackId` is the saved row the later screens add to. */
 export type FeedbackState =
-  | { outcome: FeedbackOutcome.Success }
+  | { outcome: FeedbackOutcome.Success; feedbackId: string }
   | { outcome: FeedbackOutcome.Error; message: string; field: string | null };
