@@ -97,6 +97,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -191,6 +199,16 @@
   --border: var(--wi-line);
   --input: var(--wi-line-strong);
   --ring: var(--wi-signal);
+
+  /* admin sidebar (shadcn) → the same clinical palette */
+  --sidebar: var(--wi-paper-dim);
+  --sidebar-foreground: var(--wi-ink-700);
+  --sidebar-primary: var(--wi-black);
+  --sidebar-primary-foreground: var(--wi-paper);
+  --sidebar-accent: var(--wi-mist);
+  --sidebar-accent-foreground: var(--wi-black);
+  --sidebar-border: var(--wi-line);
+  --sidebar-ring: var(--wi-signal);
 }
 
 @layer base {

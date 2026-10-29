@@ -11,18 +11,19 @@ interface SamplePageProps {
   snapScriptUrl: string;
 }
 
-/** `/sample`: coming soon before the batch opens, the intro and five-step request while it's open, the claimed notice after. */
+/** `/sample`: the batch it serves, as coming soon, the intro and five-step request, or the claimed notice. */
 export function SamplePage({ state, snapScriptUrl }: SamplePageProps) {
   return (
-    <SampleShell isWide={state.kind !== "closed"}>
-      {state.kind === "upcoming" && <SampleComingSoon />}
+    <SampleShell isWide={state.kind === "upcoming" || state.kind === "open"}>
+      {state.kind === "upcoming" && <SampleComingSoon batch={state.batch} />}
       {state.kind === "open" && (
         <>
           <SampleSnapScript src={snapScriptUrl} />
-          <SampleRequestForm />
+          <SampleRequestForm batch={state.batch} />
         </>
       )}
-      {state.kind === "closed" && <SampleNotice kind="full" />}
+      {state.kind === "closed" && <SampleNotice kind="full" batch={state.batch} />}
+      {state.kind === "none" && <SampleNotice kind="full" batch={null} />}
     </SampleShell>
   );
 }

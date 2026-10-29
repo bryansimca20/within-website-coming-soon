@@ -17,6 +17,7 @@ import {
 import { GENERIC_ERROR_MESSAGE, SampleRequestOutcome } from "@/app/utils/sample-state";
 import { WaitlistArrowGlyph } from "@/components/waitlist/svg/WaitlistGlyphs";
 import { cn } from "@/lib/utils";
+import type { ISampleBatchShown } from "@/services/sample-request.service";
 
 import { SampleIntro } from "./SampleIntro";
 import { SampleNotice } from "./SampleNotice";
@@ -52,7 +53,12 @@ function currentAttribution(): IAttribution {
 }
 
 /** The intro, then five short steps. Holds every value, validates each step before moving on, then pays. */
-export function SampleRequestForm() {
+interface SampleRequestFormProps {
+  /** The open batch this request joins. */
+  batch: ISampleBatchShown;
+}
+
+export function SampleRequestForm({ batch }: SampleRequestFormProps) {
   const router = useRouter();
   const { screen, direction, goForward, goBack, returnTo } = useSampleStepHistory();
   const [values, setValues] = useState<ISampleRequestInput>(EMPTY_SAMPLE_REQUEST_INPUT);
@@ -128,12 +134,13 @@ export function SampleRequestForm() {
   }
 
   if (ending !== null) {
-    return ending.kind === "full" ? <SampleNotice kind="full" /> : <SampleNotice kind="already" email={ending.email} />;
+    return ending.kind === "full" ? <SampleNotice kind="full" batch={batch} /> : <SampleNotice kind="already" email={ending.email} />;
   }
 
   if (screen === 0) {
     return (
       <SampleIntro
+        batch={batch}
         onContinue={() => {
           trackSampleEvent(SampleEvent.IntroContinued);
           goForward(1);

@@ -10,7 +10,7 @@ full storefront launch.
 
 - **Two backends.** The waitlist on `/` writes signups into Shopify as customers through one
   Server Action and has no database. The **sampling program** (`/sample`, `/sample/r/[token]`,
-  `/sample/feedback`, `/admin/sample`) has its own Postgres, Midtrans payments, Biteship
+  `/sample/feedback`, `/admin/*`) has its own Postgres, Midtrans payments, Biteship
   shipping, Resend emails and a founder admin (see Sampling program under Data Fetching &
   Services). Spec: `docs/superpowers/specs/2026-10-20-sampling-program-design.md` (local only).
 - The route `/` is still statically prerendered. The sample and admin routes are dynamic.
@@ -93,7 +93,7 @@ Package manager is **npm** (`package-lock.json` is the source of truth). Do not 
   **Base UI** (`@base-ui/react`), not Radix. Primitives live in
   [src/components/ui/](src/components/ui/).
 - **`@phosphor-icons/react/ssr`** — icons (`Nav`, `Footer`, `Compare`, `Faq`). `lucide-react`
-  is also a dependency but has zero call sites in `src/` right now.
+  is used only inside the shadcn primitives (`select`, `sheet`, `sidebar`); app code uses phosphor.
 - **`@vercel/analytics`** — `<Analytics />` in the root layout records page views; waitlist
   interactions go through `trackWaitlistEvent()` in
   [waitlist-analytics.ts](src/components/waitlist/utils/waitlist-analytics.ts). Nothing is sent
@@ -214,8 +214,8 @@ src/
 - If a needed shadcn component is **not installed**, stop and tell the user — let them install (`npx shadcn@latest add <component>`) or take a different approach. Do not hand-roll a substitute.
 - If a component does **not exist in shadcn at all**, surface options before writing code.
 - Icons: the shipped page actually uses `@phosphor-icons/react/ssr` (`Nav`, `Footer`,
-  `Compare`, `Faq`). `lucide-react` is installed but has zero call sites in `src/` right now —
-  don't assume it's the active icon set without checking. **Data viz:** Recharts (wrapped with
+  `Compare`, `Faq`). `lucide-react` appears only inside the shadcn primitives (`select`, `sheet`, `sidebar`) —
+  don't use it in app code; phosphor is the icon set. **Data viz:** Recharts (wrapped with
   shadcn `<ChartContainer>`) · Mapbox via `react-map-gl`. (Neither is installed yet — install
   when first needed.)
 
@@ -333,7 +333,7 @@ on `cubic-bezier(0.2,0,0,1)` at `120ms`, rings `black/15`; `coming-soon/ui/butto
 rings `wi-signal/40`.
 
 **Icons.** The shipped page uses `@phosphor-icons/react/ssr` (`Nav`, `Footer`, `Compare`,
-`Faq`) — `lucide-react` is a dependency with zero current call sites in `src/`. **Never
+`Faq`) — `lucide-react` appears only inside the shadcn primitives (`select`, `sheet`, `sidebar`). **Never
 emoji.** The logomark is a brand mark, not an icon.
 
 **Logo.** Always use `WithinLogo` (or the PNGs in `public/brand/`). **Never redraw, trace, or
@@ -392,7 +392,8 @@ the same email is a duplicate, which reports success and changes nothing in Shop
 
 ## Sampling program
 
-Batch 01: 100 boxes of three sachets, free, the sampler pays the courier. Spec and plan are in
+Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays
+the courier). Spec and plan are in
 `docs/superpowers/` (gitignored, local).
 
 ```
@@ -404,14 +405,17 @@ Batch 01: 100 boxes of three sachets, free, the sampler pays the courier. Spec a
        │                                same-email unpaid hold replaced, paid duplicate refused,
        │                                capacity checked, next box number taken
        ├─ SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
-       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-b01, ref-<slug>;
+       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-<batch id>, ref-<slug>;
                                         SUBSCRIBED only if they ticked the optional launch email
 /sample/r/[token]                       status page; "Pay now" = reopenPaymentAction
 POST /api/webhooks/midtrans             signature checked, attempt updated, paid email once
 admin "Book selected"                   SampleShipmentService.bookRun, one Biteship order each
 POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/delivered email once
 /sample/feedback[?code=]                QR landing; matched by token, else by email
-/admin/sample, /admin/sample/[id]       founder dashboard, detail, resends, CSV export
+/admin/requests, /admin/requests/[id]   selected batch: counts, search, ship runs, request detail, resends
+/admin/export (+ /registrations, /feedback)  the selected batch's two CSVs
+/admin/batches                          every batch: New batch, capacity, Coming soon / Open / Closed
+/admin/sample*                          old links, redirect to the routes above
 ```
 
 **Rules this path establishes**
@@ -444,6 +448,28 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder,
   thanks) go to every sampler regardless.
 - `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`.
+
+**Batches** (`SampleBatchService`, design `docs/superpowers/specs/2026-10-28-sample-batches-and-admin-design.md`)
+
+- Batches are always numbered: the next is `Batch NN` / `bNN` (`Batch 100` / `b100` after 99). A founder only
+  chooses capacity (1 to 10 000). The id is permanent: it is in box labels (`B02-042`), Midtrans order ids,
+  Biteship references and the Shopify tag `sampling-b02`.
+- Each batch has a phase. At most one is `open`, enforced in `setPhase` ("Close Batch 01 first.") and by the
+  partial unique index `sample_batches_one_open`. A new batch starts `upcoming`.
+- `/sample` serves the open batch (its form, or its claimed notice once full); with none open, the newest
+  `upcoming` batch's coming-soon page; otherwise the newest batch's claimed notice. Every visitor line that
+  names the batch or its size comes from `batchCopy()` in `sample-copy.ts`; never hard-code "Batch 01" or "100".
+- One email, one sample: an email with a paid, shipped or delivered request in any batch is refused
+  (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid
+  hold in any batch is expired by a new claim.
+- Admin's selected batch lives in the `within_admin_batch` cookie (path `/admin`); a missing or unknown value
+  falls back to the open batch, else the newest. Exports are one batch per file:
+  `within-<id>-registrations.csv` and `within-<id>-feedback.csv`.
+- Admin runs shadcn's sidebar, table, select, input, label, badge, separator, sheet, skeleton and tooltip,
+  restyled to `wi-*` tokens and `--wi-radius-*`; the `--sidebar*` tokens in `globals.css` map onto `wi-*`.
+  `button.tsx` and `dialog.tsx` stay hand-owned. `shadcn add` cannot answer its overwrite prompt without a
+  terminal: set those two files aside before adding components, and restore them after. It has also been seen
+  importing `cn` from an npm package called `cn`; the right import is `@/lib/utils`.
 
 When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /
 `layout.tsx` Server Component, then pass plain data down as props. Presentational components

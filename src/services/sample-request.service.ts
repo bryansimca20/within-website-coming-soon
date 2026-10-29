@@ -14,6 +14,8 @@ import {
   sampleRequests,
 } from "@/db/schema";
 
+import { SampleBatchService } from "./sample-batch.service";
+
 /** What a claim attempt produced. */
 export type ClaimResult =
   | { kind: "claimed"; request: SampleRequest }
@@ -21,8 +23,18 @@ export type ClaimResult =
   | { kind: "already-requested"; request: SampleRequest }
   | { kind: "closed" };
 
+/** The batch as a visitor reads it. */
+export interface ISampleBatchShown {
+  label: string;
+  capacity: number;
+}
+
 /** What `/sample` shows. */
-export type SamplePageState = { kind: "upcoming" } | { kind: "open"; claimed: number; capacity: number } | { kind: "closed" };
+export type SamplePageState =
+  | { kind: "upcoming"; batch: ISampleBatchShown }
+  | { kind: "open"; batch: ISampleBatchShown; claimed: number }
+  | { kind: "closed"; batch: ISampleBatchShown }
+  | { kind: "none" };
 
 /** Statuses that own a box for good: a second request from the same email is refused. */
 export const ACTIVE_STATUSES: SampleRequestStatus[] = ["paid", "shipped", "delivered"];
@@ -46,18 +58,19 @@ export class SampleRequestService {
     return batch ?? null;
   }
 
-  /** What `/sample` shows: the batch's phase as set in admin, except an open batch that is full shows closed. */
+  /** What `/sample` shows, from the batch it serves (see `SampleBatchService.forSamplePage`). An open batch that is full shows closed. */
   static async pageState(db: SampleDatabase, now: Date): Promise<SamplePageState> {
-    const [batch] = await db.select().from(sampleBatches).orderBy(sampleBatches.createdAt).limit(1);
-    if (batch === undefined) {
-      return { kind: "closed" };
+    const batch = await SampleBatchService.forSamplePage(db);
+    if (batch === null) {
+      return { kind: "none" };
     }
+    const shown = { label: batch.label, capacity: batch.capacity };
     if (batch.phase !== "open") {
-      return { kind: batch.phase };
+      return { kind: batch.phase, batch: shown };
     }
     const claimed = await SampleRequestService.countClaimed(db, batch.id, now);
 
-    return claimed < batch.capacity ? { kind: "open", claimed, capacity: batch.capacity } : { kind: "closed" };
+    return claimed < batch.capacity ? { kind: "open", batch: shown, claimed } : { kind: "closed", batch: shown };
   }
 
   /** Writes `expired` on every hold whose window has passed. Returns how many it closed. */
@@ -114,15 +127,10 @@ export class SampleRequestService {
       await tx
         .update(sampleRequests)
         .set({ status: "expired" })
-        .where(
-          and(
-            eq(sampleRequests.batchId, batchId),
-            eq(sampleRequests.email, values.email),
-            eq(sampleRequests.status, "pending_payment")
-          )
-        );
+        // In every batch: one email never holds boxes in two batches at once.
+        .where(and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment")));
 
-      const existing = await SampleRequestService.findActiveByEmail(tx, batchId, values.email);
+      const existing = await SampleRequestService.findActiveByEmail(tx, values.email);
       if (existing !== null) {
         return { kind: "already-requested", request: existing };
       }
@@ -180,17 +188,13 @@ export class SampleRequestService {
     return request ?? null;
   }
 
-  /** The newest paid, shipped or delivered request for an email in a batch. */
-  static async findActiveByEmail(db: SampleDatabase, batchId: string, email: string): Promise<SampleRequest | null> {
+  /** The newest paid, shipped or delivered request for an email, in any batch. */
+  static async findActiveByEmail(db: SampleDatabase, email: string): Promise<SampleRequest | null> {
     const [request] = await db
       .select()
       .from(sampleRequests)
       .where(
-        and(
-          eq(sampleRequests.batchId, batchId),
-          eq(sampleRequests.email, email.toLowerCase()),
-          inArray(sampleRequests.status, ACTIVE_STATUSES)
-        )
+        and(eq(sampleRequests.email, email.trim().toLowerCase()), inArray(sampleRequests.status, ACTIVE_STATUSES))
       )
       .orderBy(desc(sampleRequests.createdAt))
       .limit(1);

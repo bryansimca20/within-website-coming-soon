@@ -2,11 +2,12 @@
 
 import { motion, type Variants } from "motion/react";
 
+import type { ISampleBatchShown } from "@/services/sample-request.service";
 import { EASE } from "@/components/coming-soon/Reveal";
 import { WaitlistArrowGlyph } from "@/components/waitlist/svg/WaitlistGlyphs";
 
 import { SampleBox3D } from "./SampleBox3D";
-import { SAMPLE_COPY } from "./utils/sample-copy";
+import { batchCopy, SAMPLE_COPY } from "./utils/sample-copy";
 
 const { intro } = SAMPLE_COPY;
 
@@ -17,12 +18,16 @@ const rise: Variants = {
 };
 
 interface SampleIntroProps {
+  /** The batch taking requests: its label and size appear in the intro. */
+  batch: ISampleBatchShown;
   /** Moves the visitor into step 1. */
   onContinue: () => void;
 }
 
 /** The first screen of `/sample`: the spinning box, why we're sharing it, what's in it, one button. */
-export function SampleIntro({ onContinue }: SampleIntroProps) {
+export function SampleIntro({ batch, onContinue }: SampleIntroProps) {
+  const named = batchCopy(batch);
+
   return (
     <motion.div
       variants={cascade}
@@ -31,13 +36,13 @@ export function SampleIntro({ onContinue }: SampleIntroProps) {
       className="flex flex-1 flex-col desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
     >
       <motion.p variants={rise} className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted desk:col-start-2 desk:row-start-2">
-        {intro.label}
+        {named.label}
       </motion.p>
       <motion.h1
         variants={rise}
         className="mt-3 mb-0 text-[32px] leading-9 font-normal tracking-[-0.02em] text-balance desk:col-start-2 desk:row-start-3 desk:text-[48px] desk:leading-[52px]"
       >
-        {intro.headline}
+        {named.introHeadline}
       </motion.h1>
       <motion.div
         variants={rise}

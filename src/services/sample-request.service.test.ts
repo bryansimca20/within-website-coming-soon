@@ -2,10 +2,11 @@ import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
-import { sampleRequests } from "@/db/schema";
+import { sampleBatches, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
+import { SampleBatchService } from "./sample-batch.service";
 import { SampleRequestService } from "./sample-request.service";
 
 let db: SampleDatabase;
@@ -144,10 +145,10 @@ describe("SampleRequestService lookups", () => {
 
     expect((await SampleRequestService.findByToken(db, request.accessToken))?.id).toBe(request.id);
     expect((await SampleRequestService.findById(db, request.id))?.id).toBe(request.id);
-    expect(await SampleRequestService.findActiveByEmail(db, "b01", "a@example.com")).toBeNull();
+    expect(await SampleRequestService.findActiveByEmail(db, "a@example.com")).toBeNull();
 
     await SampleRequestService.markPaid(db, request.id, NOW);
-    expect((await SampleRequestService.findActiveByEmail(db, "b01", "a@example.com"))?.id).toBe(request.id);
+    expect((await SampleRequestService.findActiveByEmail(db, "a@example.com"))?.id).toBe(request.id);
   });
 
   test("setStatus and setShopifyOutcome write their columns", async () => {
@@ -206,26 +207,32 @@ describe("SampleRequestService.pageState", () => {
     await claimed("a@example.com");
     await SampleRequestService.updateBatch(db, "b01", { phase: "upcoming" });
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "upcoming" });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "upcoming", batch: { label: "Batch 01", capacity: 100 } });
   });
 
   test("an open batch with room is open, with its live count", async () => {
     await claimed("a@example.com");
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "open", claimed: 1, capacity: 100 });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "open", batch: { label: "Batch 01", capacity: 100 }, claimed: 1 });
   });
 
   test("an open batch that is full shows closed", async () => {
     await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
     await claimed("a@example.com");
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed" });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 1 } });
   });
 
   test("a closed batch shows closed, even before any request", async () => {
     await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed" });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 100 } });
+  });
+
+  test("with no batches at all, there is nothing to show", async () => {
+    await db.delete(sampleBatches);
+
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "none" });
   });
 
   test("only an open batch takes requests", async () => {
@@ -234,5 +241,46 @@ describe("SampleRequestService.pageState", () => {
       expect(await SampleRequestService.claim(db, "b01", sampleValues(), NOW)).toEqual({ kind: "closed" });
       expect(await SampleRequestService.getOpenBatch(db)).toBeNull();
     }
+  });
+});
+
+describe("SampleRequestService.claim across batches", () => {
+  async function openBatch02() {
+    await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
+    const created = await SampleBatchService.create(db, 150, NOW);
+    if (!created.ok) throw new Error(created.message);
+    await SampleBatchService.setPhase(db, created.batch.id, "open");
+  }
+
+  test("someone who paid in Batch 01 is refused in Batch 02, with their Batch 01 request", async () => {
+    const first = await claimed("a@example.com");
+    await SampleRequestService.markPaid(db, first.id, NOW);
+    await openBatch02();
+
+    const result = await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), NOW);
+
+    expect(result.kind).toBe("already-requested");
+    if (result.kind !== "already-requested") return;
+    expect(result.request.id).toBe(first.id);
+    expect(result.request.batchId).toBe("b01");
+    expect((await db.select().from(sampleRequests)).filter((row) => row.batchId === "b02")).toHaveLength(0);
+  });
+
+  test("a live unpaid hold in Batch 01 is expired by a claim in Batch 02", async () => {
+    const hold = await claimed("a@example.com");
+    await openBatch02();
+
+    const result = await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), NOW);
+
+    expect(result.kind).toBe("claimed");
+    expect((await SampleRequestService.findById(db, hold.id))?.status).toBe("expired");
+  });
+
+  test("an expired hold in Batch 01 does not block Batch 02", async () => {
+    const hold = await claimed("a@example.com");
+    await SampleRequestService.markExpiredIfLapsed(db, hold, minutesAfter(2000));
+    await openBatch02();
+
+    expect((await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), minutesAfter(2001))).kind).toBe("claimed");
   });
 });

@@ -5,7 +5,7 @@ import { MotionProvider } from "@/components/coming-soon/MotionProvider";
 
 /** Sample pages are reached by link only: out of search results and the sitemap. */
 export const metadata: Metadata = {
-  title: "Sample Batch 01",
+  title: "Samples",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
 };
 

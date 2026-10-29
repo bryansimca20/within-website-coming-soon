@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -48,7 +49,10 @@ export const sampleBatches = pgTable("sample_batches", {
   phase: sampleBatchPhaseEnum("phase").notNull().default("upcoming"),
   paymentWindowMinutes: integer("payment_window_minutes").notNull().default(1440),
   createdAt: timestamptz("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  // At most one batch takes requests, so /sample is never ambiguous about where a request goes.
+  uniqueIndex("sample_batches_one_open").on(table.phase).where(sql`${table.phase} = 'open'`),
+]);
 
 /** One person's request for a box: profile, delivery details, attribution and lifecycle. */
 export const sampleRequests = pgTable(

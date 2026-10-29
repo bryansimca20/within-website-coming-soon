@@ -32,7 +32,7 @@ export async function adminLoginAction(_previous: AdminLoginState, formData: For
   const session = await getAdminSession();
   session.isAdmin = true;
   await session.save();
-  redirect("/admin/sample");
+  redirect("/admin/requests");
 }
 
 export async function adminLogoutAction(): Promise<void> {

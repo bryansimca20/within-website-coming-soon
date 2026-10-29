@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import type { AdminActionResult, ShipRunState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
-import { sampleBatches, sampleBatchPhaseEnum, sampleRequests } from "@/db/schema";
+import { sampleBatches, sampleRequests } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin-session";
 import { BiteshipService } from "@/services/biteship.service";
 import { SampleAdminDataService } from "@/services/sample-admin-data.service";
@@ -19,9 +19,9 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^\d{2}:\d{2}$/;
 
 function revalidate(requestId?: string) {
-  revalidatePath("/admin/sample");
+  revalidatePath("/admin/requests");
   if (requestId !== undefined) {
-    revalidatePath(`/admin/sample/${requestId}`);
+    revalidatePath(`/admin/requests/${requestId}`);
   }
 }
 
@@ -117,16 +117,3 @@ export async function saveAdminNoteAction(formData: FormData): Promise<void> {
   revalidate(requestId);
 }
 
-/** Changes the batch capacity or opens and closes it. */
-export async function updateBatchAction(formData: FormData): Promise<void> {
-  await requireAdmin();
-  const batchId = String(formData.get("batchId") ?? "");
-  const capacity = Number(formData.get("capacity"));
-  const phaseValue = formData.get("phase");
-  const phase = sampleBatchPhaseEnum.enumValues.find((value) => value === phaseValue);
-  await SampleRequestService.updateBatch(db, batchId, {
-    ...(phase === undefined ? {} : { phase }),
-    ...(Number.isInteger(capacity) && capacity > 0 && capacity <= 10_000 ? { capacity } : {}),
-  });
-  revalidate();
-}

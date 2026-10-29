@@ -25,6 +25,17 @@ export function choiceOptions<T extends string>(keys: readonly T[], labels: Reco
   return keys.map((value) => ({ value, label: labels[value] }));
 }
 
+/** Every visitor-facing line that names the batch or its size, built from the batch /sample is serving. */
+export function batchCopy(batch: { label: string; capacity: number }) {
+  return {
+    label: `SAMPLE ${batch.label.toUpperCase()}`,
+    introHeadline: `Be one of the first ${batch.capacity} to train with it.`,
+    upcomingWhy: `Before WITHIN goes on sale, ${batch.capacity} people who train in the heat get to try it first.`,
+    closedHeadline: `${batch.label} is claimed.`,
+    pageTitle: `Sample ${batch.label}`,
+  };
+}
+
 /** Answer labels per option set, keyed by the stored option key. */
 export const OPTION_LABEL: {
   trainingType: Record<TrainingType, string>;
@@ -88,8 +99,6 @@ export const OPTION_LABEL: {
 /** Every visitor-facing string on the sample pages. Validation errors live with the validators. */
 export const SAMPLE_COPY = {
   intro: {
-    label: "SAMPLE BATCH 01",
-    headline: "Be one of the first 100 to train with it.",
     why: "We're not on sale yet, but we wanted you to try it first. Your feedback matters to us.",
     offerBefore: "You'll get ",
     offerBold: "3 sachets",
@@ -155,15 +164,13 @@ export const SAMPLE_COPY = {
     retry: "Try again",
   },
   upcoming: {
-    label: "SAMPLE BATCH 01",
     headline: "Samples are coming soon.",
-    why: "Before WITHIN goes on sale, 100 people who train in the heat get to try it first.",
     when: "Requests aren't open yet. Join the waitlist and you'll hear as soon as they are.",
     cta: "Join the waitlist",
     notePrefix: "Or follow ",
   },
   closed: {
-    headline: "Batch 01 is claimed.",
+    headlineNoBatch: "Samples aren't available right now.",
     body: "Every sample in this batch is spoken for. Join the waitlist and hear first when the next batch opens.",
     cta: "Join the waitlist",
   },
@@ -225,7 +232,7 @@ export const SAMPLE_COPY = {
     thanksHeadline: "Thank you.",
     thanksHeadlineNamed: (name: string) => `Thank you, ${name}.`,
     thanksBody: [
-      "You were one of the first 100 people to train with WITHIN, and you took the time to tell us how it really went.",
+      "You were one of the first people to train with WITHIN, and you took the time to tell us how it really went.",
       "We're a small team in Jakarta, and we read every answer ourselves. Yours helps us make WITHIN better, before anyone else gets to try it.",
       "Thank you for being part of the very start of this.",
     ],

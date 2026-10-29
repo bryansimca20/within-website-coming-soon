@@ -56,7 +56,7 @@ export function AdminShipRunForm({ rows, isSingle = false }: AdminShipRunFormPro
             {rows.map((row) => (
               <tr key={row.id} className={cn(row.needsAttention && "bg-wi-signal-tint")}>
                 <td className={CELL}>{row.isBookable && <input type="checkbox" name="requestId" value={row.id} defaultChecked={isSingle} aria-label={`Select ${row.boxLabel}`} />}</td>
-                <td className={cn(CELL, "wi-readout")}><Link href={`/admin/sample/${row.id}`} className="text-wi-black underline">{row.boxLabel}</Link></td>
+                <td className={cn(CELL, "wi-readout")}><Link href={`/admin/requests/${row.id}`} className="text-wi-black underline">{row.boxLabel}</Link></td>
                 <td className={CELL}>{row.name}<br /><span className="text-xs text-wi-ink-500">{row.email}</span></td>
                 <td className={CELL}>{row.city}</td>
                 <td className={CELL}>{row.courier}<br /><span className="wi-readout text-xs text-wi-ink-500">Rp {row.fee.toLocaleString("id-ID")}</span></td>

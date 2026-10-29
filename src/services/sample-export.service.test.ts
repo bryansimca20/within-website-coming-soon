@@ -4,7 +4,8 @@ import type { SampleDatabase } from "@/db/database";
 
 import { makeTestDb } from "../../test/sample-db";
 import { NOW, sampleValues } from "../../test/sample-fixtures";
-import { buildSampleCsv, SAMPLE_CSV_COLUMNS } from "./sample-export.service";
+import { buildFeedbackCsv, buildRegistrationsCsv, REGISTRATION_CSV_COLUMNS, SampleExportService } from "./sample-export.service";
+import { SampleBatchService } from "./sample-batch.service";
 import { SampleFeedbackService } from "./sample-feedback.service";
 import { SampleRequestService } from "./sample-request.service";
 
@@ -21,12 +22,12 @@ afterEach(async () => {
   await close();
 });
 
-describe("buildSampleCsv", () => {
+describe("buildRegistrationsCsv", () => {
   test("opens with a BOM and the column header", () => {
-    const csv = buildSampleCsv([]);
+    const csv = buildRegistrationsCsv([], "Batch 01");
 
     expect(csv.startsWith("﻿")).toBe(true);
-    expect(csv.slice(1).split("\r\n")[0]).toBe(SAMPLE_CSV_COLUMNS.join(","));
+    expect(csv.slice(1).split("\r\n")[0]).toBe(REGISTRATION_CSV_COLUMNS.join(","));
   });
 
   test("quotes and doubles a comment with commas and quotes, and derives source and intent", async () => {
@@ -53,7 +54,7 @@ describe("buildSampleCsv", () => {
       NOW
     );
 
-    const csv = buildSampleCsv([{ request, shipment: null, feedback }]);
+    const csv = buildRegistrationsCsv([{ request, shipment: null, feedback }], "Batch 01");
     const [header, row] = csv.slice(1).split("\r\n");
     const columns = header.split(",");
 
@@ -67,7 +68,7 @@ describe("buildSampleCsv", () => {
     expect(row.split(",")[columns.indexOf("feedback_length")]).toBe("under_45; over_90");
 
     const oldForm = { ...request, trainingTypes: null, trainingPrimary: null, heardFrom: null, whyReasons: null, hopes: null, mainSport: "running", trainWhere: "outdoors" };
-    const oldRow = buildSampleCsv([{ request: oldForm, shipment: null, feedback: null }]).slice(1).split("\r\n")[1].split(",");
+    const oldRow = buildRegistrationsCsv([{ request: oldForm, shipment: null, feedback: null }], "Batch 01").slice(1).split("\r\n")[1].split(",");
     expect(oldRow[columns.indexOf("main_sport")]).toBe("running");
     expect(oldRow[columns.indexOf("training_types")]).toBe("");
     expect(oldRow[columns.indexOf("hopes")]).toBe("");
@@ -77,7 +78,7 @@ describe("buildSampleCsv", () => {
   });
 });
 
-describe("buildSampleCsv formula injection", () => {
+describe("buildRegistrationsCsv formula injection", () => {
   test("neutralises cells a spreadsheet would run as a formula", async () => {
     const claim = await SampleRequestService.claim(
       db,
@@ -87,7 +88,7 @@ describe("buildSampleCsv formula injection", () => {
     );
     if (claim.kind !== "claimed") throw new Error(claim.kind);
 
-    const [header, row] = buildSampleCsv([{ request: claim.request, shipment: null, feedback: null }]).slice(1).split("\r\n");
+    const [header, row] = buildRegistrationsCsv([{ request: claim.request, shipment: null, feedback: null }], "Batch 01").slice(1).split("\r\n");
     const cells = row.split(",");
     const columns = header.split(",");
 
@@ -95,5 +96,65 @@ describe("buildSampleCsv formula injection", () => {
     expect(cells[columns.indexOf("run_club")]).toBe("'@SUM(A1)");
     expect(cells[columns.indexOf("delivery_note")]).toBe("'-2+3");
     expect(cells[columns.indexOf("shipping_fee")]).toBe("10000");
+  });
+});
+
+describe("per-batch exports", () => {
+  const ANSWERS = {
+    code: null,
+    email: null,
+    sessionType: ["running"],
+    sessionTypeOther: null,
+    sessionLength: ["over_90"],
+    tasteRating: 4,
+    felt: ["less_cramping"],
+    feltOther: null,
+    wouldReachAgain: "probably" as const,
+    comment: "=1+1",
+  };
+
+  async function paidWithFeedback(batchId: string, email: string) {
+    const claim = await SampleRequestService.claim(db, batchId, sampleValues({ email }), NOW);
+    if (claim.kind !== "claimed") throw new Error(claim.kind);
+    const request = await SampleRequestService.markPaid(db, claim.request.id, NOW);
+    if (request === null) throw new Error("not paid");
+    await SampleFeedbackService.upsert(db, request.id, ANSWERS as never, email, NOW);
+    return request;
+  }
+
+  test("registrations lead with the batch column", () => {
+    expect(buildRegistrationsCsv([], "Batch 02").slice(1).split("\r\n")[0].startsWith("batch,box,")).toBe(true);
+  });
+
+  test("a batch's feedback holds only its own requests, never another batch's or unmatched rows", async () => {
+    const mine = await paidWithFeedback("b01", "a@example.com");
+    await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
+    const second = await SampleBatchService.create(db, 50, NOW);
+    if (!second.ok) throw new Error(second.message);
+    await SampleBatchService.setPhase(db, second.batch.id, "open");
+    await paidWithFeedback("b02", "b@example.com");
+    await SampleFeedbackService.upsert(db, null, ANSWERS as never, "stranger@example.com", NOW);
+
+    const exported = await SampleExportService.loadBatch(db, "b01");
+
+    expect(exported.registrations.map((row) => row.request.id)).toEqual([mine.id]);
+    expect(exported.feedback.map((row) => row.request.id)).toEqual([mine.id]);
+  });
+
+  test("the feedback file has a BOM, the batch, the box and guards formulas", async () => {
+    await paidWithFeedback("b01", "a@example.com");
+    const exported = await SampleExportService.loadBatch(db, "b01");
+
+    const csv = buildFeedbackCsv(exported.feedback, "Batch 01");
+    const [header, row] = csv.slice(1).split("\r\n");
+    const cells = row.split(",");
+    const columns = header.split(",");
+
+    expect(csv.startsWith("﻿")).toBe(true);
+    expect(columns.slice(0, 4)).toEqual(["batch", "box", "email", "name"]);
+    expect(cells[columns.indexOf("batch")]).toBe("Batch 01");
+    expect(cells[columns.indexOf("box")]).toBe("B01-001");
+    expect(cells[columns.indexOf("comment")]).toBe("'=1+1");
+    expect(cells[columns.indexOf("intent")]).toBe("warm");
   });
 });

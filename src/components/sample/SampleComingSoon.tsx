@@ -6,9 +6,10 @@ import Link from "next/link";
 import { EASE } from "@/components/coming-soon/Reveal";
 import { WaitlistArrowGlyph } from "@/components/waitlist/svg/WaitlistGlyphs";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
+import type { ISampleBatchShown } from "@/services/sample-request.service";
 
 import { SampleBox3D } from "./SampleBox3D";
-import { SAMPLE_COPY } from "./utils/sample-copy";
+import { batchCopy, SAMPLE_COPY } from "./utils/sample-copy";
 
 const { upcoming } = SAMPLE_COPY;
 
@@ -18,8 +19,15 @@ const rise: Variants = {
   shown: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
 };
 
+interface SampleComingSoonProps {
+  /** The coming-soon batch: its label and size appear on the page. */
+  batch: ISampleBatchShown;
+}
+
 /** `/sample` before the batch opens: the intro's layout and spinning box, with the waitlist in place of the form. */
-export function SampleComingSoon() {
+export function SampleComingSoon({ batch }: SampleComingSoonProps) {
+  const named = batchCopy(batch);
+
   return (
     <motion.div
       variants={cascade}
@@ -28,7 +36,7 @@ export function SampleComingSoon() {
       className="flex flex-1 flex-col desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
     >
       <motion.p variants={rise} className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted desk:col-start-2 desk:row-start-2">
-        {upcoming.label}
+        {named.label}
       </motion.p>
       <motion.h1
         variants={rise}
@@ -46,7 +54,7 @@ export function SampleComingSoon() {
         variants={rise}
         className="flex flex-col gap-3 text-[17px] leading-[26px] text-pretty desk:col-start-2 desk:row-start-4 desk:mt-6 desk:max-w-[440px]"
       >
-        <p className="m-0">{upcoming.why}</p>
+        <p className="m-0">{named.upcomingWhy}</p>
         <p className="m-0">{upcoming.when}</p>
       </motion.div>
       <motion.div
