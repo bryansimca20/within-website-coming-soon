@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { SampleFeedbackRow, SamplePayment, SampleRequest, SampleShipment, SampleWebhookEvent } from "@/db/schema";
 
 import { AdminRowActions } from "./AdminRowActions";
+import { AdminStatusPill } from "./AdminStatusPill";
 
 interface AdminSampleDetailProps {
   request: SampleRequest;
@@ -19,8 +20,8 @@ interface AdminSampleDetailProps {
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2 rounded-[var(--wi-radius-card)] border border-wi-line bg-wi-paper p-4 text-sm">
-      <h2 className="m-0 text-2xs font-bold tracking-[0.14em] text-wi-ink-500 uppercase">{title}</h2>
+    <section className="flex flex-col gap-3 rounded-[var(--wi-radius-card)] bg-wi-paper p-5 text-sm shadow-[var(--wi-shadow-card)]">
+      <h2 className="m-0 text-sm font-medium text-wi-black">{title}</h2>
       {children}
     </section>
   );
@@ -28,7 +29,7 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
 
 function Fields({ entries }: { entries: Array<[string, unknown]> }) {
   return (
-    <dl className="m-0 grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-4 gap-y-1">
+    <dl className="m-0 grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-6 gap-y-1.5">
       {entries.map(([key, value]) => (
         <div key={key} className="contents">
           <dt className="text-wi-ink-500">{key}</dt>
@@ -48,7 +49,10 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="wi-readout m-0 text-h2 text-wi-black">{boxLabel} · {request.status}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="wi-readout m-0 text-h1 text-wi-black">{boxLabel}</h1>
+        <AdminStatusPill status={request.status} />
+      </div>
       <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} />
       {shipForm}
       <Card title="Request"><Fields entries={Object.entries(fields)} /></Card>
@@ -57,9 +61,9 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
       </Card>
       <Card title={`Shipments (${shipments.length})`}>
         {shipments.map((shipment) => (
-          <div key={shipment.id} className="flex flex-col gap-1 border-t border-wi-line pt-2 first:border-0 first:pt-0">
+          <div key={shipment.id} className="flex flex-col gap-2 border-t border-wi-line/70 pt-3 first:border-0 first:pt-0">
             <Fields entries={[["attempt", shipment.attempt], ["reference", shipment.referenceId], ["biteship id", shipment.biteshipOrderId], ["status", shipment.status], ["waybill", shipment.waybillId], ["link", shipment.trackingLink], ["price", shipment.price], ["shipped email", shipment.shippedEmailSentAt], ["delivered email", shipment.deliveredEmailSentAt]]} />
-            <pre className="m-0 overflow-x-auto text-xs text-wi-ink-500">{JSON.stringify(shipment.history, null, 2)}</pre>
+            <pre className="m-0 overflow-x-auto rounded-[calc(var(--wi-radius-card)-6px)] bg-wi-paper-dim p-3 text-xs text-wi-ink-500">{JSON.stringify(shipment.history, null, 2)}</pre>
           </div>
         ))}
       </Card>
@@ -70,7 +74,7 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
       <Card title="Founder note">
         <form action={saveAdminNoteAction} className="flex flex-col gap-2">
           <input type="hidden" name="requestId" value={request.id} />
-          <textarea name="note" rows={3} defaultValue={request.adminNote ?? ""} className="rounded-[var(--wi-radius-control)] border border-wi-line-strong bg-wi-paper p-2 text-sm" />
+          <textarea name="note" rows={3} defaultValue={request.adminNote ?? ""} className="rounded-[var(--wi-radius-control)] border border-wi-line-strong bg-wi-paper p-3 text-sm outline-none focus-visible:border-wi-black" />
           <Button type="submit" size="sm" variant="secondary" className="self-start">Save note</Button>
         </form>
       </Card>
@@ -78,7 +82,7 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
         <Card title="Cancel">
           <form action={cancelRequestAction} className="flex flex-wrap gap-2">
             <input type="hidden" name="requestId" value={request.id} />
-            <input name="note" placeholder="Reason, refund reference" className="h-9 flex-1 rounded-[var(--wi-radius-control)] border border-wi-line-strong bg-wi-paper px-2 text-sm" />
+            <input name="note" placeholder="Reason, refund reference" className="h-9 flex-1 rounded-[var(--wi-radius-control)] border border-wi-line-strong bg-wi-paper px-3 text-sm outline-none focus-visible:border-wi-black" />
             <Button type="submit" size="sm" variant="destructive">Cancel request</Button>
           </form>
           <p className="m-0 text-xs text-wi-ink-500">Refund the courier fee in the Midtrans dashboard first.</p>

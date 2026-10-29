@@ -16,19 +16,19 @@ export default async function AdminBatchesPage() {
   const rows = summaries.map(({ batch, ...counts }) => ({ id: batch.id, label: batch.label, capacity: batch.capacity, phase: batch.phase, ...counts }));
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-10 md:py-10">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="m-0 text-h2 font-medium text-wi-black">Batches</h1>
+          <h1 className="m-0 text-h1 font-medium tracking-[-0.02em] text-wi-black">Batches</h1>
           <p className="m-0 text-sm text-wi-ink-500">Only one batch can be Open at a time. Close it before opening or creating another.</p>
         </div>
         <AdminNewBatchDialog key={next.id} nextLabel={next.label} defaultCapacity={summaries[0]?.batch.capacity ?? 100} openLabel={summaries.find(({ batch }) => batch.phase === "open")?.batch.label ?? null} />
       </div>
-      <div className="overflow-x-auto rounded-[var(--wi-radius-card)] border border-wi-line bg-wi-paper">
+      <div className="overflow-x-auto rounded-[var(--wi-radius-card)] bg-wi-paper px-2 shadow-[var(--wi-shadow-card)]">
         <Table>
           <TableHeader>
             <TableRow>
-              {HEADINGS.map((heading) => <TableHead key={heading} className="text-2xs tracking-[0.14em] text-wi-ink-500 uppercase">{heading}</TableHead>)}
+              {HEADINGS.map((heading) => <TableHead key={heading} className="text-xs text-wi-ink-500">{heading}</TableHead>)}
             </TableRow>
           </TableHeader>
           <TableBody>

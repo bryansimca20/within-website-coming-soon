@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -34,8 +35,8 @@ export default async function AdminSampleDetailPage({ params }: { params: Promis
   const row = toAdminRow(request, shipments.at(-1) ?? null, feedback);
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-8">
-      <Link href="/admin/requests" className="text-sm text-wi-black underline">All requests</Link>
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-6 md:px-10 md:py-10">
+      <Link href="/admin/requests" className="inline-flex items-center gap-1.5 self-start rounded-full px-2 py-1 -ml-2 text-sm text-wi-ink-500 transition-colors hover:bg-wi-mist hover:text-wi-black"><ArrowLeft aria-hidden className="size-3.5" />All requests</Link>
       <AdminSampleDetail
         request={request}
         boxLabel={row.boxLabel}

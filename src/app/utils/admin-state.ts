@@ -15,5 +15,5 @@ export type CreateBatchState = { error: string } | { createdLabel: string } | nu
 /** A batch row's save: an error to show beside the row, a confirmation, or nothing yet. */
 export type BatchSettingsState = { error: string } | { saved: true } | null;
 
-/** A batch status change from the confirmation popup: the refusal to show, or done. */
+/** A batch change confirmed in a popup (status or removal): the refusal to show, or done. */
 export type BatchPhaseResult = { ok: true } | { ok: false; message: string };

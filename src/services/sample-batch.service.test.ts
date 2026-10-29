@@ -22,12 +22,12 @@ afterEach(async () => {
   await close();
 });
 
-/** Creates the next batch the way a founder must: with nothing open. Whatever was open is reopened after. */
+/** Creates the next batch the way a founder must: with nothing open. Whatever was open is reopened after, by direct write since Closed is final. */
 async function makeBatch(capacity = 50) {
   const open = await SampleRequestService.getOpenBatch(db);
   if (open !== null) await SampleBatchService.setPhase(db, open.id, "closed");
   const result = await SampleBatchService.create(db, capacity, NOW);
-  if (open !== null) await SampleBatchService.setPhase(db, open.id, "open");
+  if (open !== null) await db.update(sampleBatches).set({ phase: "open" }).where(eq(sampleBatches.id, open.id));
   if (!result.ok) throw new Error(result.message);
   return result.batch;
 }
@@ -83,6 +83,13 @@ describe("SampleBatchService.create while a batch is open", () => {
 });
 
 describe("SampleBatchService.setPhase", () => {
+  test.each(["open", "upcoming"] as const)("keeps a closed batch closed instead of moving it to %s", async (phase) => {
+    await SampleBatchService.setPhase(db, "b01", "closed");
+
+    expect(await SampleBatchService.setPhase(db, "b01", phase)).toEqual({ ok: false, message: "Batch 01 is closed. Closed is final." });
+    expect((await SampleBatchService.findById(db, "b01"))?.phase).toBe("closed");
+  });
+
   test("refuses a second open batch, naming the open one", async () => {
     await makeBatch();
 
@@ -122,9 +129,16 @@ describe("SampleBatchService.setPhase", () => {
 
 describe("SampleBatchService.setCapacity", () => {
   test("changes capacity within bounds, even below the claimed count", async () => {
-    expect(await SampleBatchService.setCapacity(db, "b01", 5)).toBe(true);
-    expect(await SampleBatchService.setCapacity(db, "b01", 0)).toBe(false);
+    expect(await SampleBatchService.setCapacity(db, "b01", 5)).toEqual({ ok: true });
+    expect(await SampleBatchService.setCapacity(db, "b01", 0)).toEqual({ ok: false, message: "Capacity must be a whole number from 1 to 10000." });
     expect((await SampleBatchService.findById(db, "b01"))?.capacity).toBe(5);
+  });
+
+  test("refuses a closed batch and leaves its capacity alone", async () => {
+    await SampleBatchService.setPhase(db, "b01", "closed");
+
+    expect(await SampleBatchService.setCapacity(db, "b01", 5)).toEqual({ ok: false, message: "Batch 01 is closed. Its capacity can't change." });
+    expect((await SampleBatchService.findById(db, "b01"))?.capacity).not.toBe(5);
   });
 });
 
@@ -162,7 +176,33 @@ describe("SampleBatchService.list", () => {
     const summaries = await SampleBatchService.list(db, NOW);
 
     expect(summaries.map((summary) => summary.batch.id)).toEqual(["b02", "b01"]);
-    expect(summaries[1]).toMatchObject({ claimed: 1, paid: 1, shipped: 0, delivered: 0, feedback: 0 });
-    expect(summaries[0]).toMatchObject({ claimed: 0, paid: 0 });
+    expect(summaries[1]).toMatchObject({ requests: 1, claimed: 1, paid: 1, shipped: 0, delivered: 0, feedback: 0 });
+    expect(summaries[0]).toMatchObject({ requests: 0, claimed: 0, paid: 0 });
+  });
+});
+
+describe("SampleBatchService.remove", () => {
+  test("removes an empty batch, and its number is used again", async () => {
+    await makeBatch();
+
+    expect(await SampleBatchService.remove(db, "b02")).toEqual({ ok: true });
+    expect(await SampleBatchService.findById(db, "b02")).toBeNull();
+    expect((await SampleBatchService.nextName(db)).id).toBe("b02");
+  });
+
+  test("refuses a batch that has any request, even an expired one", async () => {
+    await SampleRequestService.claim(db, "b01", sampleValues(), NOW);
+    await SampleBatchService.setPhase(db, "b01", "closed");
+
+    expect(await SampleBatchService.remove(db, "b01")).toEqual({ ok: false, message: "Batch 01 has requests, so it stays. Close it instead." });
+    expect(await SampleBatchService.findById(db, "b01")).not.toBeNull();
+  });
+
+  test("refuses the open batch", async () => {
+    expect(await SampleBatchService.remove(db, "b01")).toEqual({ ok: false, message: "Batch 01 is open. Close it or set it to Coming soon first." });
+  });
+
+  test("reports a batch that doesn't exist", async () => {
+    expect(await SampleBatchService.remove(db, "b77")).toEqual({ ok: false, message: "That batch doesn't exist." });
   });
 });

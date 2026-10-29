@@ -33,12 +33,13 @@ export async function createBatchAction(_previous: CreateBatchState, formData: F
   return { createdLabel: result.batch.label };
 }
 
-/** Changes a batch's capacity. Lowering it below the claimed count is allowed. */
+/** Changes a batch's capacity. Lowering it below the claimed count is allowed; a closed batch is refused. */
 export async function saveBatchCapacityAction(_previous: BatchSettingsState, formData: FormData): Promise<BatchSettingsState> {
   await requireAdmin();
   const batchId = String(formData.get("batchId") ?? "");
-  if (!(await SampleBatchService.setCapacity(db, batchId, Number(formData.get("capacity"))))) {
-    return { error: "Capacity must be a whole number from 1 to 10000." };
+  const result = await SampleBatchService.setCapacity(db, batchId, Number(formData.get("capacity")));
+  if (!result.ok) {
+    return { error: result.message };
   }
   revalidatePath("/admin", "layout");
 
@@ -53,6 +54,15 @@ export async function setBatchPhaseAction(batchId: string, phaseValue: string): 
     return { ok: false, message: "Unknown status." };
   }
   const result = await SampleBatchService.setPhase(db, batchId, phase);
+  revalidatePath("/admin", "layout");
+
+  return result;
+}
+
+/** Removes a batch with no requests, after the founder confirmed it. */
+export async function removeBatchAction(batchId: string): Promise<BatchPhaseResult> {
+  await requireAdmin();
+  const result = await SampleBatchService.remove(db, batchId);
   revalidatePath("/admin", "layout");
 
   return result;

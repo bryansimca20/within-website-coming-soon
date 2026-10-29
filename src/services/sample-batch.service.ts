@@ -10,6 +10,8 @@ import { SampleRequestService } from "./sample-request.service";
 /** One batch with the counts the Batches page shows. */
 export interface IBatchSummary {
   batch: SampleBatch;
+  /** Every request ever made in the batch, expired and cancelled included. Zero means it can be removed. */
+  requests: number;
   claimed: number;
   paid: number;
   shipped: number;
@@ -19,6 +21,12 @@ export interface IBatchSummary {
 
 /** Outcome of creating the next batch. */
 export type CreateBatchResult = { ok: true; batch: SampleBatch } | { ok: false; message: string };
+
+/** Outcome of changing a batch's capacity. */
+export type SetCapacityResult = { ok: true } | { ok: false; message: string };
+
+/** Outcome of removing a batch. */
+export type RemoveBatchResult = { ok: true } | { ok: false; message: string };
 
 /** Outcome of changing a batch's phase. */
 export type SetPhaseResult = { ok: true } | { ok: false; message: string };
@@ -101,6 +109,9 @@ export class SampleBatchService {
         if (batch === undefined) {
           return { ok: false, message: "That batch doesn't exist." };
         }
+        if (batch.phase === "closed" && phase !== "closed") {
+          return { ok: false, message: `${batch.label} is closed. Closed is final.` };
+        }
         if (phase === "open") {
           const [other] = await tx
             .select()
@@ -124,14 +135,45 @@ export class SampleBatchService {
     }
   }
 
-  /** Changes capacity. Lowering it below the claimed count is allowed; the batch then reads as full. */
-  static async setCapacity(db: SampleDatabase, batchId: string, capacity: number): Promise<boolean> {
-    if (!isValidCapacity(capacity)) {
-      return false;
-    }
-    const rows = await db.update(sampleBatches).set({ capacity }).where(eq(sampleBatches.id, batchId)).returning({ id: sampleBatches.id });
+  /**
+   * Removes a batch created by mistake: only one with no requests at all, and never the open one. A batch
+   * with requests keeps its id forever (box labels, Midtrans, Biteship, Shopify tags), so it is closed instead.
+   */
+  static async remove(db: SampleDatabase, batchId: string): Promise<RemoveBatchResult> {
+    return db.transaction(async (tx) => {
+      // Same row lock a claim takes, so no request can land between the count and the delete.
+      const [batch] = await tx.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).for("update");
+      if (batch === undefined) {
+        return { ok: false, message: "That batch doesn't exist." };
+      }
+      if (batch.phase === "open") {
+        return { ok: false, message: `${batch.label} is open. Close it or set it to Coming soon first.` };
+      }
+      const [request] = await tx.select({ id: sampleRequests.id }).from(sampleRequests).where(eq(sampleRequests.batchId, batchId)).limit(1);
+      if (request !== undefined) {
+        return { ok: false, message: `${batch.label} has requests, so it stays. Close it instead.` };
+      }
+      await tx.delete(sampleBatches).where(eq(sampleBatches.id, batchId));
+      return { ok: true };
+    });
+  }
 
-    return rows.length > 0;
+  /** Changes a batch's capacity, even below its claimed count. Refused once the batch is closed. */
+  static async setCapacity(db: SampleDatabase, batchId: string, capacity: number): Promise<SetCapacityResult> {
+    if (!isValidCapacity(capacity)) {
+      return { ok: false, message: "Capacity must be a whole number from 1 to 10000." };
+    }
+    const rows = await db
+      .update(sampleBatches)
+      .set({ capacity })
+      .where(and(eq(sampleBatches.id, batchId), ne(sampleBatches.phase, "closed")))
+      .returning({ id: sampleBatches.id });
+    if (rows.length > 0) {
+      return { ok: true };
+    }
+    const batch = await SampleBatchService.findById(db, batchId);
+
+    return { ok: false, message: batch === null ? "That batch no longer exists." : `${batch.label} is closed. Its capacity can't change.` };
   }
 
   /** The batch /sample shows: the open one, else the newest coming soon, else the newest. */
@@ -155,6 +197,7 @@ export class SampleBatchService {
         .where(and(eq(sampleRequests.batchId, batch.id), isNotNull(sampleFeedback.requestId)));
       summaries.push({
         batch,
+        requests: Object.values(counts).reduce((total, count) => total + count, 0),
         claimed,
         paid: counts.paid + counts.shipped + counts.delivered,
         shipped: counts.shipped + counts.delivered,

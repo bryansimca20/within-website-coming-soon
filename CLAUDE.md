@@ -456,6 +456,10 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   Biteship references and the Shopify tag `sampling-b02`.
 - Each batch has a phase. At most one is `open`, enforced in `setPhase` ("Close Batch 01 first.") and by the
   partial unique index `sample_batches_one_open`. A new batch starts `upcoming`.
+- `closed` is final: `setPhase` refuses to move a closed batch anywhere else, and `setCapacity` refuses a closed
+  batch. `remove` deletes only a batch with no requests at all (expired included) that is not open; anything with
+  requests is closed instead, because its id lives on in labels, Midtrans, Biteship and Shopify. New batch is
+  refused while one is open.
 - `/sample` serves the open batch (its form, or its claimed notice once full); with none open, the newest
   `upcoming` batch's coming-soon page; otherwise the newest batch's claimed notice. Every visitor line that
   names the batch or its size comes from `batchCopy()` in `sample-copy.ts`; never hard-code "Batch 01" or "100".
@@ -467,9 +471,12 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
   `within-<id>-registrations.csv` and `within-<id>-feedback.csv`.
 - Admin runs shadcn's sidebar, table, select, input, label, badge, separator, sheet, skeleton and tooltip,
   restyled to `wi-*` tokens and `--wi-radius-*`; the `--sidebar*` tokens in `globals.css` map onto `wi-*`.
-  `button.tsx` and `dialog.tsx` stay hand-owned. `shadcn add` cannot answer its overwrite prompt without a
-  terminal: set those two files aside before adding components, and restore them after. It has also been seen
+  `button.tsx` and `dialog.tsx` stay hand-owned. `shadcn add` cannot answer its overwrite prompt without a terminal: set those two files aside before adding components, and restore them after. It has also been seen
   importing `cn` from an npm package called `cn`; the right import is `@/lib/utils`.
+- Admin is softer than the public pages on purpose (founder, 2026-10-29): `src/app/admin/layout.tsx` sets
+  `data-admin`, and `:root:has([data-admin])` in `globals.css` raises the radii (10px control, 16px card) and
+  switches the button to sentence case through `--wi-button-*`. Admin surfaces are `bg-wi-paper` +
+  `shadow-[var(--wi-shadow-card)]` with no border; statuses render through `AdminStatusPill`.
 
 When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /
 `layout.tsx` Server Component, then pass plain data down as props. Presentational components

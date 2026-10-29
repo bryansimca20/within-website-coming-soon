@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminExportPage() {
   await requireAdmin();
   const batch = await currentAdminBatch(db);
-  if (batch === null) return <p className="p-6">No batch exists. Create one on the Batches page.</p>;
+  if (batch === null) return <p className="p-10 text-sm text-wi-ink-500">No batch exists. Create one on the Batches page.</p>;
   const { registrations, feedback } = await SampleExportService.loadBatch(db, batch.id);
   const files = [
     { href: "/admin/export/registrations", title: "Registrations", detail: "Every request: contact, address, courier, attribution and training answers.", rows: registrations.length },
@@ -20,16 +20,16 @@ export default async function AdminExportPage() {
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 md:px-10 md:py-10">
       <div className="flex flex-col gap-1">
-        <h1 className="m-0 text-h2 font-medium text-wi-black">Export · {batch.label}</h1>
+        <h1 className="m-0 text-h1 font-medium tracking-[-0.02em] text-wi-black">Export · {batch.label}</h1>
         <p className="m-0 text-sm text-wi-ink-500">CSV files open in Excel and Google Sheets. Switch batch in the sidebar to export another.</p>
       </div>
       <div className="flex flex-col gap-3">
         {files.map((file) => (
-          <section key={file.href} className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--wi-radius-card)] border border-wi-line bg-wi-paper p-4">
+          <section key={file.href} className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--wi-radius-card)] bg-wi-paper p-5 shadow-[var(--wi-shadow-card)]">
             <div className="flex min-w-0 flex-col gap-0.5">
-              <h2 className="m-0 text-body font-semibold text-wi-black">{file.title} <span className="wi-readout font-normal text-wi-ink-500">· {file.rows} rows</span></h2>
+              <h2 className="m-0 text-body font-semibold text-wi-black">{file.title} <span className="ml-1 rounded-full bg-wi-mist px-2 py-0.5 align-middle text-xs font-medium text-wi-ink-500 tabular-nums">{file.rows} rows</span></h2>
               <p className="m-0 text-sm text-wi-ink-500">{file.detail}</p>
             </div>
             <Link href={file.href} prefetch={false} className={buttonVariants({ variant: "secondary", size: "sm" })}>Download CSV</Link>

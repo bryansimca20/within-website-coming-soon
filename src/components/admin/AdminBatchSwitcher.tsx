@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleNotch } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -35,8 +36,9 @@ export function AdminBatchSwitcher({ batches, selectedId }: AdminBatchSwitcherPr
 
   return (
     <Select items={items} value={selectedId} onValueChange={select} disabled={isPending}>
-      <SelectTrigger className="h-auto w-full bg-wi-paper py-2" aria-label="Batch">
+      <SelectTrigger className="h-auto w-full border-0 bg-wi-paper py-2.5 pl-3 shadow-[var(--wi-shadow-card)]" aria-label="Batch">
         <SelectValue />
+        {isPending && <CircleNotch aria-label="Switching batch" className="ml-auto animate-spin text-wi-ink-500" />}
       </SelectTrigger>
       <SelectContent>
         {batches.map((batch) => (

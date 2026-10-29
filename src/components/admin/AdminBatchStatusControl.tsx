@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogBackdrop, DialogClose, DialogPopup, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SampleBatchPhase } from "@/db/schema";
+import { cn } from "@/lib/utils";
+
+import { AdminStatusPill } from "./AdminStatusPill";
+import { adminStatusLook } from "./utils/admin-status";
 
 const STATUS_ITEMS: Array<{ value: SampleBatchPhase; label: string }> = [
   { value: "upcoming", label: "Coming soon" },
@@ -26,7 +30,7 @@ function confirmCopy(phase: SampleBatchPhase, label: string, capacity: number) {
   if (phase === "closed") {
     return {
       title: `Close ${label}?`,
-      body: `/sample stops taking requests and shows "${label} is claimed." Anyone already holding a box can still pay until their hold runs out.`,
+      body: `/sample stops taking requests and shows "${label} is claimed." Anyone already holding a box can still pay until their hold runs out. Closing is final: ${label} can't be reopened and its capacity is locked.`,
       confirm: `Close ${label}`,
     };
   }
@@ -44,7 +48,7 @@ interface AdminBatchStatusControlProps {
   phase: SampleBatchPhase;
 }
 
-/** A batch's status as a dropdown. Picking a new status opens a popup; nothing changes until it is confirmed. */
+/** A batch's status as a clickable pill. Picking a new status opens a popup; nothing changes until it is confirmed. Closed is final, so a closed batch shows a plain pill. */
 export function AdminBatchStatusControl({ batchId, label, capacity, phase }: AdminBatchStatusControlProps) {
   const [pending, setPending] = useState<SampleBatchPhase | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,15 +74,29 @@ export function AdminBatchStatusControl({ batchId, label, capacity, phase }: Adm
     });
   }
 
+  if (phase === "closed") {
+    return <AdminStatusPill status="closed" />;
+  }
+
   return (
     <>
       <Select items={STATUS_ITEMS} value={phase} onValueChange={pick}>
-        <SelectTrigger className="h-8 w-36 bg-wi-paper" aria-label={`Status of ${label}`}>
+        <SelectTrigger
+          aria-label={`Status of ${label}`}
+          className={cn(
+            "gap-1 rounded-full border-0 py-0 pr-1.5 pl-2.5 text-xs font-medium transition-shadow duration-150 hover:shadow-[inset_0_0_0_1px_rgba(11,13,18,0.1)] data-popup-open:shadow-[inset_0_0_0_1px_rgba(11,13,18,0.16)] data-[size=default]:h-7 [&_svg]:size-3.5 [&_svg]:text-current [&_svg]:opacity-60",
+            adminStatusLook(phase).pill,
+          )}
+        >
+          <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", adminStatusLook(phase).dot)} />
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start" alignItemWithTrigger={false} className="min-w-44 p-1">
           {STATUS_ITEMS.map((item) => (
-            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+            <SelectItem key={item.value} value={item.value} className="h-8 gap-2 pl-2.5">
+              <span aria-hidden className={cn("size-1.5 shrink-0 self-center rounded-full", adminStatusLook(item.value).dot)} />
+              {item.label}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>

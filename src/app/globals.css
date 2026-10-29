@@ -168,6 +168,12 @@
   --wi-shadow-md: 0 6px 20px rgba(11, 13, 18, 0.08);
   --wi-shadow-lg: 0 18px 44px rgba(11, 13, 18, 0.12);
   --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.24);
+  --wi-shadow-card: 0 0 0 1px rgba(11, 13, 18, 0.05), 0 1px 2px rgba(11, 13, 18, 0.04), 0 8px 24px -12px rgba(11, 13, 18, 0.1);
+
+  /* button voice: uppercase and tracked on the public pages; /admin softens it below */
+  --wi-button-case: uppercase;
+  --wi-button-tracking: 0.14em;
+  --wi-button-weight: 700;
 
   /* motion */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -209,6 +215,17 @@
   --sidebar-accent-foreground: var(--wi-black);
   --sidebar-border: var(--wi-line);
   --sidebar-ring: var(--wi-signal);
+}
+
+/* /admin only: rounder corners and a quieter button voice than the public pages. The founder
+   asked for it on 2026-10-29. :root:has() also reaches dialogs and selects portalled to <body>. */
+:root:has([data-admin]) {
+  --wi-radius-control: 10px;
+  --wi-radius-card: 16px;
+  --radius: 10px;
+  --wi-button-case: none;
+  --wi-button-tracking: -0.005em;
+  --wi-button-weight: 500;
 }
 
 @layer base {

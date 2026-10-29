@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
+import { sampleBatches } from "@/db/schema";
 import { SampleBatchService } from "@/services/sample-batch.service";
 
 import { makeTestDb } from "../../test/sample-db";
@@ -16,7 +18,7 @@ beforeEach(async () => {
   close = () => handle.pg.close();
   await SampleBatchService.setPhase(db, "b01", "closed");
   await SampleBatchService.create(db, 150, NOW);
-  await SampleBatchService.setPhase(db, "b01", "open");
+  await db.update(sampleBatches).set({ phase: "open" }).where(eq(sampleBatches.id, "b01"));
 });
 
 afterEach(async () => {
