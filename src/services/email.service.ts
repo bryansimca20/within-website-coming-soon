@@ -10,6 +10,9 @@ export interface IEmailMessage {
   text: string;
 }
 
+/** A hung provider must not hang a visitor or a webhook. */
+const REQUEST_TIMEOUT_MS = 8_000;
+
 const RESEND_URL = "https://api.resend.com/emails";
 
 /** Sends through Resend. A failure is logged and reported as false; it never throws into a webhook. */
@@ -33,6 +36,7 @@ export class EmailService {
           text: message.text,
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) {

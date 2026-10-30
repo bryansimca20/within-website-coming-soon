@@ -3,7 +3,7 @@
 import { GENERIC_ERROR_MESSAGE, ReopenOutcome, type ReopenPaymentState } from "@/app/utils/sample-state";
 import { db } from "@/db/client";
 import { SITE_URL } from "@/lib/site";
-import { SampleNotifier } from "@/services/sample-notifier.service";
+import { dispatchPaidEmail } from "@/services/sample-email-dispatch.service";
 import { SamplePaymentService } from "@/services/sample-payment.service";
 import { SampleRequestService } from "@/services/sample-request.service";
 
@@ -30,8 +30,8 @@ export async function reopenPaymentAction(token: string): Promise<ReopenPaymentS
       return { outcome: ReopenOutcome.Pay, snapToken: result.payment.snapToken, snapRedirectUrl: result.payment.snapRedirectUrl };
     }
     if (result.kind === "paid") {
-      // Midtrans settled before its webhook reached us; this is the only place the paid email can go out.
-      await SampleNotifier.sendPaid(result.request, batch);
+      // Midtrans settled before its webhook reached us.
+      await dispatchPaidEmail(db, result.request, batch, new Date());
       return { outcome: ReopenOutcome.NotPending };
     }
     if (result.kind === "lapsed") {

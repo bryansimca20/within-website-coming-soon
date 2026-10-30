@@ -124,7 +124,7 @@ async function withStatus(email: string, status: "shipped" | "delivered", delive
 
 describe("SampleFeedbackService.checkEmail", () => {
   test("an email with no order is not found", async () => {
-    expect(await SampleFeedbackService.checkEmail(db, "nobody@example.com")).toMatchObject({ eligibility: FeedbackEligibility.NotFound, firstName: null });
+    expect(await SampleFeedbackService.checkEmail(db, "nobody@example.com")).toMatchObject({ eligibility: FeedbackEligibility.NotFound });
   });
 
   test("a paid order that has not shipped is not ready", async () => {
@@ -134,7 +134,7 @@ describe("SampleFeedbackService.checkEmail", () => {
 
   test("a shipped order may give feedback, and is greeted by first name", async () => {
     await withStatus("a@example.com", "shipped");
-    expect(await SampleFeedbackService.checkEmail(db, "A@Example.com")).toMatchObject({ eligibility: FeedbackEligibility.Ok, firstName: "Fanny" });
+    expect(await SampleFeedbackService.checkEmail(db, "A@Example.com")).toMatchObject({ eligibility: FeedbackEligibility.Ok });
   });
 
   test("a delivered order wins over a newer lapsed hold for the same email", async () => {

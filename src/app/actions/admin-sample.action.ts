@@ -11,6 +11,7 @@ import { BiteshipService } from "@/services/biteship.service";
 import { SampleAdminDataService } from "@/services/sample-admin-data.service";
 import { dispatchShipmentEmail } from "@/services/sample-email-dispatch.service";
 import { SampleNotifier } from "@/services/sample-notifier.service";
+import { SamplePaymentService } from "@/services/sample-payment.service";
 import { SampleEmailKind } from "@/services/sample-email-templates";
 import { SampleRequestService } from "@/services/sample-request.service";
 import { SampleShipmentService } from "@/services/sample-shipment.service";
@@ -53,7 +54,7 @@ export async function bookShipRunAction(_previous: ShipRunState, formData: FormD
     return { results };
   } catch (error) {
     console.error("[admin] ship run failed", error);
-    return { error: error instanceof Error ? error.message : "Ship run failed." };
+    return { error: "Ship run failed. Check the logs." };
   }
 }
 
@@ -97,12 +98,13 @@ export async function resendSampleEmailAction(requestId: string, kind: SampleEma
   return sent ? { ok: true, message: "Sent." } : { ok: false, message: "Resend refused it. Check the logs." };
 }
 
-/** Marks a request cancelled with a note. Refunds happen in the Midtrans dashboard. */
+/** Marks a request cancelled with a note and stops its open payment. Refunds happen in the Midtrans dashboard. */
 export async function cancelRequestAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const requestId = String(formData.get("requestId") ?? "");
   const note = String(formData.get("note") ?? "").trim().slice(0, 500);
   await SampleRequestService.setStatus(db, requestId, "cancelled", { adminNote: note === "" ? "Cancelled by a founder." : note });
+  await SamplePaymentService.cancelForRequest(db, requestId, new Date());
   revalidate();
 }
 

@@ -65,8 +65,7 @@ describe("WebhookHandlers.handleMidtrans", () => {
     const result = await WebhookHandlers.handleMidtrans(db, { ...signed(attempt.midtransOrderId), signature_key: "bad" }, SERVER_KEY, NOW);
 
     expect(result.status).toBe(200);
-    const [event] = await db.select().from(sampleWebhookEvents);
-    expect(event.error).toBe("invalid signature");
+    expect(await db.select().from(sampleWebhookEvents)).toHaveLength(0);
     expect((await SampleRequestService.findById(db, request.id))?.status).toBe("pending_payment");
   });
 
@@ -81,9 +80,33 @@ describe("WebhookHandlers.handleMidtrans", () => {
     expect(await db.select().from(sampleWebhookEvents)).toHaveLength(2);
   });
 
-  test("an unparseable body is stored and answered 200", async () => {
+  test("an unparseable body is answered 200 and not stored", async () => {
     expect((await WebhookHandlers.handleMidtrans(db, { nope: true }, SERVER_KEY, NOW)).status).toBe(200);
-    expect(await db.select().from(sampleWebhookEvents)).toHaveLength(1);
+    expect(await db.select().from(sampleWebhookEvents)).toHaveLength(0);
+  });
+
+  test("a processing failure is answered 500, and the retry pays the request", async () => {
+    const attempt = await SamplePaymentService.createAttempt(db, request, { id: "b01", paymentWindowMinutes: 1440 } as never, NOW, "https://f");
+    if (attempt === null) throw new Error("no attempt");
+    vi.spyOn(SamplePaymentService, "applyNotification").mockRejectedValueOnce(new Error("database blip"));
+
+    expect((await WebhookHandlers.handleMidtrans(db, signed(attempt.midtransOrderId), SERVER_KEY, minutesAfter(1))).status).toBe(500);
+    expect((await SampleRequestService.findById(db, request.id))?.status).toBe("pending_payment");
+
+    expect((await WebhookHandlers.handleMidtrans(db, signed(attempt.midtransOrderId), SERVER_KEY, minutesAfter(2))).status).toBe(200);
+    expect((await SampleRequestService.findById(db, request.id))?.status).toBe("paid");
+  });
+
+  test("a failed paid email is left for the cron to retry, once", async () => {
+    const attempt = await SamplePaymentService.createAttempt(db, request, { id: "b01", paymentWindowMinutes: 1440 } as never, NOW, "https://f");
+    if (attempt === null) throw new Error("no attempt");
+    vi.mocked(SampleNotifier.sendPaid).mockResolvedValueOnce(false);
+
+    await WebhookHandlers.handleMidtrans(db, signed(attempt.midtransOrderId), SERVER_KEY, minutesAfter(1));
+
+    expect((await SampleRequestService.duePaidEmails(db)).map((row) => row.id)).toEqual([request.id]);
+    expect(await SampleRequestService.claimPaidEmail(db, request.id, minutesAfter(2))).toBe(true);
+    expect(await SampleRequestService.duePaidEmails(db)).toHaveLength(0);
   });
 });
 

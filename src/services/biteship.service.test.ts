@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import {
   BiteshipService,
+  isBookable,
   type IBiteshipOrderInput,
   type IBiteshipPricing,
   phaseForBiteshipStatus,
@@ -266,5 +267,36 @@ describe("BiteshipService.fetchRates caching", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(4);
 
     fetchSpy.mockRestore();
+  });
+});
+
+describe("BiteshipService.quoteFor", () => {
+  test("returns the server's price for a courier on offer, and null for one that is not", async () => {
+    process.env.SAMPLE_ORIGIN_CONTACT_NAME = "WITHIN";
+    process.env.SAMPLE_ORIGIN_CONTACT_PHONE = "+628111111111";
+    process.env.SAMPLE_ORIGIN_ADDRESS = "BSD office";
+    process.env.SAMPLE_ORIGIN_AREA_ID = "origin-area";
+    process.env.SAMPLE_ORIGIN_POSTAL_CODE = "15345";
+    process.env.BITESHIP_API_KEY = "test";
+    BiteshipService.clearRatesCache();
+    const pricing = [{ courier_code: "jne", courier_service_code: "reg", courier_name: "JNE", courier_service_name: "Reguler", price: 12000 }];
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(JSON.stringify({ pricing })));
+
+    expect((await BiteshipService.quoteFor("area-q", "jne", "reg"))?.price).toBe(12000);
+    expect(await BiteshipService.quoteFor("area-q", "jne", "made-up")).toBeNull();
+
+    fetchSpy.mockRestore();
+  });
+});
+
+describe("isBookable", () => {
+  test("allows no shipment or a failed one, never a live one", () => {
+    expect(isBookable("paid", null)).toBe(true);
+    expect(isBookable("paid", "courier_not_found")).toBe(true);
+    expect(isBookable("shipped", "returned")).toBe(true);
+    expect(isBookable("paid", "confirmed")).toBe(false);
+    expect(isBookable("shipped", "in_transit")).toBe(false);
+    expect(isBookable("pending_payment", null)).toBe(false);
+    expect(isBookable("cancelled", "returned")).toBe(false);
   });
 });

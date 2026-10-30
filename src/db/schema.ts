@@ -121,6 +121,8 @@ export const sampleRequests = pgTable(
     createdAt: timestamptz("created_at").notNull().defaultNow(),
     expiresAt: timestamptz("expires_at").notNull(),
     paidAt: timestamptz("paid_at"),
+    // Set once the paid email went out, so a failed send can be retried and a sent one never repeats.
+    paidEmailSentAt: timestamptz("paid_email_sent_at"),
     shippedAt: timestamptz("shipped_at"),
     deliveredAt: timestamptz("delivered_at"),
     // Set once the 7-day check-in reminder went out, so it is never sent twice.
@@ -216,7 +218,7 @@ export const sampleWebhookEvents = pgTable("sample_webhook_events", {
   receivedAt: timestamptz("received_at").notNull().defaultNow(),
   processedAt: timestamptz("processed_at"),
   error: text("error"),
-});
+}, (table) => [index("sample_webhook_events_external_ref").on(table.externalRef)]);
 
 export type SampleBatch = typeof sampleBatches.$inferSelect;
 export type SampleRequest = typeof sampleRequests.$inferSelect;

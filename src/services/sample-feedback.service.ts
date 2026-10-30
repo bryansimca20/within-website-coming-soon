@@ -46,7 +46,7 @@ export class SampleFeedbackService {
   static async checkEmail(
     db: SampleDatabase,
     email: string
-  ): Promise<{ eligibility: FeedbackEligibility; firstName: string | null; request: SampleRequest | null }> {
+  ): Promise<{ eligibility: FeedbackEligibility; request: SampleRequest | null }> {
     const requests = await db
       .select()
       .from(sampleRequests)
@@ -54,12 +54,11 @@ export class SampleFeedbackService {
       .orderBy(desc(sampleRequests.createdAt));
     const request = requests.find((row) => row.status === "shipped" || row.status === "delivered") ?? requests[0] ?? null;
     if (request === null) {
-      return { eligibility: FeedbackEligibility.NotFound, firstName: null, request: null };
+      return { eligibility: FeedbackEligibility.NotFound, request: null };
     }
     const hasFeedback = (await SampleFeedbackService.forRequest(db, request.id)) !== null;
-    const eligibility = feedbackEligibility(request.status, hasFeedback);
 
-    return { eligibility, firstName: eligibility === FeedbackEligibility.Ok ? request.firstName : null, request };
+    return { eligibility: feedbackEligibility(request.status, hasFeedback), request };
   }
 
   /** Delivered at least seven days before `now`, no check-in yet, and not reminded before. */

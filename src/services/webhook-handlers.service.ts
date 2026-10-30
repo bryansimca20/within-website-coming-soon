@@ -4,15 +4,17 @@ import type { SampleDatabase } from "@/db/database";
 
 import { BiteshipService, type IBiteshipOrder } from "./biteship.service";
 import { MidtransService } from "./midtrans.service";
-import { dispatchShipmentEmail } from "./sample-email-dispatch.service";
-import { SampleNotifier } from "./sample-notifier.service";
+import { dispatchPaidEmail, dispatchShipmentEmail } from "./sample-email-dispatch.service";
 import { SamplePaymentService } from "./sample-payment.service";
 import { SampleRequestService } from "./sample-request.service";
 import { SampleShipmentService } from "./sample-shipment.service";
 import { WebhookEventService } from "./webhook-event.service";
 
-/** Every webhook is answered 200 once stored, so providers stop retrying; failures live on the event row. */
+/** Handled, or nothing a retry could change: the provider can stop. */
 const OK = { status: 200 } as const;
+
+/** Processing failed: the provider retries, which is safe because every write repeats cleanly. */
+const RETRY = { status: 500 } as const;
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -20,7 +22,10 @@ function errorText(error: unknown): string {
 
 /** Midtrans and Biteship webhook processing, shared by the route handlers and tested without HTTP. */
 export class WebhookHandlers {
-  /** Store, verify signature, apply to the attempt, send the paid email the first time a request is paid. */
+  /**
+   * Verify signature, store, apply to the attempt, send the paid email the first time a request is paid.
+   * The URL is public, so only signed bodies reach the database.
+   */
   static async handleMidtrans(
     db: SampleDatabase,
     body: unknown,
@@ -28,30 +33,29 @@ export class WebhookHandlers {
     now: Date
   ): Promise<{ status: number }> {
     const notification = MidtransService.parseNotification(body);
-    const eventId = await WebhookEventService.record(db, "midtrans", notification?.order_id ?? null, body, now);
-
     if (notification === null) {
-      await WebhookEventService.markProcessed(db, eventId, "unparseable body", now);
+      console.error("[midtrans] unparseable notification");
       return OK;
     }
     if (!MidtransService.verifyNotification(notification, serverKey)) {
       console.error("[midtrans] notification with a bad signature", notification.order_id);
-      await WebhookEventService.markProcessed(db, eventId, "invalid signature", now);
       return OK;
     }
+    const eventId = await WebhookEventService.record(db, "midtrans", notification.order_id, body, now);
 
     try {
       const result = await SamplePaymentService.applyNotification(db, notification, now);
       if (result.kind === "paid") {
         const batch = await SampleRequestService.findBatch(db, result.request.batchId);
         if (batch !== null) {
-          await SampleNotifier.sendPaid(result.request, batch);
+          await dispatchPaidEmail(db, result.request, batch, now);
         }
       }
       await WebhookEventService.markProcessed(db, eventId, result.kind === "unknown" ? "unknown order id" : null, now);
     } catch (error) {
       console.error("[midtrans] processing failed", error);
       await WebhookEventService.markProcessed(db, eventId, errorText(error), now);
+      return RETRY;
     }
 
     return OK;
@@ -78,7 +82,7 @@ export class WebhookHandlers {
       const order = await fetchOrder(orderId);
       if (order === null) {
         await WebhookEventService.markProcessed(db, eventId, "order fetch failed", now);
-        return OK;
+        return RETRY;
       }
 
       const { shipment: current, dueEmail } = await SampleShipmentService.applyOrderSnapshot(db, shipment, order, now);
@@ -89,6 +93,7 @@ export class WebhookHandlers {
     } catch (error) {
       console.error("[biteship] processing failed", error);
       await WebhookEventService.markProcessed(db, eventId, errorText(error), now);
+      return RETRY;
     }
 
     return OK;

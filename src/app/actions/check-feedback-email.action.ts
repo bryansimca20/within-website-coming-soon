@@ -19,13 +19,13 @@ const allow = createRateLimiter({ windowMs: 10 * 60_000, maxAttempts: 20 });
 export async function checkFeedbackEmailAction(rawEmail: string): Promise<IFeedbackEmailCheck> {
   const email = normalizeEmail(rawEmail);
   if (email === null || (await checkBotId()).isBot || !allow(clientKey(await headers()))) {
-    return { eligibility: FeedbackEligibility.NotFound, firstName: null };
+    return { eligibility: FeedbackEligibility.NotFound };
   }
   try {
-    const { eligibility, firstName } = await SampleFeedbackService.checkEmail(db, email);
-    return { eligibility, firstName };
+    const { eligibility } = await SampleFeedbackService.checkEmail(db, email);
+    return { eligibility };
   } catch (error) {
     console.error("[check-feedback-email] unexpected failure", error);
-    return { eligibility: FeedbackEligibility.NotFound, firstName: null };
+    return { eligibility: FeedbackEligibility.NotFound };
   }
 }

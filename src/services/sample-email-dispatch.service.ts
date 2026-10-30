@@ -1,11 +1,21 @@
 import "server-only";
 
 import type { SampleDatabase } from "@/db/database";
-import type { SampleShipment } from "@/db/schema";
+import type { SampleBatch, SampleRequest, SampleShipment } from "@/db/schema";
 
 import { SampleNotifier } from "./sample-notifier.service";
 import { SampleRequestService } from "./sample-request.service";
 import { SampleShipmentService } from "./sample-shipment.service";
+
+/** Sends the paid email at most once. A failed send gives the claim back, and the daily cron retries it. */
+export async function dispatchPaidEmail(db: SampleDatabase, request: SampleRequest, batch: SampleBatch, now: Date): Promise<void> {
+  if (!(await SampleRequestService.claimPaidEmail(db, request.id, now))) {
+    return;
+  }
+  if (!(await SampleNotifier.sendPaid(request, batch))) {
+    await SampleRequestService.releasePaidEmail(db, request.id);
+  }
+}
 
 /**
  * Sends the shipped or delivered email at most once. The claim is taken before sending and given

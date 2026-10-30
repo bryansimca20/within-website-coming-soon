@@ -161,6 +161,7 @@ export const SAMPLE_COPY = {
     loading: "Getting courier prices",
     noCourier: "No courier serves this area right now.",
     failed: "Could not load courier prices.",
+    changed: "Courier prices have changed. Pick a courier again.",
     retry: "Try again",
   },
   upcoming: {

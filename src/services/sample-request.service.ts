@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, ilike, inArray, lte, max, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, max, ne, or, type SQL, sql } from "drizzle-orm";
 
 import type { ISampleRequestValues } from "@/app/utils/sample-request-input";
 import { generateAccessToken } from "@/app/utils/token";
@@ -22,6 +22,12 @@ export type ClaimResult =
   | { kind: "full" }
   | { kind: "already-requested"; request: SampleRequest }
   | { kind: "closed" };
+
+/** What a settled payment did: paid the request, was a repeat, or must be refunded by a founder. */
+export type SettleResult =
+  | { kind: "paid"; request: SampleRequest }
+  | { kind: "repeat" }
+  | { kind: "refund"; request: SampleRequest };
 
 /** The batch as a visitor reads it. */
 export interface ISampleBatchShown {
@@ -213,6 +219,71 @@ export class SampleRequestService {
     return request ?? null;
   }
 
+  /**
+   * Applies a settled payment with the batch row locked. A cancelled request, or an email that already
+   * owns a box, is not paid again. Paying closes the same email's other holds, so they free their slots.
+   */
+  static async settle(db: SampleDatabase, requestId: string, paidAt: Date): Promise<SettleResult> {
+    return db.transaction(async (tx) => {
+      const unlocked = await SampleRequestService.findById(tx, requestId);
+      if (unlocked === null) {
+        return { kind: "repeat" };
+      }
+      await tx.select({ id: sampleBatches.id }).from(sampleBatches).where(eq(sampleBatches.id, unlocked.batchId)).for("update");
+      const request = (await SampleRequestService.findById(tx, requestId)) ?? unlocked;
+      if (request.paidAt !== null) {
+        return { kind: "repeat" };
+      }
+      if (request.status === "cancelled" || (await SampleRequestService.findActiveByEmail(tx, request.email)) !== null) {
+        return { kind: "refund", request };
+      }
+
+      const paid = await SampleRequestService.markPaid(tx, request.id, paidAt);
+      if (paid === null) {
+        return { kind: "repeat" };
+      }
+      await tx
+        .update(sampleRequests)
+        .set({ status: "expired" })
+        .where(and(eq(sampleRequests.email, request.email), eq(sampleRequests.status, "pending_payment"), ne(sampleRequests.id, request.id)));
+
+      return { kind: "paid", request: paid };
+    });
+  }
+
+  /** Leaves a founder the order to refund, keeping any note already on the request. */
+  static async noteRefundDue(db: SampleDatabase, request: SampleRequest, orderId: string): Promise<void> {
+    const note = `REFUND DUE: ${orderId} was paid after this request closed or the email already had a box.`;
+    await db
+      .update(sampleRequests)
+      .set({ adminNote: request.adminNote === null ? note : `${request.adminNote}\n${note}` })
+      .where(eq(sampleRequests.id, request.id));
+  }
+
+  /** Claims the once-only paid email: true when this caller won. */
+  static async claimPaidEmail(db: SampleDatabase, requestId: string, at: Date): Promise<boolean> {
+    const rows = await db
+      .update(sampleRequests)
+      .set({ paidEmailSentAt: at })
+      .where(and(eq(sampleRequests.id, requestId), isNull(sampleRequests.paidEmailSentAt)))
+      .returning({ id: sampleRequests.id });
+
+    return rows.length > 0;
+  }
+
+  /** Gives the claim back after a failed send, so the daily cron can retry. */
+  static async releasePaidEmail(db: SampleDatabase, requestId: string): Promise<void> {
+    await db.update(sampleRequests).set({ paidEmailSentAt: null }).where(eq(sampleRequests.id, requestId));
+  }
+
+  /** Paid requests whose confirmation email never went out. */
+  static async duePaidEmails(db: SampleDatabase): Promise<SampleRequest[]> {
+    return db
+      .select()
+      .from(sampleRequests)
+      .where(and(isNotNull(sampleRequests.paidAt), isNull(sampleRequests.paidEmailSentAt), inArray(sampleRequests.status, ACTIVE_STATUSES)));
+  }
+
   /** Writes `expired` on a pending request whose window has passed; otherwise returns it untouched. */
   static async markExpiredIfLapsed(db: SampleDatabase, request: SampleRequest, now: Date): Promise<SampleRequest> {
     if (request.status !== "pending_payment" || request.expiresAt.getTime() > now.getTime()) {
@@ -221,10 +292,11 @@ export class SampleRequestService {
     const [updated] = await db
       .update(sampleRequests)
       .set({ status: "expired" })
-      .where(eq(sampleRequests.id, request.id))
+      .where(and(eq(sampleRequests.id, request.id), eq(sampleRequests.status, "pending_payment")))
       .returning();
 
-    return updated ?? { ...request, status: "expired" };
+    // No row means a payment landed after `request` was read: the stored state wins.
+    return updated ?? (await SampleRequestService.findById(db, request.id)) ?? request;
   }
 
   static async setStatus(

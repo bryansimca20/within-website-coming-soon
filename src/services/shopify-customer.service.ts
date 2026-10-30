@@ -64,6 +64,9 @@ export const SAMPLING_TAG_PREFIX = "sampling-";
 /** Requires a matching metafield definition in Shopify admin to be visible in the UI. */
 const INSTAGRAM_METAFIELD = { namespace: "custom", key: "instagram_handle" };
 
+/** A hung provider must not hang a visitor or a webhook. */
+const REQUEST_TIMEOUT_MS = 8_000;
+
 const DUPLICATE_EMAIL_MESSAGE = "email has already been taken";
 
 const CREATE_CUSTOMER_MUTATION = `
@@ -140,6 +143,7 @@ export class ShopifyCustomerService {
         client_secret: clientSecret,
       }),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -176,6 +180,7 @@ export class ShopifyCustomerService {
           variables: { input: ShopifyCustomerService.buildCustomerInput(subscriber) },
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       }
     );
 

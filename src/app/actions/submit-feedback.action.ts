@@ -1,6 +1,7 @@
 "use server";
 
 import { checkBotId } from "botid/server";
+import { headers } from "next/headers";
 
 import { FeedbackEligibility } from "@/app/utils/feedback-eligibility";
 import { readFormField } from "@/app/utils/form-field";
@@ -9,7 +10,11 @@ import { parseReviewInput, readSampleFeedbackInput } from "@/app/utils/sample-fe
 import { FeedbackOutcome, type FeedbackState, GENERIC_ERROR_MESSAGE } from "@/app/utils/sample-state";
 import { SAMPLE_COPY } from "@/components/sample/utils/sample-copy";
 import { db } from "@/db/client";
+import { clientKey, createRateLimiter } from "@/lib/rate-limit";
 import { SampleFeedbackService } from "@/services/sample-feedback.service";
+
+/** Same ceiling as the email check: this path answers the same question. */
+const allowEmailPath = createRateLimiter({ windowMs: 10 * 60_000, maxAttempts: 20 });
 
 const EMAIL_MESSAGE: Record<Exclude<FeedbackEligibility, FeedbackEligibility.Ok>, string> = {
   [FeedbackEligibility.NotFound]: SAMPLE_COPY.feedback.emailNotFound,
@@ -55,6 +60,9 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
 
     let request = await SampleFeedbackService.resolveRequest(db, { code, email: null });
     if (request === null && email !== null) {
+      if (!allowEmailPath(clientKey(await headers()))) {
+        return { outcome: FeedbackOutcome.Error, message: GENERIC_ERROR_MESSAGE, field: "email" };
+      }
       const check = await SampleFeedbackService.checkEmail(db, email);
       if (check.eligibility !== FeedbackEligibility.Ok) {
         return { outcome: FeedbackOutcome.Error, message: EMAIL_MESSAGE[check.eligibility], field: "email" };

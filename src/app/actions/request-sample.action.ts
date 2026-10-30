@@ -7,10 +7,12 @@ import { buildReferralTag, isRosterSlug } from "@/app/utils/attribution";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD, isHoneypotTripped } from "@/app/utils/honeypot";
 import { parseSampleRequestInput, readSampleRequestInput } from "@/app/utils/sample-request-input";
 import { GENERIC_ERROR_MESSAGE, SampleRequestOutcome, type SampleRequestState } from "@/app/utils/sample-state";
+import { SAMPLE_COPY } from "@/components/sample/utils/sample-copy";
 import { db } from "@/db/client";
 import { clientKey } from "@/lib/rate-limit";
 import { createSampleRequestLimiter } from "@/lib/request-limit";
 import { SITE_URL } from "@/lib/site";
+import { BiteshipService } from "@/services/biteship.service";
 import { SampleNotifier } from "@/services/sample-notifier.service";
 import { SamplePaymentService } from "@/services/sample-payment.service";
 import { SampleRequestService } from "@/services/sample-request.service";
@@ -24,6 +26,12 @@ const RATE_LIMITED: SampleRequestState = {
   outcome: SampleRequestOutcome.Error,
   message: "Too many requests from this connection. Try again in an hour.",
   field: null,
+};
+
+const COURIER_CHANGED: SampleRequestState = {
+  outcome: SampleRequestOutcome.Error,
+  message: SAMPLE_COPY.shipping.changed,
+  field: "courierCompany",
 };
 
 const GENERIC_ERROR: SampleRequestState = { outcome: SampleRequestOutcome.Error, message: GENERIC_ERROR_MESSAGE, field: null };
@@ -55,7 +63,6 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
   if (!allowRequest(clientKey(await headers()))) {
     return RATE_LIMITED;
   }
-  const values = parsed.value;
 
   try {
     const now = new Date();
@@ -64,7 +71,25 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       return { outcome: SampleRequestOutcome.Full };
     }
 
+    // The form's courier and fee are only what the browser sent: the charge comes from Biteship's own quote.
+    const quote = await BiteshipService.quoteFor(parsed.value.areaId, parsed.value.courierCompany, parsed.value.courierType);
+    if (quote === null) {
+      return COURIER_CHANGED;
+    }
+    const values = {
+      ...parsed.value,
+      courierServiceName: `${quote.courierName} ${quote.serviceName}`,
+      shippingFee: quote.price,
+      shippingEta: quote.etaLabel,
+    };
+
     const claim = await SampleRequestService.claim(db, batch.id, values, now);
+    if (claim.kind !== "closed") {
+      // A hold this claim replaced must stop being payable. If this fails, a late payment is flagged for refund instead.
+      await SamplePaymentService.cancelSuperseded(db, values.email, now).catch((error: unknown) => {
+        console.error("[request-sample] cancelling replaced attempts failed", error);
+      });
+    }
     if (claim.kind === "full" || claim.kind === "closed") {
       return { outcome: SampleRequestOutcome.Full };
     }

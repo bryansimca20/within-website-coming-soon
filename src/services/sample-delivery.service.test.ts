@@ -22,6 +22,16 @@ function entry(id: string, requestStatus: string, shipmentStatus: string | null,
 }
 
 describe("buildDeliveryBoard", () => {
+  test("a paid box whose order failed before pickup is listed; one waiting for pickup is not counted", () => {
+    const board = buildDeliveryBoard(
+      [entry("refused", "paid", "courier_not_found"), entry("waiting", "paid", "confirmed"), entry("unbooked", "paid", null)],
+      NOW
+    );
+
+    expect(board.issues.map((issue) => issue.requestId)).toEqual(["refused"]);
+    expect(board.byBatch.b02).toEqual({ inTransit: 0, stuck: 0, failed: 1, delivered: 0 });
+  });
+
   test("counts moving, stuck, failed and delivered per batch", () => {
     const board = buildDeliveryBoard(
       [

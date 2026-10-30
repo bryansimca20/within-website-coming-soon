@@ -39,7 +39,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 `/sample` takes requests for the Batch 01 sample box, charges the courier fee through Midtrans
 Snap, ships through Biteship, and collects feedback at `/sample/feedback` (the QR on the card).
-Founders run it at `/admin/sample`.
+Founders run it at `/admin`.
 
 Local setup: put a Postgres URL in `DATABASE_URL` in `.env.local`, then
 

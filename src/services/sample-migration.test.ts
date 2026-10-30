@@ -49,3 +49,27 @@ describe("training questions migration", () => {
     expect(request.rows[0]).toEqual({ main_sport: "running", training_types: null, hopes: null });
   });
 });
+
+describe("paid email guard migration", () => {
+  test("a box paid before the column existed is not emailed again", async () => {
+    const pg = new PGlite();
+    const db = drizzle(pg);
+    await migrate(db, { migrationsFolder: firstMigrations(9) });
+
+    await pg.exec(`
+      INSERT INTO sample_requests (batch_id, box_number, access_token, status, sessions_per_week, session_length,
+        full_name, first_name, email, whatsapp, instagram_handle, address_line, area_id, area_name, province, city,
+        district, postal_code, courier_company, courier_type, courier_service_name, shipping_fee, shipping_eta,
+        expires_at, paid_at)
+      VALUES ('b01', 1, 'tok-paid', 'paid', 'three_to_four', 'over_90', 'Fanny Lie', 'Fanny', 'fanny@example.com',
+        '+6281234567890', 'fanny.runs', 'Jl. Sudirman No. 12', 'area', 'Area', 'DKI Jakarta', 'Jakarta Selatan',
+        'Pesanggrahan', '12250', 'jne', 'reg', 'JNE Regular', 10000, '2 to 3 days', now(), '2026-10-27T03:00:00Z');
+    `);
+
+    await migrate(db, { migrationsFolder: "./drizzle" });
+
+    const { rows } = await pg.query<{ paid_at: Date; paid_email_sent_at: Date | null }>("SELECT paid_at, paid_email_sent_at FROM sample_requests");
+    expect(rows[0]?.paid_email_sent_at).toEqual(rows[0]?.paid_at);
+    await pg.close();
+  });
+});

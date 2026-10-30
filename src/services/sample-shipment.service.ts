@@ -8,6 +8,7 @@ import { type SampleRequest, type SampleShipment, sampleShipments } from "@/db/s
 import {
   BiteshipService,
   type IBiteshipOrder,
+  isBookable,
   phaseForBiteshipStatus,
   readSampleOrigin,
   ShipmentPhase,
@@ -37,9 +38,6 @@ export interface SnapshotResult {
   dueEmail: "shipped" | "delivered" | null;
 }
 
-/** Requests a founder may book: paid, or shipped and coming back for a re-ship. */
-const BOOKABLE_STATUSES = ["paid", "shipped"];
-
 /** Pickups are scheduled in Jakarta time. */
 const JAKARTA_OFFSET = "+07:00";
 
@@ -62,12 +60,15 @@ export class SampleShipmentService {
         continue;
       }
       const boxLabel = SampleRequestService.boxLabel(request.batchId, request.boxNumber);
-      if (!BOOKABLE_STATUSES.includes(request.status)) {
-        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: `Not bookable: status is ${request.status}.` });
+      const attempts = await SampleShipmentService.listAttempts(db, requestId);
+      const latestStatus = attempts.at(-1)?.status ?? null;
+      if (!isBookable(request.status, latestStatus)) {
+        const shipmentNote = latestStatus === null ? "" : `, shipment is ${latestStatus}`;
+        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: `Not bookable: status is ${request.status}${shipmentNote}.` });
         continue;
       }
 
-      const attempt = (await SampleShipmentService.listAttempts(db, requestId)).length + 1;
+      const attempt = attempts.length + 1;
       const referenceId = SampleShipmentService.referenceId(boxLabel, attempt);
       const order = await BiteshipService.createOrder({
         referenceId,
@@ -92,24 +93,31 @@ export class SampleShipmentService {
         continue;
       }
 
-      await db.insert(sampleShipments).values({
-        requestId,
-        attempt,
-        referenceId,
-        biteshipOrderId: order.id,
-        trackingId: order.trackingId,
-        waybillId: order.waybillId,
-        courierCompany: request.courierCompany,
-        courierType: request.courierType,
-        trackingLink: order.trackingLink,
-        status: order.status,
-        price: order.price,
-        deliveryType: input.deliveryType,
-        scheduledFor: SampleShipmentService.scheduledFor(input),
-        history: order.history,
-        createdAt: now,
-        updatedAt: now,
-      });
+      try {
+        await db.insert(sampleShipments).values({
+          requestId,
+          attempt,
+          referenceId,
+          biteshipOrderId: order.id,
+          trackingId: order.trackingId,
+          waybillId: order.waybillId,
+          courierCompany: request.courierCompany,
+          courierType: request.courierType,
+          trackingLink: order.trackingLink,
+          status: order.status,
+          price: order.price,
+          deliveryType: input.deliveryType,
+          scheduledFor: SampleShipmentService.scheduledFor(input),
+          history: order.history,
+          createdAt: now,
+          updatedAt: now,
+        });
+      } catch (error) {
+        // Two runs at once share a reference, so Biteship gave both the same order and only one row can hold it.
+        console.error("[ship-run] order booked but not saved", referenceId, error);
+        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: "Booked with Biteship but not saved. Refresh before booking again." });
+        continue;
+      }
       results.push({ requestId, boxLabel, ok: true, waybillId: order.waybillId, error: null });
     }
 

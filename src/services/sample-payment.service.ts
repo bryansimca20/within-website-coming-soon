@@ -1,10 +1,10 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { generateOrderSuffix } from "@/app/utils/token";
 import type { SampleDatabase } from "@/db/database";
-import { type SampleBatch, type SamplePayment, samplePayments, type SampleRequest } from "@/db/schema";
+import { type SampleBatch, type SamplePayment, samplePayments, type SampleRequest, sampleRequests } from "@/db/schema";
 
 import { type IMidtransNotification, MidtransService, PaymentSignal } from "./midtrans.service";
 import { SampleRequestService } from "./sample-request.service";
@@ -12,6 +12,7 @@ import { SampleRequestService } from "./sample-request.service";
 /** What applying a Midtrans notification did. */
 export type ApplyNotificationResult =
   | { kind: "paid"; request: SampleRequest }
+  | { kind: "refund" }
   | { kind: "updated" }
   | { kind: "unknown" }
   | { kind: "ignored" };
@@ -171,8 +172,42 @@ export class SamplePaymentService {
       return { kind: "updated" };
     }
 
-    const request = await SampleRequestService.markPaid(db, payment.requestId, now);
+    const settled = await SampleRequestService.settle(db, payment.requestId, now);
+    if (settled.kind === "refund") {
+      console.error("[midtrans] paid attempt needs a refund", notification.order_id);
+      await SampleRequestService.noteRefundDue(db, settled.request, notification.order_id);
+    }
+    if (settled.kind === "repeat") {
+      return { kind: "updated" };
+    }
 
-    return request === null ? { kind: "updated" } : { kind: "paid", request };
+    return settled.kind === "refund" ? { kind: "refund" } : { kind: "paid", request: settled.request };
+  }
+
+  /** Stops every open attempt on a request a founder cancelled. */
+  static async cancelForRequest(db: SampleDatabase, requestId: string, now: Date): Promise<void> {
+    const attempts = await db
+      .select()
+      .from(samplePayments)
+      .where(and(eq(samplePayments.requestId, requestId), eq(samplePayments.status, "pending")));
+    await SamplePaymentService.cancelAttempts(db, attempts, now);
+  }
+
+  /** Stops open attempts on this email's expired holds, which Midtrans would otherwise still let them pay. */
+  static async cancelSuperseded(db: SampleDatabase, email: string, now: Date): Promise<void> {
+    const rows = await db
+      .select({ attempt: samplePayments })
+      .from(samplePayments)
+      .innerJoin(sampleRequests, eq(samplePayments.requestId, sampleRequests.id))
+      .where(and(eq(sampleRequests.email, email), eq(sampleRequests.status, "expired"), eq(samplePayments.status, "pending")));
+    await SamplePaymentService.cancelAttempts(db, rows.map((row) => row.attempt), now);
+  }
+
+  private static async cancelAttempts(db: SampleDatabase, attempts: SamplePayment[], now: Date): Promise<void> {
+    for (const attempt of attempts) {
+      if (await MidtransService.cancelTransaction(attempt.midtransOrderId)) {
+        await db.update(samplePayments).set({ status: "cancel", updatedAt: now }).where(eq(samplePayments.id, attempt.id));
+      }
+    }
   }
 }

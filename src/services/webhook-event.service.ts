@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 
 import type { SampleDatabase } from "@/db/database";
 import { sampleWebhookEvents } from "@/db/schema";
@@ -33,10 +33,7 @@ export class WebhookEventService {
     if (refs.length === 0) {
       return [];
     }
-    const rows = await db.select().from(sampleWebhookEvents);
 
-    return rows
-      .filter((row) => row.externalRef !== null && refs.includes(row.externalRef))
-      .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
+    return db.select().from(sampleWebhookEvents).where(inArray(sampleWebhookEvents.externalRef, refs)).orderBy(desc(sampleWebhookEvents.receivedAt));
   }
 }

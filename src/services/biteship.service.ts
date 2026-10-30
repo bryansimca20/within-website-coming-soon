@@ -99,6 +99,9 @@ export const SAMPLE_PARCEL = {
 
 export const MAX_COURIER_OPTIONS = 4;
 
+/** A hung provider must not hang a visitor or a webhook. */
+const REQUEST_TIMEOUT_MS = 8_000;
+
 const BASE_URL = "https://api.biteship.com";
 
 const DUPLICATE_REFERENCE_CODE = 40002060;
@@ -141,6 +144,15 @@ export const BITESHIP_STATUS_LABEL: Record<string, string> = {
 /** Booked, shipped, delivered, or something a founder needs to look at. */
 export function phaseForBiteshipStatus(status: string): ShipmentPhase {
   return PHASE_BY_STATUS[status] ?? ShipmentPhase.Attention;
+}
+
+/** Paid with no shipment yet, or paid or shipped with a latest shipment that failed. A live shipment is never booked twice. */
+export function isBookable(requestStatus: string, shipmentStatus: string | null): boolean {
+  if (shipmentStatus === null) {
+    return requestStatus === "paid";
+  }
+
+  return (requestStatus === "paid" || requestStatus === "shipped") && phaseForBiteshipStatus(shipmentStatus) === ShipmentPhase.Attention;
 }
 
 /** The BSD office from env. Throws when a key is missing, like every other secret read. */
@@ -300,6 +312,7 @@ export class BiteshipService {
     const response = await fetch(`${BASE_URL}/v1/maps/areas?${params}`, {
       headers: BiteshipService.headers(),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       console.error("[biteship] area search failed", response.status, await response.text());
@@ -332,6 +345,13 @@ export class BiteshipService {
     return options;
   }
 
+  /** Biteship's own quote for the courier a form named, or null when it is not on offer for this area. */
+  static async quoteFor(destinationAreaId: string, courierCompany: string, courierType: string): Promise<ICourierOption | null> {
+    const options = await BiteshipService.fetchRates(destinationAreaId);
+
+    return options.find((option) => option.courierCompany === courierCompany && option.courierType === courierType) ?? null;
+  }
+
   private static async requestRates(destinationAreaId: string): Promise<ICourierOption[]> {
     const origin = readSampleOrigin();
     const response = await fetch(`${BASE_URL}/v1/rates/couriers`, {
@@ -344,6 +364,7 @@ export class BiteshipService {
         items: [{ ...SAMPLE_PARCEL }],
       }),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       console.error("[biteship] rates failed", response.status, await response.text());
@@ -371,6 +392,7 @@ export class BiteshipService {
       headers: BiteshipService.headers(),
       body: JSON.stringify(BiteshipService.buildOrderPayload(input)),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const payload = asRecord(await response.json().catch(() => null));
 
@@ -392,6 +414,7 @@ export class BiteshipService {
     const response = await fetch(`${BASE_URL}/v1/orders/${encodeURIComponent(orderId)}`, {
       headers: BiteshipService.headers(),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       console.error("[biteship] order fetch failed", response.status, await response.text());

@@ -2,7 +2,7 @@ import { resolveSource } from "@/app/utils/attribution";
 import { groupIntent } from "@/app/utils/intent";
 import type { WouldReachAgain } from "@/app/utils/sample-options";
 import type { SampleFeedbackRow, SampleRequest, SampleShipment } from "@/db/schema";
-import { phaseForBiteshipStatus, ShipmentPhase } from "@/services/biteship.service";
+import { isBookable, phaseForBiteshipStatus, ShipmentPhase } from "@/services/biteship.service";
 import { SampleRequestService } from "@/services/sample-request.service";
 
 /** One plain, serializable admin table row. */
@@ -22,7 +22,7 @@ export interface IAdminRow {
   needsAttention: boolean;
   intent: string | null;
   source: string;
-  /** Paid with no live shipment, or shipped with a shipment that came back: a founder can book it. */
+  /** No shipment yet, or the latest one failed: a founder can book it. */
   isBookable: boolean;
 }
 
@@ -54,6 +54,6 @@ export function toAdminRow(request: SampleRequest, shipment: SampleShipment | nu
       utmContent: request.utmContent,
       utmTerm: request.utmTerm,
     }),
-    isBookable: (request.status === "paid" && shipment === null) || (request.status === "shipped" && needsAttention),
+    isBookable: isBookable(request.status, shipment?.status ?? null),
   };
 }

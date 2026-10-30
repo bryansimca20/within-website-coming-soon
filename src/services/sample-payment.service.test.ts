@@ -5,7 +5,7 @@ import type { SampleBatch, SampleRequest } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
-import { type IMidtransNotification, MidtransService } from "./midtrans.service";
+import { type IMidtransNotification, MidtransService, PaymentSignal } from "./midtrans.service";
 import { SamplePaymentService } from "./sample-payment.service";
 import { SampleRequestService } from "./sample-request.service";
 
@@ -194,6 +194,64 @@ describe("SamplePaymentService.applyNotification", () => {
 
     expect(result.kind).toBe("paid");
     expect((await SampleRequestService.findById(db, request.id))?.status).toBe("paid");
+  });
+});
+
+describe("SamplePaymentService.applyNotification when the request should not be paid", () => {
+  test("the same email paying a replaced hold and its new one gets one box and a refund note", async () => {
+    const first = await SamplePaymentService.createAttempt(db, request, batch, NOW, FINISH_URL);
+    if (first === null) throw new Error("no attempt");
+    const second = await SampleRequestService.claim(db, "b01", sampleValues(), minutesAfter(1));
+    if (second.kind !== "claimed") throw new Error(second.kind);
+    const secondAttempt = await SamplePaymentService.createAttempt(db, second.request, batch, minutesAfter(1), FINISH_URL);
+    if (secondAttempt === null) throw new Error("no attempt");
+
+    const paid = await SamplePaymentService.applyNotification(db, notification(first.midtransOrderId), minutesAfter(2));
+    const late = await SamplePaymentService.applyNotification(db, notification(secondAttempt.midtransOrderId), minutesAfter(3));
+
+    expect(paid.kind).toBe("paid");
+    expect(late.kind).toBe("refund");
+    const after = await SampleRequestService.findById(db, second.request.id);
+    expect(after?.status).toBe("expired");
+    expect(after?.adminNote).toContain(`REFUND DUE: ${secondAttempt.midtransOrderId}`);
+  });
+
+  test("a payment never brings a cancelled request back", async () => {
+    const attempt = await SamplePaymentService.createAttempt(db, request, batch, NOW, FINISH_URL);
+    if (attempt === null) throw new Error("no attempt");
+    await SampleRequestService.setStatus(db, request.id, "cancelled", { adminNote: "Founder note" });
+
+    const result = await SamplePaymentService.applyNotification(db, notification(attempt.midtransOrderId), minutesAfter(5));
+
+    expect(result.kind).toBe("refund");
+    const after = await SampleRequestService.findById(db, request.id);
+    expect(after?.status).toBe("cancelled");
+    expect(after?.adminNote).toContain("Founder note");
+  });
+
+  test("a stale read cannot expire a request that has been paid", async () => {
+    await SampleRequestService.markPaid(db, request.id, NOW);
+
+    const result = await SampleRequestService.markExpiredIfLapsed(db, request, minutesAfter(1441));
+
+    expect(result.status).toBe("paid");
+    expect((await SampleRequestService.findById(db, request.id))?.status).toBe("paid");
+  });
+
+  test("replacing a hold cancels its open Midtrans order", async () => {
+    const attempt = await SamplePaymentService.createAttempt(db, request, batch, NOW, FINISH_URL);
+    if (attempt === null) throw new Error("no attempt");
+    const cancel = vi.spyOn(MidtransService, "cancelTransaction").mockResolvedValue(true);
+    await SampleRequestService.claim(db, "b01", sampleValues(), minutesAfter(1));
+
+    await SamplePaymentService.cancelSuperseded(db, sampleValues().email, minutesAfter(1));
+
+    expect(cancel).toHaveBeenCalledWith(attempt.midtransOrderId);
+    expect((await SamplePaymentService.findByOrderId(db, attempt.midtransOrderId))?.status).toBe("cancel");
+  });
+
+  test("a Midtrans failure lets the sampler pay again", () => {
+    expect(MidtransService.interpretNotification(notification("x", { transaction_status: "failure" }))).toBe(PaymentSignal.Lapsed);
   });
 });
 

@@ -26,13 +26,14 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 /admin/batches/[batchId]/requests       one batch: status, capacity, counts, search, ship runs
 /admin/batches/[batchId]/export (+ /registrations, /feedback)  that batch's two CSVs
 /admin/requests/[id]                    request detail, resends, reship
-/admin/requests, /admin/export, /admin/batches, /admin/sample*  old links, redirect to the routes above
 ```
 
 ## Holds, webhooks and failures
 
 - A request's 24-hour hold is ours; a Midtrans attempt lapsing (QRIS defaults to 15 minutes) ends only that attempt. `pending_payment` becomes `expired` lazily, whenever the count or a status page is read. The only cron is the check-in reminder.
-- Webhook bodies are stored in `sample_webhook_events` before processing and every webhook is answered 200 once stored. Midtrans is trusted only after its SHA512 signature; Biteship bodies are never trusted, the order is re-fetched. A paid request is never moved backwards, and each once-only email has a guard column (`paid_at`, `shipped_email_sent_at`, `delivered_email_sent_at`).
+- Webhook bodies are stored in `sample_webhook_events` before processing and answered 500 if processing fails, so the provider retries. Midtrans is trusted only after its SHA512 signature, and unsigned bodies are logged, not stored; Biteship bodies are never trusted, the order is re-fetched. A paid request is never moved backwards, and each once-only email has a guard column (`paid_email_sent_at`, `shipped_email_sent_at`, `delivered_email_sent_at`). The daily cron retries a failed paid email.
+- The courier fee comes from the server's own Biteship quote, never from the form.
+- A settlement on a cancelled request, or for an email that already owns a box, does not pay it: the request's admin note says `REFUND DUE` with the order id, for a founder to refund in Midtrans. Replacing a hold or cancelling a request also cancels its open Midtrans order.
 - `MidtransService.createSnapTransaction`, `BiteshipService.createOrder` and `EmailService.send` never throw; they log and return null or false. A thrown error there once left unpaid holds occupying slots.
 
 ## Check-ins and reviews
@@ -60,7 +61,7 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 
 ## Admin
 
-- The batch an admin page shows is in its URL (`/admin/batches/b02/...`); the sidebar has one section per batch, and the open batch plus the one you are in show their Requests and Export. Old batch-less links land on the open batch, else the newest (`defaultAdminBatch`).
+- The batch an admin page shows is in its URL (`/admin/batches/b02/...`); the sidebar has one section per batch, and the open batch plus the one you are in show their Requests and Export.
 - Exports are one batch per file: `within-<id>-registrations.csv` and `within-<id>-feedback.csv`.
-- Delivery tracking (`SampleDeliveryService.board`) reads each shipped box's latest Biteship attempt. Failed is `ShipmentPhase.Attention`; stuck is picked up or in transit with no courier scan for `STUCK_AFTER_DAYS` (5). The reason shown is the courier's latest non-empty history note. Feedback rate is check-ins over delivered boxes.
+- Delivery tracking (`SampleDeliveryService.board`) reads each paid, shipped or delivered box's latest Biteship attempt, so an order that fails before pickup still shows. Failed is `ShipmentPhase.Attention`, and such a box can be booked again; a live shipment cannot (`isBookable`, enforced in `bookRun`); stuck is picked up or in transit with no courier scan for `STUCK_AFTER_DAYS` (5). The reason shown is the courier's latest non-empty history note. Feedback rate is check-ins over delivered boxes.
 - UI rules for admin are in [transparency-lab.md](transparency-lab.md).

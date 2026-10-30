@@ -87,6 +87,8 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
       continue;
     }
     if (shipment === null) continue;
+    // Booked and waiting for pickup: not moving yet, and not a problem.
+    if (request.status === "paid" && phase === ShipmentPhase.Booked) continue;
 
     const history = readHistory(shipment.history).sort((a, b) => b.at.getTime() - a.at.getTime());
     const lastMovedAt = history[0]?.at ?? shipment.updatedAt;
@@ -120,10 +122,10 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
   return { issues, byBatch };
 }
 
-/** Delivery tracking for the admin overview: every shipped or delivered box and its latest attempt. */
+/** Delivery tracking for the admin overview: every paid or later box and its latest attempt. Paid is here for orders that fail before pickup. */
 export class SampleDeliveryService {
   static async board(db: SampleDatabase, now: Date): Promise<IDeliveryBoard> {
-    const requests = await db.select().from(sampleRequests).where(inArray(sampleRequests.status, ["shipped", "delivered"]));
+    const requests = await db.select().from(sampleRequests).where(inArray(sampleRequests.status, ["paid", "shipped", "delivered"]));
     const shipments = await SampleAdminDataService.latestShipments(db, requests.map((request) => request.id));
 
     return buildDeliveryBoard(requests.map((request) => ({ request, shipment: shipments.get(request.id) ?? null })), now);

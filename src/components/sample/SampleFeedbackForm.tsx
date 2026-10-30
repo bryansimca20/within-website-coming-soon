@@ -68,9 +68,8 @@ export function SampleFeedbackForm({ code, firstName, initialRating }: SampleFee
   const [isDone, setIsDone] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [renderedAt] = useState(() => String(Date.now()));
-  const [greetName, setGreetName] = useState(firstName);
 
-  if (isDone) return <SampleFeedbackThanks firstName={greetName} />;
+  if (isDone) return <SampleFeedbackThanks firstName={firstName} />;
 
   const step = index === -1 ? null : FEEDBACK_STEP_ORDER[index];
 
@@ -92,7 +91,6 @@ export function SampleFeedbackForm({ code, firstName, initialRating }: SampleFee
       try {
         const check = await checkFeedbackEmailAction(values.email);
         if (check.eligibility !== FeedbackEligibility.Ok) return setError({ field: "email", message: EMAIL_MESSAGE[check.eligibility] });
-        setGreetName(check.firstName);
         go(0);
       } catch {
         setError({ field: "email", message: GENERIC_ERROR_MESSAGE });
@@ -174,7 +172,7 @@ export function SampleFeedbackForm({ code, firstName, initialRating }: SampleFee
         onBack={index > 0 || code === null ? () => go(index - 1) : undefined} />
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.div key={index} custom={direction} variants={SAMPLE_STEP_SLIDE} initial="enter" animate="center" exit="exit" className={SAMPLE_ALERT_FADE}>
-          <SampleFeedbackQuestion step={step} values={values} onChange={change} firstName={greetName} error={error?.message} errorField={error?.field} />
+          <SampleFeedbackQuestion step={step} values={values} onChange={change} firstName={firstName} error={error?.message} errorField={error?.field} />
         </motion.div>
       </AnimatePresence>
       {honeypot}

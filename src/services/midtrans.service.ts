@@ -57,6 +57,9 @@ export enum PaymentSignal {
 /** QRIS and the two wallets. Virtual accounts carry a flat fee that is absurd on a courier charge. */
 export const MIDTRANS_ENABLED_PAYMENTS = ["other_qris", "gopay", "shopeepay"] as const;
 
+/** A hung provider must not hang a visitor or a webhook. */
+const REQUEST_TIMEOUT_MS = 8_000;
+
 const KNOWN_STATUSES: SamplePaymentStatus[] = ["pending", "settlement", "expire", "cancel", "deny"];
 
 const HOSTS: Record<MidtransEnvironment, { app: string; api: string }> = {
@@ -142,7 +145,7 @@ export class MidtransService {
     if (status === "pending") {
       return PaymentSignal.Pending;
     }
-    if (status === "expire" || status === "cancel" || status === "deny") {
+    if (status === "expire" || status === "cancel" || status === "deny" || status === "failure") {
       return PaymentSignal.Lapsed;
     }
 
@@ -212,6 +215,7 @@ export class MidtransService {
       },
       body: JSON.stringify(MidtransService.buildSnapPayload(input)),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -226,6 +230,28 @@ export class MidtransService {
     }
 
     return { token: payload.token, redirectUrl: payload.redirect_url };
+  }
+
+  /** Cancels an unpaid order so it cannot be paid. False, with a log line, when Midtrans refuses or the call fails. */
+  static async cancelTransaction(orderId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${HOSTS[MidtransService.environment()].api}/v2/${encodeURIComponent(orderId)}/cancel`, {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: MidtransService.authorization() },
+        cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      const payload: { status_code?: unknown } = await response.json();
+      if (!response.ok || payload.status_code !== "200") {
+        console.error("[midtrans] cancel refused", orderId, response.status, payload.status_code);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("[midtrans] cancel threw", error);
+      return false;
+    }
   }
 
   /** Reads the current status of an order from Midtrans, for admin refreshes. */
@@ -244,6 +270,7 @@ export class MidtransService {
       {
         headers: { Accept: "application/json", Authorization: MidtransService.authorization() },
         cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       }
     );
 

@@ -49,7 +49,6 @@ export enum FeedbackOutcome {
 /** What the QR path's email check hands back: whether to continue, and the name to greet. */
 export interface IFeedbackEmailCheck {
   eligibility: FeedbackEligibility;
-  firstName: string | null;
 }
 
 /** What the review actions hand back. `feedbackId` is the saved row the later screens add to. */

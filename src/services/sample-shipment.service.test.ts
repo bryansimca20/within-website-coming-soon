@@ -127,8 +127,45 @@ describe("SampleShipmentService.bookRun", () => {
     expect(await SampleShipmentService.latestForRequest(db, paid.id)).toBeNull();
   });
 
-  test("a second run for the same request is attempt 2 with its own reference", async () => {
+  test("a live shipment is not booked twice", async () => {
     await bookOne();
+    createOrder.mockClear();
+
+    const [result] = await SampleShipmentService.bookRun(
+      db,
+      { requestIds: [paid.id], deliveryType: "now", deliveryDate: null, deliveryTime: null },
+      minutesAfter(60)
+    );
+
+    expect(result).toMatchObject({ ok: false, waybillId: null });
+    expect(createOrder).not.toHaveBeenCalled();
+    expect(await SampleShipmentService.listAttempts(db, paid.id)).toHaveLength(1);
+  });
+
+  test("a save failure stays on that row and the run carries on", async () => {
+    await bookOne();
+    const other = await SampleRequestService.claim(db, "b01", sampleValues({ email: "b@example.com" }), NOW);
+    if (other.kind !== "claimed") throw new Error(other.kind);
+    await SampleRequestService.markPaid(db, other.request.id, NOW);
+    const third = await SampleRequestService.claim(db, "b01", sampleValues({ email: "c@example.com" }), NOW);
+    if (third.kind !== "claimed") throw new Error(third.kind);
+    await SampleRequestService.markPaid(db, third.request.id, NOW);
+    createOrder.mockResolvedValueOnce(order()).mockResolvedValueOnce(order({ id: "order-3" }));
+
+    const results = await SampleShipmentService.bookRun(
+      db,
+      { requestIds: [other.request.id, third.request.id], deliveryType: "now", deliveryDate: null, deliveryTime: null },
+      NOW
+    );
+
+    expect(results.map((result) => result.ok)).toEqual([false, true]);
+  });
+
+  test("a shipment that failed before pickup can be booked again as attempt 2", async () => {
+    await bookOne();
+    const failed = await SampleShipmentService.latestForRequest(db, paid.id);
+    if (failed === null) throw new Error("no shipment");
+    await SampleShipmentService.applyOrderSnapshot(db, failed, order({ status: "courier_not_found" }), minutesAfter(30));
     createOrder.mockResolvedValue(order({ id: "order-2", waybillId: "JNE456" }));
 
     await SampleShipmentService.bookRun(

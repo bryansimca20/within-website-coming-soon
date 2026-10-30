@@ -64,6 +64,13 @@
       "when": 1793285281955,
       "tag": "0008_sample_reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793359550504,
+      "tag": "0009_paid_email_guard",
+      "breakpoints": true
     }
   ]
 }
