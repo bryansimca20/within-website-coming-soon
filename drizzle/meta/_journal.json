@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792479351324,
+      "tag": "0000_sampling_program",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792479352201,
+      "tag": "0001_seed_batch_01",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792656039040,
+      "tag": "0002_training_questions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792662595750,
+      "tag": "0003_feedback_reminder",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792670445572,
+      "tag": "0004_feedback_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792672492937,
+      "tag": "0005_optional_launch_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793176170566,
+      "tag": "0006_batch_phase",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793179070663,
+      "tag": "0007_single_open_batch",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793285281955,
+      "tag": "0008_sample_reviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793359550504,
+      "tag": "0009_paid_email_guard",
+      "breakpoints": true
+    }
+  ]
+}

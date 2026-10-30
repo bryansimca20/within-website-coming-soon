@@ -50,7 +50,7 @@ export function WaitlistField({
       <div
         className={cn(
           "flex flex-col gap-0.5 border-b pt-2 outline-offset-2 outline-brand-ink has-focus-visible:outline-2 desk:pt-2.5",
-          error === undefined ? "border-brand-muted pb-1.5" : "border-b-2 border-brand-ink pb-[5px]"
+          error === undefined ? "border-brand-muted pb-1.5" : "border-b-2 border-brand-error pb-[5px]"
         )}
       >
         <label htmlFor={id} className="text-[13px] leading-[18px] text-brand-muted">
@@ -77,7 +77,7 @@ export function WaitlistField({
         </div>
       </div>
       {error !== undefined && (
-        <p id={errorId} role="alert" className="mt-1.5 mb-0 text-[13px] leading-[18px] font-semibold text-brand-ink">
+        <p id={errorId} role="alert" className="mt-1.5 mb-0 text-[13px] leading-[18px] font-semibold text-brand-error">
           {error}
         </p>
       )}

@@ -1,0 +1,1 @@
+ALTER TABLE "sample_requests" ADD COLUMN "feedback_reminder_sent_at" timestamp with time zone;

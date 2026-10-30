@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--wi-radius-control)] border font-bold uppercase leading-none tracking-[0.14em] transition-[background-color,color,opacity,transform] duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] outline-none select-none active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-black/15 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[var(--wi-radius-control)] border [font-weight:var(--wi-button-weight)] [text-transform:var(--wi-button-case)] leading-none tracking-[var(--wi-button-tracking)] transition-[background-color,color,opacity,transform,box-shadow] duration-[120ms] ease-[cubic-bezier(0.2,0,0,1)] outline-none select-none active:scale-[0.97] focus-visible:ring-[3px] focus-visible:ring-black/15 disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "border-wi-black bg-wi-black text-wi-paper hover:opacity-[0.86]",
         secondary:
-          "border-[1.5px] border-wi-black bg-transparent text-wi-black hover:bg-wi-black hover:text-wi-paper",
+          "border-[1.5px] border-wi-black bg-transparent text-wi-black hover:bg-wi-black hover:text-wi-paper [[data-admin]_&]:border-transparent [[data-admin]_&]:bg-wi-paper [[data-admin]_&]:shadow-[var(--wi-shadow-card)] [[data-admin]_&]:hover:bg-wi-paper-dim [[data-admin]_&]:hover:text-wi-black",
         outline:
           "border-[1.5px] border-wi-black bg-transparent text-wi-black hover:bg-wi-black hover:text-wi-paper",
         ghost: "border-transparent bg-transparent text-wi-black hover:bg-wi-mist",

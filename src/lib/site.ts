@@ -1,5 +1,19 @@
-/** Canonical production URL. Override per environment with NEXT_PUBLIC_SITE_URL. */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://within.id";
+/** The live domain. The apex redirects here, so links skip the hop. */
+const PRODUCTION_URL = "https://www.getwithin.id";
+
+/** This deployment's own origin: an explicit override, else the Vercel preview host, localhost in dev, else production. */
+export function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_ENV === "preview") {
+    const host = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL;
+    if (host) return `https://${host}`;
+  }
+  if (process.env.NODE_ENV === "development") return "http://localhost:3000";
+  return PRODUCTION_URL;
+}
+
+/** Base for every absolute URL the site emits (metadata, emails, the Snap finish callback). */
+export const SITE_URL = resolveSiteUrl();
 
 /** Brand name used across metadata and structured data. */
 export const SITE_NAME = "WITHIN";

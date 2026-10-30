@@ -27,6 +27,20 @@ describe("ShopifyCustomerService.buildCustomerInput", () => {
     });
   });
 
+  test("a sampler who skipped the launch email is saved without marketing consent", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({
+      firstName: "Bryan",
+      lastName: null,
+      email: "bryan@example.com",
+      instagramHandle: null,
+      consentedAt: null,
+      extraTags: ["sampling-b01"],
+    });
+
+    expect(input.emailMarketingConsent).toBeUndefined();
+    expect(input.tags).toEqual(["prelaunch", "coming-soon", "sampling-b01"]);
+  });
+
   test("omits the metafields key entirely when no handle was given", () => {
     const input = ShopifyCustomerService.buildCustomerInput({
       firstName: "Bryan",
@@ -121,5 +135,34 @@ describe("ShopifyCustomerService.interpretUserErrors", () => {
     ]);
 
     expect(outcome).toBe(SubscribeOutcome.Failed);
+  });
+});
+
+describe("ShopifyCustomerService.buildCustomerInput extra tags", () => {
+  const base = {
+    firstName: "Fanny",
+    lastName: "Lie",
+    email: "fanny@example.com",
+    instagramHandle: null,
+    consentedAt: CONSENTED_AT,
+  };
+
+  test("appends the sampling and referral tags after the two base tags", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({
+      ...base,
+      extraTags: ["sampling-b01", "ref-fanny"],
+    });
+
+    expect(input.tags).toEqual(["prelaunch", "coming-soon", "sampling-b01", "ref-fanny"]);
+  });
+
+  test("never repeats a tag", () => {
+    const input = ShopifyCustomerService.buildCustomerInput({ ...base, extraTags: ["prelaunch"] });
+
+    expect(input.tags).toEqual(["prelaunch", "coming-soon"]);
+  });
+
+  test("keeps the two base tags when no extras are given", () => {
+    expect(ShopifyCustomerService.buildCustomerInput(base).tags).toEqual(["prelaunch", "coming-soon"]);
   });
 });
