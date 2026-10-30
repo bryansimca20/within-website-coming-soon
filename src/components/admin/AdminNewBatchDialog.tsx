@@ -37,7 +37,7 @@ export function AdminNewBatchDialog({ nextLabel, defaultCapacity, openLabel }: A
           <DialogBackdrop className="bg-wi-black/40" />
           <DialogPopup className="top-1/2 left-1/2 w-[calc(100vw-32px)] max-w-sm -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[var(--wi-radius-card)] border border-wi-line bg-wi-paper p-5 text-wi-ink-700 shadow-[var(--wi-shadow-lg)] data-ending-style:opacity-0 data-starting-style:opacity-0">
             <DialogTitle className="m-0 text-h3 font-medium text-wi-black">New batch: {nextLabel}</DialogTitle>
-            <p className="m-0 text-sm">It starts as Coming soon. Open it from the Batches table when you&apos;re ready.</p>
+            <p className="m-0 text-sm">It starts as Coming soon. Open it from its page when you&apos;re ready.</p>
             <form action={action} className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="new-batch-capacity">Capacity</Label>

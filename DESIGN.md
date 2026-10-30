@@ -139,7 +139,7 @@ components:
 
 This file describes the **WITHIN brand system**, the live system on `/` (the one-screen waitlist) and on every `/sample` page (the intro, the five-step request, the status page and the feedback form). Its source is the waitlist design handoff in `../within-waitlist-handoff` (`assets/within-tokens.json`) and the WITHIN Logo & Brand Identity Guideline.
 
-Two older surfaces still run the previous **Transparency Lab** system: `/cohort` and the 404 page. `/admin` runs Transparency Lab tokens too. Those routes use the `--wi-*` tokens in `globals.css`, described in CLAUDE.md under "WITHIN Design System". Do not mix the two systems on one route.
+Two older surfaces still run the previous **Transparency Lab** system: `/cohort` and the 404 page. `/admin` runs Transparency Lab tokens too. Those routes use the `--wi-*` tokens in `globals.css`, described in docs/transparency-lab.md. Do not mix the two systems on one route.
 
 ## Overview
 

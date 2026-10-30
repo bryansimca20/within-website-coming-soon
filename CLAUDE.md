@@ -1,495 +1,195 @@
 @AGENTS.md
 
-# WITHIN — Coming Soon
+# CLAUDE.md — WITHIN Coming Soon
 
-## 1. Project Overview
+Guidelines for the WITHIN pre-launch site. Inherits and extends [../CLAUDE.md](../CLAUDE.md). One Next.js app holds both the frontend and the backend, so the rules for both live here. Details of how each area works live in the [reference docs](#reference-docs).
 
-Static "coming soon" landing page for **WITHIN**, an Indonesian sports-supplement brand
-(BPOM and Halal certifications pending). Single-page marketing placeholder shown ahead of the
-full storefront launch.
+## Project Overview
 
-- **Two backends.** The waitlist on `/` writes signups into Shopify as customers through one
-  Server Action and has no database. The **sampling program** (`/sample`, `/sample/r/[token]`,
-  `/sample/feedback`, `/admin/*`) has its own Postgres, Midtrans payments, Biteship
-  shipping, Resend emails and a founder admin (see Sampling program under Data Fetching &
-  Services). Spec: `docs/superpowers/specs/2026-10-20-sampling-program-design.md` (local only).
-- The route `/` is still statically prerendered. The sample and admin routes are dynamic.
-- Deploys to **Vercel** (auto-detected, zero config).
+WITHIN is an Indonesian electrolyte brand (BPOM and Halal certifications pending). This site serves the waitlist on `/`, the founding-member preview on `/cohort`, the paid-shipping sampling program on `/sample`, and a founder admin on `/admin`. It deploys to Vercel. The storefront is a separate repo (`../within-website`) that shares this Shopify store.
 
-The production storefront lives separately (`../within-website`, a Shopify Hydrogen app).
-It shares branding, and — since email capture landed — the same Shopify store: signups here
-become customers there, tagged `prelaunch`. The two repos have deliberately diverged on
-design system: `/` here runs the WITHIN brand system from the waitlist design handoff (see
-WITHIN Design System below), `/cohort` and the 404 still run Transparency Lab, and
-`../within-website` ships the earlier Inter/monochrome system.
+Optimizes for: **trust in what we claim and how we treat a visitor's data**, **no lost money or orders** (payment, shipping and email must survive retries and third-party failure), and **minimal dependencies**. Guiding principle: when a decision could double-charge, oversell a batch, leak who has signed up, or put an unverified claim on the page, surface it and stop.
 
-## 2. Commands
+## Commands
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the dev server (Turbopack) at `http://localhost:3000` |
-| `npm run build` | Production build (Turbopack) |
-| `npm run start` | Serve the built app locally |
-| `npm run lint` | Run ESLint (flat config, `eslint-config-next`) |
-| `npm run test` | Run the Vitest suite once |
-| `npm run test:watch` | Vitest in watch mode |
-| `npm run db:generate` | Generate a Drizzle migration from `src/db/schema.ts` into `drizzle/` |
-| `npm run db:migrate` | Apply migrations to `DATABASE_URL` |
-| `npx shadcn@latest add <component>` | Add a shadcn/ui component |
+```bash
+npm run dev           # Dev server (Turbopack) on http://localhost:3000
+npm run build         # Production build
+npm run start         # Serve the production build
+npm run lint          # ESLint
+npm run test          # Vitest once
+npm run test:watch    # Vitest watch mode
+npx tsc --noEmit      # Type-check (Vitest does not)
+npm run db:generate   # Generate a Drizzle migration from src/db/schema.ts
+npm run db:migrate    # Apply migrations to DATABASE_URL
+```
 
-Package manager is **npm** (`package-lock.json` is the source of truth). Do not introduce
-`pnpm` / `yarn` lockfiles.
+Package manager is **npm**. Do not introduce another lockfile.
 
-## 3. Environment
+## Environment
 
-- **Node.js** `>= 20.9` (Next.js 16 requirement). Dev machine runs Node 22.
-- Secrets live in `.env.local` (gitignored) locally and in Vercel project settings for
-  Production + Preview. Adding a new key means mirroring it in this section and surfacing it
-  to the user first (see When in Doubt).
+Node `>= 20.9`. Secrets live in `.env.local` locally and in Vercel settings for Production + Preview. Every key and third-party setup step is in [docs/environment.md](docs/environment.md); keep that list current. Do not add a new env var without asking. Only values that are public by design get `NEXT_PUBLIC_`.
 
-| Key | Purpose |
-| --- | --- |
-| `SHOPIFY_STORE_DOMAIN` | `xxx.myshopify.com`. Which store signups are written to |
-| `SHOPIFY_CLIENT_ID` | Dev Dashboard app Client ID, **`write_customers` scope only** |
-| `SHOPIFY_CLIENT_SECRET` | `shpss_…` Client Secret. Exchanged for a 24h Admin API token at request time |
+## Tech Stack
 
-| `DATABASE_URL` | Neon Postgres for the sampling tables. Previews get their own Neon branch |
-| `SESSION_SECRET` | iron-session secret for the founder admin cookie, 32+ chars |
-| `ADMIN_PASSCODE` | Shared founder passcode for `/admin/login` |
-| `MIDTRANS_SERVER_KEY` | Snap transactions and notification signature checks |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Public by design: snap.js `data-client-key` |
-| `NEXT_PUBLIC_MIDTRANS_ENV` | `sandbox` or `production`; picks both Midtrans hosts |
-| `BITESHIP_API_KEY` | Area search, rates, orders |
-| `BITESHIP_WEBHOOK_TOKEN` | Secret `?token=` on the Biteship webhook URL (Biteship signs nothing) |
-| `SAMPLE_ORIGIN_CONTACT_NAME`, `_PHONE`, `_ADDRESS`, `_AREA_ID`, `_POSTAL_CODE`, `_NOTE` | The BSD office as Biteship origin (all prefixed `SAMPLE_ORIGIN_`) |
-| `RESEND_API_KEY`, `SAMPLE_EMAIL_FROM`, `SAMPLE_EMAIL_REPLY_TO` | Sampler emails through Resend |
-| `CRON_SECRET` | Vercel Cron sends it as `Authorization: Bearer …`; `/api/cron/feedback-reminders` refuses anything else |
+- **Framework:** Next.js 16 (App Router, Turbopack) · React 19 · TypeScript strict. This Next.js has breaking changes: read the guide in `node_modules/next/dist/docs/` before writing framework code.
+- **Styling:** Tailwind CSS 4, configured in CSS through `@theme` in [globals.css](src/app/globals.css) · shadcn/ui (`base-nova`, on Base UI rather than Radix) · `@phosphor-icons/react`
+- **Motion and 3D:** `motion` · `three`
+- **Data:** Postgres (Neon) · Drizzle ORM · **Testing:** Vitest + PGlite
+- **Third parties:** Shopify Admin API · Midtrans · Biteship · Resend · BotID · Vercel Analytics and Cron
+- **Auth:** `iron-session` founder cookie, no user accounts · **Forms:** native forms + Server Actions, `zod` on the sampling forms
 
-- Every URL the sampling program emits (emails, the Snap finish callback, the card's QR target
-  `/sample/feedback`) is built from `SITE_URL` (`NEXT_PUBLIC_SITE_URL`). Set it per environment.
-- Shopify killed in-admin custom apps + static `shpat_` tokens. The app now lives in the
-  **Dev Dashboard** (`dev.shopify.com/dashboard`): scope `write_customers`, Release the version,
-  Install on the store. The service exchanges Client ID + Secret for a short-lived token via
-  `POST /admin/oauth/access_token` (`grant_type=client_credentials`) on each write — no static
-  token to store or rotate.
-- **Never** prefix any of these with `NEXT_PUBLIC_`, and never import
-  [shopify-customer.service.ts](src/services/shopify-customer.service.ts) from a client
-  component. It imports `server-only`, so doing so is a build error rather than a leaked secret.
-- The Admin API version is a code constant in that service, not an environment variable.
-- Shopify also needs a customer metafield definition (`custom.instagram_handle`, single line
-  text). Without it the value still writes but stays invisible in the admin UI.
+**Do NOT use without asking:**
+- A data-fetching library or global state library. Reads happen on the server; client state stays local.
+- A second ORM or raw query layer alongside Drizzle.
+- `lucide-react` in app code. It stays inside shadcn primitives.
+- Any new dependency when the platform or an installed one does the job.
 
-## 4. Tech Stack
-
-- **Next.js 16.2.10** — App Router, Turbopack is the default bundler for both `dev` and `build`.
-  ⚠️ This major has breaking changes vs. older Next.js; read `@AGENTS.md` and the bundled
-  guides in `node_modules/next/dist/docs/` before writing framework code — do not rely on
-  training-data conventions.
-- **React 19.2.4** / `react-dom` 19.2.4.
-- **TypeScript 5**, strict mode.
-- **Tailwind CSS v4** — CSS-first config. No `tailwind.config.*`; theme tokens are CSS
-  variables inside `@theme` in [src/app/globals.css](src/app/globals.css).
-- **shadcn/ui** — style `base-nova`, base color `neutral`, RSC enabled. Built on
-  **Base UI** (`@base-ui/react`), not Radix. Primitives live in
-  [src/components/ui/](src/components/ui/).
-- **`@phosphor-icons/react/ssr`** — icons (`Nav`, `Footer`, `Compare`, `Faq`). `lucide-react`
-  is used only inside the shadcn primitives (`select`, `sheet`, `sidebar`); app code uses phosphor.
-- **`@vercel/analytics`** — `<Analytics />` in the root layout records page views; waitlist
-  interactions go through `trackWaitlistEvent()` in
-  [waitlist-analytics.ts](src/components/waitlist/utils/waitlist-analytics.ts). Nothing is sent
-  in local dev. Web Analytics must be enabled on the Vercel project.
-- Utilities: `tw-animate-css`, `class-variance-authority`, `clsx`, `tailwind-merge`
-  (composed by `cn()` in [src/lib/utils.ts](src/lib/utils.ts)).
-- **`botid`** — Vercel bot protection for the signup Server Action. `next.config.ts` is wrapped
-  in `withBotId()`, protected paths are declared in
-  [src/instrumentation-client.ts](src/instrumentation-client.ts), and the server calls
-  `checkBotId()`. A path missing from `initBotId({ protect })` makes `checkBotId()` fail, so the
-  two must stay in sync. Locally `checkBotId()` always returns `isBot: false`.
-- **`server-only`** — import guard on modules that hold secrets.
-- **Drizzle ORM** + **postgres** — sampling schema in [src/db/schema.ts](src/db/schema.ts), committed
-  migrations in `drizzle/` (the second one seeds Batch 01). [client.ts](src/db/client.ts) is a lazy
-  proxy, so importing it without `DATABASE_URL` does not connect. Services take the
-  `SampleDatabase` type so the same code runs on PGlite in tests.
-- **`zod`** — the two sampling form validators. The three-field waitlist validator stays hand-written.
-- **`iron-session`** — the founder admin cookie (`within_admin`). [src/proxy.ts](src/proxy.ts) only
-  checks the cookie is present; `requireAdmin()` verifies it on every admin page and action.
-- **Vitest** (dev) — unit tests for pure logic, colocated as `*.test.ts`. `server-only` is
-  aliased to a stub in [vitest.config.ts](vitest.config.ts) so services stay testable.
-  Database services are tested against **`@electric-sql/pglite`** with every migration applied
-  ([test/sample-db.ts](test/sample-db.ts)); files run one at a time (`fileParallelism: false`).
-
-## 5. Architecture
-
-App Router project under [src/](src/) with the `@/*` → `./src/*` path alias.
+## Architecture
 
 ```
 src/
-├── instrumentation-client.ts  # BotID protected-path declaration (runs on the client)
-├── app/              # Routes. layout.tsx + page.tsx are the only entry points.
-│   ├── layout.tsx    # Root layout (fonts, <html>/<body>, globals import)
-│   ├── page.tsx      # "/" — the waitlist page ("feature orbit", comp 2c of the handoff)
-│   ├── cohort/       # "/cohort" — unlisted founding-member preview (Transparency Lab)
-│   ├── fonts/        # BiroScriptPlus.otf, loaded with next/font/local
-│   ├── not-found.tsx # 404, on-brand
-│   ├── globals.css   # Tailwind v4 import + @theme tokens + :root design tokens
-│   ├── icon.tsx, apple-icon.tsx, opengraph-image.tsx  # generated icon/OG routes (no static favicon.ico)
-│   ├── robots.ts, sitemap.ts  # generated SEO routes
-│   ├── actions/      # Server Actions ("use server"), one file per action
-│   └── utils/        # Route-local pure helpers (validation, honeypot, action state)
-├── components/
-│   ├── brand/        # WithinLogo — the brand mark, used site-wide
-│   ├── waitlist/     # The waitlist page: WaitlistPage + orbit, feature cards, sheet, form, joined dialog
-│   │   ├── svg/      # WaitlistGlyphs.tsx — the page's hand-drawn icons
-│   │   └── utils/    # waitlist-copy.ts (every string, layouts, features), waitlist-analytics.ts
-│   ├── cohort/       # "/cohort" sections
-│   ├── coming-soon/  # Reveal / Section / MotionProvider only, kept for "/cohort"
-│   └── ui/           # shadcn/ui primitives — WITHIN-restyled, owned in-repo (see UI and Design Rules)
-├── services/
-│   └── shopify-customer.service.ts   # Shopify Admin API writes
-└── lib/
-    ├── utils.ts      # cn() and other app infrastructure
-    └── site.ts       # SITE_NAME / SITE_URL / SITE_DESCRIPTION / Instagram constants
+  app/                 Routes, plus the API routes for webhooks, cron and sampling proxies
+    actions/           Server Actions, <verb>.action.ts, orchestration only
+    utils/             Pure helpers: validation, form state, option keys
+  components/
+    <domain>/          waitlist/, sample/, admin/, cohort/, brand/, coming-soon/ (shared motion)
+      svg/  utils/     Domain-local SVG primitives and .ts helpers
+    ui/                shadcn primitives, restyled and owned in this repo
+  services/            <noun>.service.ts: third-party calls and database logic
+  db/                  Drizzle schema and lazy client
+  lib/                 App infrastructure only: cn(), site constants, session, env, rate limits
+test/                  Database and fixture helpers for the suite
+drizzle/               Committed migrations
 ```
 
-- **Server Components by default** (RSC). Client interactivity is opt-in via `"use client"`,
-  pushed as deep into the tree as possible.
-- **`/` and `/cohort` are statically prerendered.** The sample and admin routes are
-  `force-dynamic`, since they read Postgres on every request.
-  The handoff's alternate "button first" layout (comp 2f) was built and
-  then dropped on 2026-10-09 in favour of 2c on both phone and desktop.
-- A `"use server"` file may export **only async functions**. Types, enums and constants that
-  the action's callers need live in `src/app/utils/` (e.g. `subscribe-state.ts`), never in the
-  action file itself.
-
----
-
-## Rules
-
+Rules:
 - Path alias `@/*` → `./src/*`. Always use it.
-- `page.tsx` and `layout.tsx` are async server components (the `page.tsx` data-fetch pattern lives in Data Fetching & Services). Add `"use client"` only when needed; push it as deep into the tree as possible.
-- Co-locate route-specific code; promote to `src/components/` (components) or `src/utils/` (helpers) only when reused across 2+ routes. `src/lib/` is framework / app infrastructure only — never domain helpers.
-- `components/` folders contain only `.tsx` files that return JSX — no `.ts` helpers. Route-local `.ts` helpers go in sibling `utils/`. SVG primitives go in sibling `svg/`.
+- Server Components by default. Add `"use client"` only when needed, as deep in the tree as possible.
+- `/` and `/cohort` are statically prerendered. Anything reading Postgres is `force-dynamic`.
+- A `"use server"` file exports only async functions. Types, enums and constants its callers need go in `src/app/utils/`.
+- A component belongs in its domain folder even with one consumer. `components/` folders hold `.tsx` that returns JSX; `.ts` helpers go in sibling `utils/`, SVGs in sibling `svg/`. Three.js scenes beside their 3D component are the existing exception.
+- `src/lib/` never holds domain helpers.
 
 ## Coding Conventions
 
 **TypeScript**
-- Strict mode on. Do not use `any` even though the lint rule is disabled. Never use the non-null assertion `!` — handle `null` / `undefined` explicitly (early return, type guard, default).
-- Prefer inferred types. Add explicit annotations only when they aid clarity (module-boundary signatures, ambiguous return types).
-- `interface` for object shapes (props, domain entities); `type` for unions, intersections, and primitive aliases (e.g., `type EngineStatus = "ok" | "warn" | …`).
-- Use `enum` for closed status/category sets.
-- Domain interfaces use the `I` prefix (`IShip`, `ITelemetry`). No exceptions.
+- No `any` and no non-null assertion `!`. Handle `null` and `undefined` explicitly.
+- Prefer inferred types; annotate where it aids clarity, such as module boundaries.
+- `interface` for object shapes, `type` for unions and aliases, `enum` for closed status or category sets. Domain interfaces use the `I` prefix.
 
-**Component patterns**
-- Before creating a new component, search [src/components/](src/components/) and the current route — if something similar exists, extend or compose it rather than building a near-duplicate.
-- Functional components only. Compose shadcn primitives — wrap, don't rewrite.
-- Default to co-location (inline a ≲ 50-line, single-use subcomponent as a local function); split into a new file when reused across 2+ parents, 75+ lines, has internal state, is a distinct concept (SVG primitive, section wrapper), or is a top-level route component (`*PageContent`, `*Sidebar`).
-- Creating a new reusable abstraction (generic component, hook, or util) requires 3+ concrete usage sites or genuinely complex logic. Three similar lines beat a premature abstraction (parent CLAUDE.md §2).
-- Keep components under 200 lines. If a parent exceeds it, extract sub-components or hooks.
-- Props interface is named `<ComponentName>Props` and defined directly above the component.
-- Presentational components do not fetch data or contain business logic. Transforms live in `utils/` or `services/`; pass results down as props. (Where fetching itself lives → Data Fetching & Services.)
+**Components**
+- Search `src/components/` before creating a component; extend or compose what exists. Compose shadcn primitives rather than rewriting them.
+- Inline a small single-use subcomponent. Split it out when it is reused, has its own state, or is a distinct concept.
+- A new reusable abstraction needs 3+ real usage sites or genuinely complex logic.
+- Keep components under 200 lines. Shadcn primitives are exempt.
+- Props interface is `<ComponentName>Props`, directly above the component.
+- Presentational components do not fetch or hold business logic. Pass results down as props.
 
 **Naming**
-- Components: `PascalCase.tsx`, prefixed with their domain (`SidebarOrgCard`, `EngineCard`). Avoid generic names like `Chip`, `Row`, `Card`.
-- Hooks: filename `use-kebab-case.ts`, export `useCamelCase`.
-- Services: `<noun>.service.ts` with static methods. Other utilities: `kebab-case.ts`.
+- Components: `PascalCase.tsx`, prefixed with their domain (`WaitlistForm`, `AdminStatusPill`). Avoid generic names.
+- Hooks: `use-kebab-case.ts`, exporting `useCamelCase`. Services: `<noun>.service.ts` with static methods. Other files: `kebab-case.ts`.
+- Descriptive variable names; abbreviate only what is universal (`id`, `url`).
 
 **Exports**
-- Route files (`page.tsx`, `layout.tsx`) use default exports — Next.js requires it.
-- Every other file uses **named exports**. No exceptions.
+- Route files use default exports because Next.js requires it. Every other file uses named exports.
 
 **Comments**
-- One-line `/** ... */` above every exported component, every interface prop, and every named helper (two lines max). Describe purpose, not implementation — don't restate the type signature or write `@param`/`@returns`.
-- Skip only self-explanatory throwaways (e.g., `className?: string`) and inline arrow callbacks.
-
-**Style**
-- Descriptive variable names. Avoid abbreviations unless universally understood (`id`, `url`, `idx`).
-- No dead code or commented-out blocks in committed files — git remembers.
+- One-line `/** ... */` above exported components, interface props and named helpers (two lines at most). Describe purpose, not implementation. Skip self-explanatory throwaways.
+- No dead code or commented-out blocks.
 
 ## UI and Design Rules
 
+**Two design systems coexist. Check the route before reaching for a token, and never mix them on one route.**
+
+| Route | System | Source |
+|---|---|---|
+| `/`, `/sample*` | WITHIN brand: Inter, ink on paper, square corners, one orange accent | [DESIGN.md](DESIGN.md) |
+| `/cohort`, 404, `/admin` | Transparency Lab: Geist, `--wi-*` tokens | [docs/transparency-lab.md](docs/transparency-lab.md) |
+
 **Components**
-- Always prefer shadcn/ui over custom implementations. Check [src/components/ui/](src/components/ui/) first.
-- **`ui/` primitives are WITHIN-restyled and owned in-repo** — they may be hand-edited to carry brand styling (e.g. [button.tsx](src/components/ui/button.tsx) is rebranded uppercase/sharp/monochrome). Re-running `npx shadcn@latest add <component>` **overwrites** the file with the vanilla version; after any CLI re-add, reapply the WITHIN restyle and diff before committing.
-- [dialog.tsx](src/components/ui/dialog.tsx) is a hand-owned Base UI wrapper under the same ownership model as `button.tsx`. It carries behaviour only (focus trap, Escape, focus return, fade); each caller positions the popup and sets its surface. The waitlist's phone bottom sheet is this same Dialog pinned to the bottom edge, so there is no separate drawer.
-- If a needed shadcn component is **not installed**, stop and tell the user — let them install (`npx shadcn@latest add <component>`) or take a different approach. Do not hand-roll a substitute.
-- If a component does **not exist in shadcn at all**, surface options before writing code.
-- Icons: the shipped page actually uses `@phosphor-icons/react/ssr` (`Nav`, `Footer`,
-  `Compare`, `Faq`). `lucide-react` appears only inside the shadcn primitives (`select`, `sheet`, `sidebar`) —
-  don't use it in app code; phosphor is the icon set. **Data viz:** Recharts (wrapped with
-  shadcn `<ChartContainer>`) · Mapbox via `react-map-gl`. (Neither is installed yet — install
-  when first needed.)
+- Prefer shadcn/ui, checking [src/components/ui/](src/components/ui/) first. If a needed component is not installed, or does not exist in shadcn, stop and surface options rather than hand-rolling a substitute.
+- `ui/` primitives carry brand styling and may be hand-edited. Re-adding one through the CLI overwrites that styling, so reapply it and diff before committing.
+- No control or status without behaviour behind it.
+- Use phosphor for icons and never emoji. Use `WithinLogo` or the files in `public/brand/` for the logo; never redraw it.
 
 **Styling**
-- **Tailwind utilities only — never `style={}` for a static value.** This holds even when porting a design authored in inline styles: translate every static value to a Tailwind class, using arbitrary values for anything off-scale (`text-[17px]`, `tracking-[0.14em]`, `max-w-[420px]`, `min-h-[calc(100vh-66px)]`, `bg-linear-to-b from-black/[0.38] via-black/[0.30] to-black/[0.72]`). `style={}` is allowed ONLY for values that change at runtime — driven by state, refs, or render-computed props (an animated width from state, a `transform` toggled open/closed). If the value is fixed at author time, it is a Tailwind class, not a style. "The design came in inline styles" is not an exception. (Next `opengraph-image`/`icon`/`apple-icon` ImageResponse files are the one exemption — Satori renders inline styles only, never Tailwind.)
-- Use `cn()` from [src/lib/utils.ts](src/lib/utils.ts) for conditional classes.
-- Extract a component for repeated multi-class patterns — never extract a CSS class. Do not extract a CSS class for styling either; component or utilities only.
+- Tailwind utilities only, using arbitrary values for anything off-scale. `style={}` is only for values that change at runtime. A design handed over in inline styles is not an exception. Generated image routes (`icon`, `apple-icon`, `opengraph-image`) are, because Satori cannot read Tailwind.
+- Use `cn()` for conditional classes. Extract a component for a repeated pattern, never a CSS class.
+- Never invent a color. Use existing tokens, and ask before adding or changing one. There is no dark mode.
 
-## WITHIN Design System
+**Motion**
+- Animate with `motion/react` and the shared `EASE` curve. Keep it quick and precise with no visible bounce. Animate `transform` and `opacity`, honor reduced motion, and do not animate what a user triggers constantly.
 
-**Two systems coexist. Check which route you are in before reaching for a token.**
+**Accessibility**
+- Visible focus on every interactive element. Semantic HTML, a label on every input, keyboard support for every interaction. Use `next/image`, `next/link`, `next/font`.
 
-- **`/` (the waitlist page) runs the WITHIN brand system** from the design
-  handoff (`../within-waitlist-handoff`, tokens in its `assets/within-tokens.json`). In
-  `globals.css` that is `brand-ink` `#191919`, `brand-mist` `#f2f2f2`, `brand-muted` `#6b6b6b`,
-  `brand-muted-dark` `#8c8c8c`, and `flavor-orange` `#ff8326` as the only accent (text on it is
-  ink). Errors (messages and the 2px error underline) use `brand-error` `#d0312d`, a status
-  colour rather than an accent. Type is Inter (`font-brand`), headlines Regular, emphasis by weight and never colour;
-  Biro Script (`font-script`) is for the "see you soon" accent only, letters only. Corners are
-  square, there are no shadows, and the dotted circle is the only round element. The page is one
-  viewport with no scroll (`h-dvh overflow-hidden`); the phone and desktop comps switch at the
-  `desk:` breakpoint (900px). The floating sachet is a CSS keyframe (`animate-sachet-float`),
-  off under reduced motion; it is the design's one sanctioned loop. Icons are the hand-drawn
-  SVGs in `components/waitlist/svg/`. Every string lives in `waitlist-copy.ts`.
-- **`/cohort` and the 404 still run Transparency Lab**, described in the rest of this section.
-  The paragraphs below that name `Hero`, `Nav`, `Footer`, `Compare`, `Faq`, `Ledger`, `Close`,
-  `WaitlistOverlay`, `SignupForm`, `drawer.tsx` or `coming-soon/ui/button.tsx` describe
-  components the waitlist remake deleted; read them as history.
+**Copy**
+- English only, even for the Jakarta market. Short, factual statements: no em dashes, exclamation marks, hype words or emoji.
+- Visitor-facing strings live in the route's copy file (`waitlist-copy.ts`, `sample-copy.ts`), never inline in components.
+- The certifications are pending, so never present them as granted. Check product claims against [PRODUCT.md](PRODUCT.md) and flag any it does not support.
 
-The durable brand guardrail: **Transparency Lab**, promoted to `/` from the exploratory `/v2`
-route earlier in this refactor. Source of truth: Claude Design project
-`9a760727-dad3-4223-afd7-78934815824f` ("Within Design System"). Tokens live in
-[globals.css](src/app/globals.css) (`@theme` + `:root`); brand components in
-[src/components/brand/](src/components/brand/); page sections and motion primitives in
-[src/components/coming-soon/](src/components/coming-soon/).
+## Data, Services & Backend
 
-**Color — paper-white clinical canvas, cool-tinted greys, one true-black signal.** The ink
-scale runs `--wi-black` `#0b0d12` → `--wi-charcoal` `#1a1e26` → `--wi-ink-700` `#363d49` →
-`--wi-ink-500` `#626b7a` → `--wi-ink-300` `#9aa3b2`, against `--wi-line` `#e2e7ee`,
-`--wi-mist` `#eceff4`, `--wi-paper-dim` `#f6f8fb` and `--wi-paper` `#ffffff`. `--wi-signal`
-(`#000000`, stepped by `--wi-signal-bright` `#262c36` and the `--wi-signal-tint` `#e3e7ef`
-wash) is the one token that marks actives and live data — resting states step down to ink
-rather than compete with it. `--wi-flag` (`#ce1126`) is reserved for the Indonesian flag, not
-a general accent. Status colors stay as the intentional non-monochrome exceptions:
-`--wi-error` `#e5484d`, `--wi-success` `#30a46c`. Use `--wi-*` tokens / `wi-*` utilities or the
-shadcn semantic tokens (`bg-primary`, `text-muted-foreground`, …); **never invent a color,
-never use `oklch`, never a `dark:` variant** (`viewport.colorScheme` in `layout.tsx` is
-`"light"` only).
+**Layering**
+- Read data in an async `page.tsx` or `layout.tsx` and pass plain data down. Mutations go through Server Actions; API routes exist only for webhooks, cron, and proxies a client must call.
+- Actions orchestrate. Validation goes in `src/app/utils/`, network and database work in a service.
+- Services touching a secret import `server-only` on their first line. Database services take the `SampleDatabase` type as a parameter so the same code runs on PGlite in tests.
+- Schema changes go through `npm run db:generate`. Never hand-edit an applied migration.
 
-**Type — Geist Sans for display and body, Geist Mono for readouts.** Inter is gone from the
-repo. Both fonts come from the `geist` package (`GeistSans` / `GeistMono` in
-[layout.tsx](src/app/layout.tsx)); `:root` sets Geist Sans as the base `font-family`. Readouts
-(numerals, status strings) use the `.wi-readout` utility class — tabular numerals, tight
-tracking — not a dedicated component. Type scale exposed via `@theme`: `text-display-2xl`
-(96px), `text-display-xl` (72px), `text-display-lg` (56px), `text-display-md` (40px),
-`text-h1` (34px), `text-h2` (26px), `text-h3` (20px), `text-body-lg` (18px), `text-body`
-(16px), `text-2xs` (11px). There is no hero/label component register: hero and label type is
-hand-set per component (see `Hero.tsx`'s `<motion.h1>`, `WaitlistOverlay.tsx`'s
-`OVERLAY_TITLE`). Several steps of that scale currently have no consumer, which is expected
-for a declared ramp, not a signal to delete them.
+**Trust boundaries**
+- A Server Action is reachable by direct POST. Re-validate everything on the server, whatever the form already checked.
+- Trust a webhook only after verifying it, and prefer re-fetching state from the source over believing a body.
+- Every admin page and action calls `requireAdmin()`. The proxy only checks that a cookie exists.
+- A public form or paid-API route stays listed in `initBotId({ protect })` in [instrumentation-client.ts](src/instrumentation-client.ts). `checkBotId()` fails for anything missing from it.
+- Never send third-party error text to the browser. Real errors go to `console.error`; visitors get one generic message.
+- Do not reveal who is registered unless the founder has accepted that trade-off. A duplicate waitlist email reports success.
 
-**Voice — honest, introverted, high-performing.** Short declarative statements. Subtractive
-framing ("No additives. Just what works."). Facts over adjectives ("1000mg sodium" beats
-"packed with electrolytes"). Second person, sparingly. Prices in Rupiah (`Rp 45.000`, dot
-thousands). **No emoji, no exclamation marks, no hype words** ("revolutionary", "game-changing").
+**Money and orders**
+- Every write must be safe to repeat, since webhooks arrive twice or out of order. Store the event first, never move a paid request backwards, and guard once-only emails with a column.
+- Capacity changes happen in one transaction with the batch row locked.
+- A third-party failure must not strand the customer or a slot. Payment, shipping and email wrappers log and return `null` or `false` rather than throw.
+- Marketing consent is explicit and separate from order emails.
 
-**Form.** Crisp, near-flush corners, applied as direct CSS-variable arbitrary values — no
-component reaches for the Tailwind `rounded-sm` / `rounded-lg` scale:
-`rounded-[var(--wi-radius-control)]` (`--wi-radius-control` = `2px`) on controls,
-`rounded-[var(--wi-radius-card)]` (`--wi-radius-card` = `3px`) on cards, dialogs and the
-drawer. `--wi-radius-card` happens to equal the shadcn `--radius` bridge (also `3px`), but
-nothing relies on that coincidence — every card/dialog pulls `--wi-radius-card` directly.
-Cool-tinted shadows only, never a colored halo: `--wi-shadow-sm` / `-md` / `-lg` (all
-`rgba(11, 13, 18, …)`), plus a `--wi-shadow-focus` ring — in practice only `--wi-shadow-lg` has
-a current callsite (`dialog.tsx`, `drawer.tsx`); `-sm`, `-md` and `-focus` are declared but
-unused today. Full-bleed black surfaces do appear — `Close`'s waitlist section sets
-`bg-wi-black` directly on its `<section>`, and `WaitlistOverlay`'s Dialog/Drawer popup does
-the same — but **not** through `Section`: `Section`'s `SURFACE` object defines `black` as one
-of three page-surface options (`paper` / `paperDim` / `black`), yet every current callsite
-(`Compare.tsx` → `surface="paperDim"`, `Faq.tsx` → `surface="paper"`) passes `paper` or
-`paperDim`; nothing currently passes `surface="black"`. `Hero` does not import `Section` and
-is not a black panel — its only `bg-wi-black` is a 20%-opacity blurred glow behind the product
-photo, and its actual page background is `bg-wi-paper`. For a reference full-bleed black
-section, look at `Close.tsx`, not `Hero.tsx`.
+**Forms**
+- Validate per field on the client with the same validator the server runs. Reuse the honeypot helper on public forms.
 
-**Motion.** Animate with **Motion** (`motion/react`, the `motion` package) — not hand-rolled CSS
-keyframes or `IntersectionObserver`. Quick, precise, **no visible bounce** (WITHIN is introverted);
-fades and short slides only, no infinite decorative loops.
-- The real primitives live in
-  [src/components/coming-soon/Reveal.tsx](src/components/coming-soon/Reveal.tsx): `Reveal`
-  (fade + lift into view once, on scroll) and the exported `EASE` curve
-  `[0.23, 1, 0.32, 1]` — this **matches** `--wi-ease-out` / `--ease-out` in `globals.css`
-  (`cubic-bezier(0.23, 1, 0.32, 1)`; the old system used a different curve). `EASE` is used
-  throughout `Hero`, `WhyWithin`, `Ledger`, `Faq`, `Compare`, `CountUp`,
-  `DissectionWatermark`, `WaitlistOverlay` and `SignupForm` — use it for every tween.
-  `Reveal.tsx` exports exactly two things: `Reveal` and `EASE`. Stagger a group by giving
-  sibling `Reveal`s increasing `delay` values (30-80ms apart).
-- Wrap animated trees in [MotionProvider](src/components/coming-soon/MotionProvider.tsx)
-  (`<MotionConfig reducedMotion="user">`), mounted once around the whole tree in `page.tsx`,
-  so motion honors `prefers-reduced-motion` (drops movement, keeps fades).
-- Only animate `transform` and `opacity` (GPU); avoid animating layout props except the
-  deliberate exception (`Faq`'s accordion `height`, via `AnimatePresence`).
-- Durations in practice: `0.22s`–`0.45s` for micro-interactions and overlay content, `~0.5s`–`1s`
-  for scroll reveals. Springs are allowed only with `bounce` ≈ 0. Don't animate anything a user
-  triggers dozens of times a day.
+## Known Gotchas
 
-**Buttons.** [src/components/ui/button.tsx](src/components/ui/button.tsx) (the shared shadcn
-primitive) and
-[src/components/coming-soon/ui/button.tsx](src/components/coming-soon/ui/button.tsx) (a
-second, page-local `Button`) are deliberately separate files, not one component reused two
-ways — don't assume editing one updates the other. They currently differ in weight, tracking,
-easing and focus ring: `components/ui/button.tsx` is `font-bold`, `tracking-[0.14em]`, eases
-on `cubic-bezier(0.2,0,0,1)` at `120ms`, rings `black/15`; `coming-soon/ui/button.tsx` is
-`font-semibold`, `tracking-[0.1em]`, eases on the canonical `--wi-ease-out` curve at `130ms`,
-rings `wi-signal/40`.
+- **Do not run `next build` while `next dev` is live.** They share `.next`, and the dev server then serves stale CSS. If classes silently fall back, or a route 404s and fonts vanish after files move, `rm -rf .next` and restart. Use `npx tsc --noEmit` to check types.
+- **Swapping a `public/` image under the same name keeps the old derivative in dev.** Delete `.next/dev/cache/images`.
+- **`tailwind-merge` drops an earlier `leading-*`** when an arbitrary `text-[size]` follows it in `cn()`. Put `leading-*` last.
+- **`shadcn add` cannot answer its overwrite prompt without a terminal.** Set `button.tsx` and `dialog.tsx` aside first and restore them after. It has also imported `cn` from an npm package named `cn`; the right import is `@/lib/utils`.
+- **Importing the `db` client without `DATABASE_URL` does not fail**, because it is a lazy proxy. The first query does.
+- **`docs/superpowers/` and `docs/PRD/` are gitignored.** Specs there are local and may not exist on another machine.
 
-**Icons.** The shipped page uses `@phosphor-icons/react/ssr` (`Nav`, `Footer`, `Compare`,
-`Faq`) — `lucide-react` appears only inside the shadcn primitives (`select`, `sheet`, `sidebar`). **Never
-emoji.** The logomark is a brand mark, not an icon.
+## Testing
 
-**Logo.** Always use `WithinLogo` (or the PNGs in `public/brand/`). **Never redraw, trace, or
-approximate the mark.**
+- Vitest runs in a node environment on `src/**/*.test.ts`, colocated with the code. Files run one at a time because PGlite flakes in parallel.
+- Unit-test pure logic: validators, normalizers, error mappers, state rules. Test database services against PGlite with every migration applied ([test/sample-db.ts](test/sample-db.ts)).
+- Do not write mock-heavy tests for actions or framework glue.
+- Tests do not replace running the app. For UI changes, verify in the browser at phone and desktop widths.
 
-**Brand components.** `WithinLogo` is the only one. `WiHero` and `WiEyebrow` were deleted on
-2026-08-13 once the 404 page moved onto the Transparency Lab type system and left them with no
-consumers. Do not reintroduce a shared "hero voice" component without a reason: hero and label
-type is hand-set per component in this design system.
+## Safety Rules
 
-## Data Fetching & Services
+Do NOT change without explicit instruction:
+- Design tokens in [globals.css](src/app/globals.css), and the logo assets.
+- Payment, webhook-verification and session code: `midtrans.service.ts`, `webhook-handlers.service.ts`, `admin-session.ts`, `src/proxy.ts`.
+- A batch's id once it has requests. It lives on in box labels, Midtrans, Biteship and Shopify.
+- `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `components.json`, `vercel.json`, `drizzle.config.ts`.
+- `.env*`: never commit, never echo.
 
-The waitlist on `/` reads no server-side data and writes in one place: pre-launch email capture.
-The sampling program is the other backend; it has its own section below.
+## Reference Docs
 
-**The signup path**
+Read the one that matches the area before changing it, and update it in the same change when behaviour moves.
 
-`WaitlistForm` mounts inside `WaitlistSheet` (a bottom sheet on phones, a centred modal on
-desktop), opened by the one orange button on the page.
-
-```
-WaitlistForm ("use client", mounted inside WaitlistSheet)
-  ├─ validateField() per field               → each error shown under its own field
-  └─ subscribeAction(formData) ("use server", called inside useTransition)
-       ├─ checkBotId()                       → isBot ? generic error
-       ├─ isHoneypotTripped()                → tripped ? report success, write nothing
-       ├─ parseSubscriberInput()             → same validator, re-run server-side
-       └─ ShopifyCustomerService.createPrelaunchSubscriber()
-            └─ Admin GraphQL customerCreate  → customer tagged `prelaunch`, SUBSCRIBED
-```
-
-Fields run email, name, Instagram, and all three are required since 2026-10-20
-(`SUBSCRIBER_FIELD_ORDER` and `validateField` in `subscriber-input.ts` drive both the form and
-the server check). Each field shows its own error under itself, checked on blur and on submit. The form calls the action directly rather
-than through `useActionState`, because the sheet keeps the typed values for "Edit my details".
-On success the sheet closes and `WaitlistJoinedDialog` opens in its place: a centred popup on
-every screen size that thanks the visitor by first name, signed WITHIN / Jakarta, with the
-Instagram follow as the next step. The orange button stamps to ink with a check (`data-joined`)
-and reopens that popup from then on. "Edit my details" re-opens the form; a second submit with
-the same email is a duplicate, which reports success and changes nothing in Shopify.
-`/` must stay listed in `initBotId({ protect })`.
-
-**Rules this path establishes**
-
-- Server Actions live in `src/app/actions/` as `<verb>.action.ts` and hold orchestration only.
-  Validation goes in `src/app/utils/`, the network call in a service.
-- Services are `<noun>.service.ts` with static methods, and any service touching a secret
-  imports `server-only` on its first line.
-- Pure logic (validators, normalizers, error mappers) is unit-tested. Network and framework
-  glue is not — do not add mock-heavy tests for the action itself.
-- A Server Action is reachable by direct POST, not only through the UI. Re-validate everything
-  server-side regardless of what the form already checked.
-- Never surface a Shopify error message to the browser. A duplicate email reports **success**
-  (saying otherwise leaks who is registered); everything else reports one generic message.
-  Real errors go to `console.error` only.
-
-## Sampling program
-
-Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays
-the courier). Spec and plan are in
-`docs/superpowers/` (gitignored, local).
-
-```
-/sample (dynamic)                       SampleRequestForm, 3 steps, client-held values
-  ├─ GET  /api/sample/areas?q=          Biteship area search (rate-limited proxy)
-  ├─ POST /api/sample/rates             live courier quotes, cheapest 4
-  └─ requestSampleAction                BotID + honeypot + zod, then:
-       ├─ SampleRequestService.claim    one transaction, batch row locked: lapsed holds expire,
-       │                                same-email unpaid hold replaced, paid duplicate refused,
-       │                                capacity checked, next box number taken
-       ├─ SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
-       └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-<batch id>, ref-<slug>;
-                                        SUBSCRIBED only if they ticked the optional launch email
-/sample/r/[token]                       status page; "Pay now" = reopenPaymentAction
-POST /api/webhooks/midtrans             signature checked, attempt updated, paid email once
-admin "Book selected"                   SampleShipmentService.bookRun, one Biteship order each
-POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/delivered email once
-/sample/feedback[?code=]                QR landing; matched by token, else by email
-/admin/requests, /admin/requests/[id]   selected batch: counts, search, ship runs, request detail, resends
-/admin/export (+ /registrations, /feedback)  the selected batch's two CSVs
-/admin/batches                          every batch: New batch, capacity, Coming soon / Open / Closed
-/admin/sample*                          old links, redirect to the routes above
-```
-
-**Rules this path establishes**
-
-- A request's 24-hour hold is ours; a Midtrans attempt lapsing (QRIS defaults to 15 minutes)
-  ends only that attempt. `pending_payment` becomes `expired` lazily, whenever the count or a
-  status page is read. The only cron is the check-in reminder (below).
-- Webhook bodies are stored in `sample_webhook_events` before processing and every webhook is
-  answered 200 once stored. Midtrans is trusted only after its SHA512 signature; Biteship
-  bodies are never trusted, the order is re-fetched. A paid request is never moved backwards,
-  and each once-only email has a guard column (`paid_at`, `shipped_email_sent_at`,
-  `delivered_email_sent_at`).
-- `MidtransService.createSnapTransaction`, `BiteshipService.createOrder` and
-  `EmailService.send` never throw; they log and return null or false. A thrown error there
-  once left unpaid holds occupying slots.
-- The check-in has two doors. The personal link (`?code=`, in the delivered and reminder emails and on
-  the status page) identifies the sampler outright. The card's QR asks for the email first: it must
-  belong to a shipped or delivered order with no check-in yet, or the form says why it can't go on.
-  That does reveal whether an email claimed samples; the founder accepted it on 2026-10-22. Older
-  unmatched rows are still listed in admin.
-- Since 2026-10-29 the check-in is a review in four screens: stars + review (required), headline (optional,
-  skippable), taste + effectiveness (1 to 5), how they felt. The first screen saves the row
-  (`submitFeedbackAction`); each later one adds to it by its id (`addToFeedbackAction`), only within two hours
-  of the last save, so leaving early still leaves a review. Rows from the old six-question form keep
-  `session_type`, `session_length`, `would_reach_again` and `comment`; new rows leave them null, so intent
-  is empty for them. Nothing publishes reviews yet; the share note under the first screen is the notice.
-- One check-in reminder goes out 7 days after delivery, from the daily Vercel Cron in `vercel.json`
-  (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it. It carries
-  five text stars (U+2606), each linking `?code=…&rating=N`, which pre-fills the stars. There is no
-  thank-you email any more; the thank-you screen carries the Instagram follow.
-- Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels
-  live in `src/components/sample/utils/sample-copy.ts`; email copy in
-  `src/services/sample-email-copy.ts`.
-- `/sample*` runs the WITHIN brand system from `/` (and scrolls). `/admin` runs Transparency
-  Lab tokens and `components/ui/button.tsx`. Both are `noindex` and out of the sitemap.
-- The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches.").
-  Ticking it is the only marketing consent a sampler gives: it sets
-  `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder)
-  go to every sampler regardless.
-- `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`.
-
-**Batches** (`SampleBatchService`, design `docs/superpowers/specs/2026-10-28-sample-batches-and-admin-design.md`)
-
-- Batches are always numbered: the next is `Batch NN` / `bNN` (`Batch 100` / `b100` after 99). A founder only
-  chooses capacity (1 to 10 000). The id is permanent: it is in box labels (`B02-042`), Midtrans order ids,
-  Biteship references and the Shopify tag `sampling-b02`.
-- Each batch has a phase. At most one is `open`, enforced in `setPhase` ("Close Batch 01 first.") and by the
-  partial unique index `sample_batches_one_open`. A new batch starts `upcoming`.
-- `closed` is final: `setPhase` refuses to move a closed batch anywhere else, and `setCapacity` refuses a closed
-  batch. `remove` deletes only a batch with no requests at all (expired included) that is not open; anything with
-  requests is closed instead, because its id lives on in labels, Midtrans, Biteship and Shopify. New batch is
-  refused while one is open.
-- `/sample` serves the open batch (its form, or its claimed notice once full); with none open, the newest
-  `upcoming` batch's coming-soon page; otherwise the newest batch's claimed notice. Every visitor line that
-  names the batch or its size comes from `batchCopy()` in `sample-copy.ts`; never hard-code "Batch 01" or "100".
-- One email, one sample: an email with a paid, shipped or delivered request in any batch is refused
-  (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid
-  hold in any batch is expired by a new claim.
-- Admin's selected batch lives in the `within_admin_batch` cookie (path `/admin`); a missing or unknown value
-  falls back to the open batch, else the newest. Exports are one batch per file:
-  `within-<id>-registrations.csv` and `within-<id>-feedback.csv`.
-- Admin runs shadcn's sidebar, table, select, input, label, badge, separator, sheet, skeleton and tooltip,
-  restyled to `wi-*` tokens and `--wi-radius-*`; the `--sidebar*` tokens in `globals.css` map onto `wi-*`.
-  `button.tsx` and `dialog.tsx` stay hand-owned. `shadcn add` cannot answer its overwrite prompt without a terminal: set those two files aside before adding components, and restore them after. It has also been seen
-  importing `cn` from an npm package called `cn`; the right import is `@/lib/utils`.
-- Admin is softer than the public pages on purpose (founder, 2026-10-29): `src/app/admin/layout.tsx` sets
-  `data-admin`, and `:root:has([data-admin])` in `globals.css` raises the radii (10px control, 16px card) and
-  switches the button to sentence case through `--wi-button-*`. Admin surfaces are `bg-wi-paper` +
-  `shadow-[var(--wi-shadow-card)]` with no border; statuses render through `AdminStatusPill`.
-
-When server-side **reads** first become necessary: fetch inside the relevant async `page.tsx` /
-`layout.tsx` Server Component, then pass plain data down as props. Presentational components
-never fetch.
+- [docs/environment.md](docs/environment.md): every env var, URL handling, Shopify app setup
+- [docs/waitlist.md](docs/waitlist.md): the `/` page and its signup path
+- [docs/sampling-program.md](docs/sampling-program.md): `/sample` and `/admin` routes, payment, shipping, check-ins, batches
+- [docs/transparency-lab.md](docs/transparency-lab.md): tokens and UI rules for `/cohort`, the 404 and `/admin`
+- [DESIGN.md](DESIGN.md): the WITHIN brand system
+- [PRODUCT.md](PRODUCT.md): product facts and audience
 
 ## When in Doubt
 
-Stop and ask. Parent CLAUDE.md §1 applies: surface tradeoffs, name what's confusing, don't pick silently. When a needed component, token, abstraction, dependency, or env var doesn't exist, propose options before writing code.
+Stop and ask. Surface tradeoffs, name what's confusing, and don't pick silently. When a needed component, token, abstraction, dependency, or env var doesn't exist, propose options before writing code.

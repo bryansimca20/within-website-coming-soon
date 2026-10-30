@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { removeBatchAction } from "@/app/actions/admin-batch.action";
@@ -11,17 +12,19 @@ interface AdminRemoveBatchButtonProps {
   label: string;
 }
 
-/** "Remove" for a batch with no requests, behind a confirmation popup. */
+/** "Remove" for a batch with no requests, behind a confirmation popup. Its page is gone afterwards, so it returns to the overview. */
 export function AdminRemoveBatchButton({ batchId, label }: AdminRemoveBatchButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRemoving, startTransition] = useTransition();
+  const router = useRouter();
 
   function remove() {
     startTransition(async () => {
       const result = await removeBatchAction(batchId);
       if (result.ok) {
         setIsOpen(false);
+        router.push("/admin");
       } else {
         setError(result.message);
       }

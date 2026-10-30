@@ -36,7 +36,7 @@ export default async function AdminSampleDetailPage({ params }: { params: Promis
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-6 md:px-10 md:py-10">
-      <Link href="/admin/requests" className="inline-flex items-center gap-1.5 self-start rounded-full px-2 py-1 -ml-2 text-sm text-wi-ink-500 transition-colors hover:bg-wi-mist hover:text-wi-black"><ArrowLeft aria-hidden className="size-3.5" />All requests</Link>
+      <Link href={`/admin/batches/${request.batchId}/requests`} className="inline-flex items-center gap-1.5 self-start rounded-full px-2 py-1 -ml-2 text-sm text-wi-ink-500 transition-colors hover:bg-wi-mist hover:text-wi-black"><ArrowLeft aria-hidden className="size-3.5" />All requests</Link>
       <AdminSampleDetail
         request={request}
         boxLabel={row.boxLabel}

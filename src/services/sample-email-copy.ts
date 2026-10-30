@@ -3,7 +3,7 @@
  * warm, plain, no hype. `{name}` is the sampler's first name, `{batch}` the batch label ("Batch 01").
  */
 export const SAMPLE_EMAIL_COPY = {
-  footer: "You're getting this because you requested a WITHIN sample at within.id. Reply to this email with any question and a person will answer.",
+  footer: "You're getting this because you requested a WITHIN sample at getwithin.id. Reply to this email with any question and a person will answer.",
   place: "JAKARTA",
   paid: {
     subject: "{name}, you're in for {batch}",

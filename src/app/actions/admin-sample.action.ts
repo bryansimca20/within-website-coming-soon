@@ -18,11 +18,9 @@ import { SampleShipmentService } from "@/services/sample-shipment.service";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^\d{2}:\d{2}$/;
 
-function revalidate(requestId?: string) {
-  revalidatePath("/admin/requests");
-  if (requestId !== undefined) {
-    revalidatePath(`/admin/requests/${requestId}`);
-  }
+/** Every admin page shows shipment state now (overview, batch pages, sidebar counts), so refresh them all. */
+function revalidate() {
+  revalidatePath("/admin", "layout");
 }
 
 /** Books one Biteship order per selected paid request. */
@@ -75,7 +73,7 @@ export async function refreshShipmentAction(shipmentId: string): Promise<AdminAc
   if (dueEmail !== null) {
     await dispatchShipmentEmail(db, current, dueEmail, now);
   }
-  revalidate(current.requestId);
+  revalidate();
   return { ok: true, message: `Status: ${order.status}.` };
 }
 
@@ -105,7 +103,7 @@ export async function cancelRequestAction(formData: FormData): Promise<void> {
   const requestId = String(formData.get("requestId") ?? "");
   const note = String(formData.get("note") ?? "").trim().slice(0, 500);
   await SampleRequestService.setStatus(db, requestId, "cancelled", { adminNote: note === "" ? "Cancelled by a founder." : note });
-  revalidate(requestId);
+  revalidate();
 }
 
 /** Saves the free-text founder note on a request. */
@@ -114,6 +112,6 @@ export async function saveAdminNoteAction(formData: FormData): Promise<void> {
   const requestId = String(formData.get("requestId") ?? "");
   const note = String(formData.get("note") ?? "").trim().slice(0, 2000);
   await db.update(sampleRequests).set({ adminNote: note === "" ? null : note }).where(eq(sampleRequests.id, requestId));
-  revalidate(requestId);
+  revalidate();
 }
 

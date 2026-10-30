@@ -47,5 +47,5 @@ Local setup: put a Postgres URL in `DATABASE_URL` in `.env.local`, then
 npm run db:migrate   # creates the tables and seeds Batch 01
 ```
 
-Every key it needs is listed in `CLAUDE.md` under Environment. Without the Midtrans, Biteship
+Every key it needs is listed in `docs/environment.md`. Without the Midtrans, Biteship
 and Resend keys the pages still render; area search, courier prices, payment and email do not.

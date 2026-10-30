@@ -1,6 +1,6 @@
 import type { SampleBatch, SampleRequestStatus } from "@/db/schema";
 
-import { AdminStatusPill } from "./AdminStatusPill";
+import { AdminBatchSettings } from "./AdminBatchSettings";
 
 interface AdminSampleSummaryProps {
   batch: SampleBatch;
@@ -17,7 +17,7 @@ const LABEL: Record<SampleRequestStatus, string> = {
   cancelled: "Cancelled",
 };
 
-/** The selected batch's counts by status. Capacity and phase are set on the Batches page. */
+/** A batch's header: its name, status and capacity controls, how full it is, and its counts by status. */
 export function AdminSampleSummary({ batch, summary }: AdminSampleSummaryProps) {
   const claimed = summary.pending_payment + summary.paid + summary.shipped + summary.delivered;
   const filled = Math.min(1, claimed / batch.capacity);
@@ -25,9 +25,9 @@ export function AdminSampleSummary({ batch, summary }: AdminSampleSummaryProps) 
   return (
     <section className="flex flex-col gap-6 rounded-[var(--wi-radius-card)] bg-wi-paper p-6 shadow-[var(--wi-shadow-card)]">
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3">
           <h1 className="m-0 text-h1 font-medium tracking-[-0.02em] text-wi-black">{batch.label}</h1>
-          <AdminStatusPill status={batch.phase} />
+          <AdminBatchSettings id={batch.id} label={batch.label} capacity={batch.capacity} phase={batch.phase} requests={Object.values(summary).reduce((total, count) => total + count, 0)} />
         </div>
         <div className="flex w-full max-w-64 flex-col gap-2">
           <p className="m-0 text-sm text-wi-ink-500">

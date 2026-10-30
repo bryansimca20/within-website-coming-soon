@@ -5,21 +5,10 @@ import { revalidatePath } from "next/cache";
 import type { BatchPhaseResult, BatchSettingsState, CreateBatchState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
 import { sampleBatchPhaseEnum } from "@/db/schema";
-import { rememberAdminBatch } from "@/lib/admin-batch";
 import { requireAdmin } from "@/lib/admin-session";
 import { SampleBatchService } from "@/services/sample-batch.service";
 
-/** Switches the batch every admin page shows. Unknown ids are ignored. */
-export async function selectBatchAction(batchId: string): Promise<void> {
-  await requireAdmin();
-  if ((await SampleBatchService.findById(db, batchId)) === null) {
-    return;
-  }
-  await rememberAdminBatch(batchId);
-  revalidatePath("/admin", "layout");
-}
-
-/** Creates the next numbered batch as coming soon and switches admin to it. Only capacity is asked for. */
+/** Creates the next numbered batch as coming soon. Only capacity is asked for. */
 export async function createBatchAction(_previous: CreateBatchState, formData: FormData): Promise<CreateBatchState> {
   await requireAdmin();
   const capacity = Number(formData.get("capacity"));
@@ -27,7 +16,6 @@ export async function createBatchAction(_previous: CreateBatchState, formData: F
   if (!result.ok) {
     return { error: result.message };
   }
-  await rememberAdminBatch(result.batch.id);
   revalidatePath("/admin", "layout");
 
   return { createdLabel: result.batch.label };
