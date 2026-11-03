@@ -12,9 +12,10 @@ interface SampleShellProps {
 /** The sample pages' frame: the waitlist header, then one centred, scrolling column. */
 export function SampleShell({ children, isWide = false }: SampleShellProps) {
   return (
-    <main className="flex min-h-dvh flex-col bg-white px-4 pb-12 font-brand text-brand-ink desk:px-0">
+    // One-screen views need a definite height so their box can size from 100cqh.
+    <main className="flex min-h-dvh flex-col bg-white px-4 pb-12 font-brand text-brand-ink has-[[data-fill-screen]]:h-dvh desk:px-0">
       <WaitlistHeader />
-      <div className={cn("mx-auto flex w-full flex-1 flex-col pt-8 desk:pt-14", isWide ? "max-w-[560px] desk:max-w-[1040px] desk:px-12" : "max-w-[560px]")}>
+      <div className={cn("mx-auto flex w-full flex-1 flex-col pt-8 has-[[data-fill-screen]]:pt-[18px] desk:pt-14 desk:has-[[data-fill-screen]]:pt-14", isWide ? "max-w-[560px] desk:max-w-[1040px] desk:px-12" : "max-w-[560px]")}>
         {children}
       </div>
     </main>
