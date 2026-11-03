@@ -13,7 +13,7 @@ One-screen page, statically prerendered, from the waitlist design handoff (comp 
 
 ## Signup path
 
-`WaitlistForm` mounts inside `WaitlistSheet` (a bottom sheet on phones, a centred modal on desktop), opened by the one orange button.
+`WaitlistForm` mounts inside `WaitlistSheet` (a bottom sheet on phones, a centred modal on desktop), opened by the one orange button. On `/sample`, `SampleWaitlistButton` opens the same sheet and confirmation in place (coming soon and batch full), so visitors join without leaving the page.
 
 ```
 WaitlistForm ("use client", mounted inside WaitlistSheet)
