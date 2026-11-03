@@ -33,7 +33,7 @@ export function SampleIntro({ batch, onContinue }: SampleIntroProps) {
       variants={cascade}
       initial="hidden"
       animate="shown"
-      className="flex flex-1 flex-col desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
+      className="-mb-12 flex flex-1 flex-col desk:mb-0 desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
     >
       <motion.p variants={rise} className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted desk:col-start-2 desk:row-start-2">
         {named.label}
@@ -46,7 +46,7 @@ export function SampleIntro({ batch, onContinue }: SampleIntroProps) {
       </motion.h1>
       <motion.div
         variants={rise}
-        className="mt-1 [--sample-box-w:clamp(34px,calc((100dvh-480px)/4.95),72px)] desk:col-start-1 desk:row-span-6 desk:row-start-1 desk:mt-0 desk:self-center desk:[--sample-box-w:116px]"
+        className="mt-1 min-h-[168px] flex-1 [container-type:size] [--sample-box-w:clamp(34px,calc(100cqh/4.95),72px)] desk:col-start-1 desk:min-h-0 desk:[container-type:normal] desk:row-span-6 desk:row-start-1 desk:mt-0 desk:self-center desk:[--sample-box-w:116px]"
       >
         <SampleBox3D width="var(--sample-box-w)" speed={-14} />
       </motion.div>

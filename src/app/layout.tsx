@@ -73,8 +73,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   colorScheme: "light",
-  // iOS 26 Safari: without cover, 100dvh stops above the floating toolbar, which shrinks the /sample box and leaves a blank band.
-  viewportFit: "cover",
 };
 
 export default function RootLayout({
