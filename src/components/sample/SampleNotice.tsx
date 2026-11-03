@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import type { ISampleBatchShown } from "@/services/sample-request.service";
 
+import { SampleWaitlistButton } from "./SampleWaitlistButton";
 import { batchCopy, SAMPLE_COPY } from "./utils/sample-copy";
 
 /** `full` names the batch when there is one; with no batch at all it says samples aren't available. */
@@ -24,9 +23,9 @@ export function SampleNotice(props: SampleNoticeProps) {
         <h2 className="m-0 text-[26px] leading-[30px] font-normal tracking-[-0.01em]">{props.batch === null ? SAMPLE_COPY.closed.headlineNoBatch : batchCopy(props.batch).closedHeadline}</h2>
         <p className="m-0 text-[17px] leading-[26px]">{SAMPLE_COPY.closed.body}</p>
       </div>
-      <Link href="/" className="flex h-14 items-center justify-center bg-brand-ink text-base font-semibold text-brand-mist no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink">
+      <SampleWaitlistButton className="flex h-14 cursor-pointer items-center justify-center bg-brand-ink text-base font-semibold text-brand-mist no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink">
         {SAMPLE_COPY.closed.cta}
-      </Link>
+      </SampleWaitlistButton>
     </div>
   );
 }

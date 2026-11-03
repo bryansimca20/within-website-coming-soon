@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, type Variants } from "motion/react";
-import Link from "next/link";
 
 import { EASE } from "@/components/coming-soon/Reveal";
 import { WaitlistArrowGlyph } from "@/components/waitlist/svg/WaitlistGlyphs";
@@ -9,6 +8,7 @@ import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/lib/site";
 import type { ISampleBatchShown } from "@/services/sample-request.service";
 
 import { SampleBox3D } from "./SampleBox3D";
+import { SampleWaitlistButton } from "./SampleWaitlistButton";
 import { batchCopy, SAMPLE_COPY } from "./utils/sample-copy";
 
 const { upcoming } = SAMPLE_COPY;
@@ -62,13 +62,12 @@ export function SampleComingSoon({ batch }: SampleComingSoonProps) {
         variants={rise}
         className="sticky bottom-0 -mx-4 mt-4 bg-linear-to-b from-white/0 to-white to-[18px] px-4 pt-[22px] pb-[max(16px,env(safe-area-inset-bottom))] desk:static desk:col-start-2 desk:row-start-5 desk:mx-0 desk:mt-8 desk:max-w-[440px] desk:bg-none desk:p-0"
       >
-        <Link
-          href="/"
-          className="flex h-14 w-full items-center justify-between bg-brand-ink px-5 text-base font-semibold text-brand-mist no-underline transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] motion-reduce:transition-none"
+        <SampleWaitlistButton
+          className="flex h-14 w-full cursor-pointer items-center justify-between bg-brand-ink px-5 text-base font-semibold text-brand-mist no-underline transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] motion-reduce:transition-none"
         >
           <span>{upcoming.cta}</span>
           <WaitlistArrowGlyph />
-        </Link>
+        </SampleWaitlistButton>
         <p className="mt-2.5 mb-0 text-center text-[13px] leading-[18px] text-brand-muted desk:text-left">
           {upcoming.notePrefix}
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener" className="text-brand-ink underline">
