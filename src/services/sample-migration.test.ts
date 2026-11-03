@@ -73,3 +73,34 @@ describe("paid email guard migration", () => {
     await pg.close();
   });
 });
+
+describe("batch 01 starts upcoming migration", () => {
+  test("a fresh database does not open the form", async () => {
+    const pg = new PGlite();
+    await migrate(drizzle(pg), { migrationsFolder: "./drizzle" });
+
+    const { rows } = await pg.query<{ id: string; phase: string }>("SELECT id, phase FROM sample_batches");
+    expect(rows).toEqual([{ id: "b01", phase: "upcoming" }]);
+    await pg.close();
+  });
+
+  test("an open batch that already took requests stays open", async () => {
+    const pg = new PGlite();
+    const db = drizzle(pg);
+    await migrate(db, { migrationsFolder: firstMigrations(10) });
+    await pg.exec(`
+      INSERT INTO sample_requests (batch_id, box_number, access_token, sessions_per_week, session_length,
+        full_name, first_name, email, whatsapp, instagram_handle, address_line, area_id, area_name, province, city,
+        district, postal_code, courier_company, courier_type, courier_service_name, shipping_fee, shipping_eta, expires_at)
+      VALUES ('b01', 1, 'tok-live', 'three_to_four', 'over_90', 'Fanny Lie', 'Fanny', 'fanny@example.com',
+        '+6281234567890', 'fanny.runs', 'Jl. Sudirman No. 12', 'area', 'Area', 'DKI Jakarta', 'Jakarta Selatan',
+        'Pesanggrahan', '12250', 'jne', 'reg', 'JNE Regular', 10000, '2 to 3 days', now());
+    `);
+
+    await migrate(db, { migrationsFolder: "./drizzle" });
+
+    const { rows } = await pg.query<{ phase: string }>("SELECT phase FROM sample_batches");
+    expect(rows[0]?.phase).toBe("open");
+    await pg.close();
+  });
+});

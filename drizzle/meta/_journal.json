@@ -71,6 +71,13 @@
       "when": 1793359550504,
       "tag": "0009_paid_email_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793360101261,
+      "tag": "0010_batch_01_starts_upcoming",
+      "breakpoints": true
     }
   ]
 }
