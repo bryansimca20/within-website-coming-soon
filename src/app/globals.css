@@ -50,6 +50,8 @@
   --color-brand-muted: #6b6b6b;
   --color-brand-muted-dark: #8c8c8c;
   --color-flavor-orange: #ff8326;
+  /* Errors only: field messages and the error underline. 5.05:1 on white. */
+  --color-brand-error: #d0312d;
 
   /* The waitlist comps switch from the phone layout to the desktop layout at 900px. */
   --breakpoint-desk: 900px;
@@ -95,6 +97,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -158,6 +168,12 @@
   --wi-shadow-md: 0 6px 20px rgba(11, 13, 18, 0.08);
   --wi-shadow-lg: 0 18px 44px rgba(11, 13, 18, 0.12);
   --wi-shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.24);
+  --wi-shadow-card: 0 0 0 1px rgba(11, 13, 18, 0.05), 0 1px 2px rgba(11, 13, 18, 0.04), 0 8px 24px -12px rgba(11, 13, 18, 0.1);
+
+  /* button voice: uppercase and tracked on the public pages; /admin softens it below */
+  --wi-button-case: uppercase;
+  --wi-button-tracking: 0.14em;
+  --wi-button-weight: 700;
 
   /* motion */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -189,6 +205,27 @@
   --border: var(--wi-line);
   --input: var(--wi-line-strong);
   --ring: var(--wi-signal);
+
+  /* admin sidebar (shadcn) → the same clinical palette */
+  --sidebar: var(--wi-paper-dim);
+  --sidebar-foreground: var(--wi-ink-700);
+  --sidebar-primary: var(--wi-black);
+  --sidebar-primary-foreground: var(--wi-paper);
+  --sidebar-accent: var(--wi-mist);
+  --sidebar-accent-foreground: var(--wi-black);
+  --sidebar-border: var(--wi-line);
+  --sidebar-ring: var(--wi-signal);
+}
+
+/* /admin only: rounder corners and a quieter button voice than the public pages. The founder
+   asked for it on 2026-10-29. :root:has() also reaches dialogs and selects portalled to <body>. */
+:root:has([data-admin]) {
+  --wi-radius-control: 10px;
+  --wi-radius-card: 16px;
+  --radius: 10px;
+  --wi-button-case: none;
+  --wi-button-tracking: -0.005em;
+  --wi-button-weight: 500;
 }
 
 @layer base {

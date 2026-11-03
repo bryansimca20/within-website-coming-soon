@@ -1,0 +1,1 @@
+ALTER TABLE "sample_requests" ALTER COLUMN "consented_at" DROP NOT NULL;

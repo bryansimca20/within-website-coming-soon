@@ -1,5 +1,7 @@
 import "server-only";
 
+import { requireEnv } from "@/lib/env";
+
 /** Result of attempting to add one address to the pre-launch list. */
 export enum SubscribeOutcome {
   Created = "created",
@@ -19,7 +21,10 @@ export interface IPrelaunchSubscriber {
   lastName: string | null;
   email: string;
   instagramHandle: string | null;
-  consentedAt: string;
+  /** When they agreed to marketing email; null saves the customer without subscribing them. */
+  consentedAt: string | null;
+  /** Tags beyond the two every pre-launch signup carries, such as `sampling-b01` or `ref-fanny`. */
+  extraTags?: string[];
 }
 
 /** Shape of the `CustomerInput` we send to `customerCreate`. */
@@ -28,7 +33,7 @@ interface ICustomerInput {
   firstName: string;
   lastName?: string;
   tags: string[];
-  emailMarketingConsent: {
+  emailMarketingConsent?: {
     marketingState: "SUBSCRIBED";
     marketingOptInLevel: "SINGLE_OPT_IN";
     consentUpdatedAt: string;
@@ -53,8 +58,14 @@ const ADMIN_API_VERSION = "2026-07";
 /** Segments the launch campaign. `coming-soon` records where the signup came from. */
 const PRELAUNCH_TAGS = ["prelaunch", "coming-soon"];
 
+/** Prefix of the per-batch tag a sample request adds, e.g. `sampling-b01`. */
+export const SAMPLING_TAG_PREFIX = "sampling-";
+
 /** Requires a matching metafield definition in Shopify admin to be visible in the UI. */
 const INSTAGRAM_METAFIELD = { namespace: "custom", key: "instagram_handle" };
+
+/** A hung provider must not hang a visitor or a webhook. */
+const REQUEST_TIMEOUT_MS = 8_000;
 
 const DUPLICATE_EMAIL_MESSAGE = "email has already been taken";
 
@@ -67,31 +78,23 @@ const CREATE_CUSTOMER_MUTATION = `
   }
 `;
 
-/** Reads a required server-side variable, failing loudly rather than sending a broken request. */
-function requireEnv(name: string): string {
-  const value = process.env[name];
-
-  if (value === undefined || value === "") {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
-
-/** Writes pre-launch signups into Shopify as customers with email marketing consent. */
+/** Writes pre-launch signups into Shopify as customers; with email marketing consent only when they gave it. */
 export class ShopifyCustomerService {
   /** Builds the `customerCreate` input. Consent is set inline so no unsubscribed window exists. */
   static buildCustomerInput(subscriber: IPrelaunchSubscriber): ICustomerInput {
     const input: ICustomerInput = {
       email: subscriber.email,
       firstName: subscriber.firstName,
-      tags: PRELAUNCH_TAGS,
-      emailMarketingConsent: {
+      tags: [...new Set([...PRELAUNCH_TAGS, ...(subscriber.extraTags ?? [])])],
+    };
+
+    if (subscriber.consentedAt !== null) {
+      input.emailMarketingConsent = {
         marketingState: "SUBSCRIBED",
         marketingOptInLevel: "SINGLE_OPT_IN",
         consentUpdatedAt: subscriber.consentedAt,
-      },
-    };
+      };
+    }
 
     if (subscriber.lastName !== null) {
       input.lastName = subscriber.lastName;
@@ -140,6 +143,7 @@ export class ShopifyCustomerService {
         client_secret: clientSecret,
       }),
       cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -176,6 +180,7 @@ export class ShopifyCustomerService {
           variables: { input: ShopifyCustomerService.buildCustomerInput(subscriber) },
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       }
     );
 

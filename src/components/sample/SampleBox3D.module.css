@@ -1,0 +1,38 @@
+/* Floating WITHIN box. Stage height follows the box (H = 3.75 W) plus room for the float gap and shadow. */
+.stage {
+  --h: calc(var(--w) * 3.75);
+  position: relative;
+  width: 100%;
+  height: calc(var(--h) * 1.32);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.stage[data-dragging] { cursor: grabbing; }
+.stage:focus-visible { outline: 2px solid var(--color-brand-ink); outline-offset: 2px; }
+
+/* Front photo, shown only when WebGL is unavailable. */
+.poster {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--w);
+  height: var(--h);
+  transform: translate(-50%, -62%) rotate(var(--lean, 0deg)) scale(0.82);
+  pointer-events: none;
+  opacity: 0;
+}
+.stage[data-failed] .poster { opacity: 1; }
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.stage[data-ready] canvas { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .stage canvas { transition-duration: 0.2s; }
+}

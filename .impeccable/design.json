@@ -1,35 +1,225 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-31T00:00:00.000Z",
+  "generatedAt": "2026-10-21T08:06:36.000Z",
   "title": "Design System: WITHIN",
   "extensions": {
     "colorMeta": {
-      "electric": { "role": "primary", "displayName": "Electric", "canonical": "#0047ff", "tonalRamp": ["#001433", "#001f52", "#002a7a", "#0038c2", "#0047ff", "#3d6bff", "#7d9bff", "#e8eeff"] },
-      "electric-bright": { "role": "primary", "displayName": "Electric Bright", "canonical": "#3d6bff", "tonalRamp": ["#001433", "#002a7a", "#0038c2", "#0047ff", "#3d6bff", "#7d9bff", "#bcccff", "#e8eeff"] },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0b0d12", "tonalRamp": ["#0b0d12", "#1a1e26", "#363d49", "#626b7a", "#9aa3b2", "#cfd6e0", "#e2e7ee", "#f6f8fb"] },
-      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["#0b0d12", "#363d49", "#626b7a", "#9aa3b2", "#cfd6e0", "#e2e7ee", "#f6f8fb", "#ffffff"] },
-      "flag": { "role": "tertiary", "displayName": "Flag Red", "canonical": "#ce1126", "tonalRamp": ["#3d050b", "#5e0812", "#8a0d1b", "#b30f22", "#ce1126", "#e0455a", "#ec8894", "#f7d0d6"] }
+      "brand-black": {
+        "role": "neutral",
+        "displayName": "Black",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#f2f2f2"
+        ]
+      },
+      "brand-ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#191919",
+        "tonalRamp": [
+          "#0d0d0d",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#f2f2f2"
+        ]
+      },
+      "brand-mist": {
+        "role": "neutral",
+        "displayName": "Mist",
+        "canonical": "#f2f2f2",
+        "tonalRamp": [
+          "#0d0d0d",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#f2f2f2"
+        ]
+      },
+      "brand-white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0d0d0d",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#ffffff"
+        ]
+      },
+      "brand-muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#6b6b6b",
+        "tonalRamp": [
+          "#0d0d0d",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#f2f2f2"
+        ]
+      },
+      "brand-muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Dark",
+        "canonical": "#8c8c8c",
+        "tonalRamp": [
+          "#0d0d0d",
+          "#191919",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#cccccc",
+          "#f2f2f2"
+        ]
+      },
+      "flavor-orange": {
+        "role": "accent",
+        "displayName": "Flavor Orange",
+        "canonical": "#ff8326",
+        "tonalRamp": [
+          "#3d1a00",
+          "#6b2f00",
+          "#a34700",
+          "#d9620d",
+          "#ff8326",
+          "#ffa25c",
+          "#ffc699",
+          "#ffe8d6"
+        ]
+      },
+      "brand-error": {
+        "role": "status",
+        "displayName": "Error Red",
+        "canonical": "#d0312d",
+        "tonalRamp": [
+          "#3d0e0d",
+          "#6b1816",
+          "#9c231f",
+          "#c22c27",
+          "#d0312d",
+          "#e0655f",
+          "#efa29e",
+          "#fbe3e2"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Hero and closing headlines. Geist Sans, medium, sentence case, tight tracking." },
-      "readout": { "displayName": "Readout", "purpose": "Every dose and data numeral. Geist Mono, tabular, counts up on first view." },
-      "label": { "displayName": "Label", "purpose": "Mono data annotations only: units, axis numbers, mineral symbols." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "The waitlist headline on desktop. Fluid from 40px to 64px."
+      },
+      "hero": {
+        "displayName": "Hero",
+        "purpose": "The /sample intro headline on desktop."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page headlines on phone; step headings and sheet titles on desktop."
+      },
+      "card-title": {
+        "displayName": "Card title",
+        "purpose": "Fact and heat card titles on desktop."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Step headings and sheet titles on phone."
+      },
+      "title-sm": {
+        "displayName": "Title small",
+        "purpose": "Card titles on phone."
+      },
+      "body-lg": {
+        "displayName": "Body large",
+        "purpose": "Lead paragraphs."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Inputs and buttons; 16px stops iOS zoom."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Chips, legends, checkbox sentences, courier rows, Back."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Secondary lines."
+      },
+      "field": {
+        "displayName": "Field",
+        "purpose": "Field labels, hints, errors, fine print."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase section labels and step names."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Orbit tile tags and scale annotations on phone."
+      },
+      "script": {
+        "displayName": "Biro Script",
+        "purpose": "The 'see you soon' accent only. Letters only."
+      },
+      "headline-lg": {
+        "displayName": "Headline large",
+        "purpose": "The /sample status headline on desktop."
+      }
     },
-    "shadows": [
-      { "name": "specimen-lift", "value": "0 20px 40px rgba(11,13,18,0.16)", "purpose": "Under the floating sachet only, so it reads as lifted off its frame." },
-      { "name": "overlay", "value": "0 18px 44px rgba(11,13,18,0.12)", "purpose": "The signup Dialog/Drawer." },
-      { "name": "focus", "value": "0 0 0 3px rgba(0,71,255,0.28)", "purpose": "Electric focus ring on interactive elements." }
-    ],
+    "shadows": [],
     "motion": [
-      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Strong ease-out for entrances, reveals, and press feedback." },
-      { "name": "ease-in-out", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "On-screen movement and morphs." },
-      { "name": "ease-drawer", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "iOS-like drawer curve for the mobile signup drawer." }
+      {
+        "name": "ease-brand",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Every tween and transition (EASE in code)."
+      },
+      {
+        "name": "press",
+        "value": "scale(0.97) 150ms",
+        "purpose": "Press feedback on every button and chip."
+      },
+      {
+        "name": "entrance",
+        "value": "opacity + 8px lift, 300ms, 50ms stagger",
+        "purpose": "First-view entrances."
+      },
+      {
+        "name": "step-slide",
+        "value": "12px slide, enter 240ms, exit 140ms",
+        "purpose": "Moving between /sample steps, direction-aware."
+      },
+      {
+        "name": "sachet-float",
+        "value": "4.5s ease-in-out infinite",
+        "purpose": "The one sanctioned loop, the floating sachet on /."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "desk",
+        "value": "900px"
+      }
     ]
   },
   "components": [
@@ -37,60 +227,100 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The waitlist action. Ink fill, paper text, crisp 2px edge, electric focus ring, press-scale feedback.",
-      "html": "<button class=\"ds-btn-primary\">Join the list</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 22px; background: #0b0d12; color: #fff; border: 1px solid #0b0d12; border-radius: 2px; font-family: var(--font-geist-sans), sans-serif; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: opacity .13s cubic-bezier(0.23,1,0.32,1), transform .13s cubic-bezier(0.23,1,0.32,1); } .ds-btn-primary:hover { opacity: .86; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,71,255,.4); }"
+      "description": "Ink fill, label left, arrow right. The default action.",
+      "html": "<button class=\"ds-btn-primary\"><span>Claim my samples</span><svg viewBox=\"0 0 20 20\" width=\"20\" height=\"20\" fill=\"none\"><path d=\"M3 10h13M11 5l5 5-5 5\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"square\"/></svg></button>",
+      "css": ".ds-btn-primary{display:flex;align-items:center;justify-content:space-between;width:320px;height:56px;padding:0 20px;background:#191919;color:#f2f2f2;border:0;border-radius:0;font:600 16px/24px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;cursor:pointer;transition:transform 150ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-primary:active{transform:scale(0.97)}.ds-btn-primary:focus-visible{outline:2px solid #191919;outline-offset:2px}"
     },
     {
-      "name": "Text Input",
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Flavor Orange with Ink text. One per view: the waitlist and pay buttons.",
+      "html": "<button class=\"ds-btn-accent\"><span>Pay shipping Rp 9.000</span><svg viewBox=\"0 0 20 20\" width=\"20\" height=\"20\" fill=\"none\"><path d=\"M3 10h13M11 5l5 5-5 5\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"square\"/></svg></button>",
+      "css": ".ds-btn-accent{display:flex;align-items:center;justify-content:space-between;width:320px;height:56px;padding:0 20px;background:#ff8326;color:#191919;border:0;border-radius:0;font:600 16px/24px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;cursor:pointer;transition:transform 150ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-accent:active{transform:scale(0.97)}.ds-btn-accent:focus-visible{outline:2px solid #191919;outline-offset:2px}.ds-btn-accent:disabled{opacity:.6;cursor:default}"
+    },
+    {
+      "name": "Underlined Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Waitlist field. Paper fill, hairline stroke, label above, electric focus ring.",
-      "html": "<label class=\"ds-label\">Email</label><input class=\"ds-input\" placeholder=\"you@example.com\" />",
-      "css": ".ds-label { display:block; margin-bottom:8px; font-family: var(--font-geist-sans), sans-serif; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#626b7a; } .ds-input { width:100%; height:44px; padding:0 14px; background:#fff; color:#0b0d12; border:1px solid #cfd6e0; border-radius:2px; font-family: var(--font-geist-sans), sans-serif; font-size:16px; } .ds-input::placeholder { color:#9aa3b2; } .ds-input:focus-visible { outline:none; border-color:#0047ff; box-shadow:0 0 0 3px rgba(0,71,255,.28); }"
+      "description": "Muted label above, 16px input, 1px underline; in error a 2px Error Red underline and a red message.",
+      "html": "<div><label class=\"ds-field\"><span class=\"ds-field-label\">Email</span><input class=\"ds-field-input\" placeholder=\"you@email.com\"></label><label class=\"ds-field ds-field-error\"><span class=\"ds-field-label\">Email</span><input class=\"ds-field-input\" value=\"melina@\"></label><p class=\"ds-field-msg\">Check your email address.</p></div>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:2px;width:320px;padding:8px 0 6px;border-bottom:1px solid #6b6b6b;font-family:Inter, system-ui, -apple-system, 'Segoe UI', sans-serif}.ds-field:focus-within{outline:2px solid #191919;outline-offset:2px}.ds-field-label{font-size:13px;line-height:18px;color:#6b6b6b}.ds-field-input{border:0;padding:4px 0;font-size:16px;line-height:24px;color:#191919;background:transparent;outline:none}.ds-field-input::placeholder{color:#6b6b6b}.ds-field-error{border-bottom:2px solid #d0312d;padding-bottom:5px;margin-top:16px}.ds-field-msg{margin:6px 0 0;font:600 13px/18px Inter, system-ui, sans-serif;color:#d0312d}"
     },
     {
-      "name": "Dose Readout",
+      "name": "Choice Chip",
+      "kind": "chip",
+      "refersTo": "choice-chip",
+      "description": "Bordered square chip; selected fills Ink.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-on\">Running</button><button class=\"ds-chip\">Cycling</button><button class=\"ds-chip\">Padel</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px}.ds-chip{min-height:44px;padding:0 16px;border:1px solid #191919;border-radius:0;background:#fff;color:#191919;font:400 15px/20px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;cursor:pointer;transition:background-color 150ms,color 150ms,transform 150ms cubic-bezier(0.23,1,0.32,1)}.ds-chip:active{transform:scale(0.97)}.ds-chip-on{background:#191919;color:#f2f2f2}.ds-chip:focus-visible{outline:2px solid #191919;outline-offset:2px}"
+    },
+    {
+      "name": "Step Progress",
       "kind": "custom",
-      "refersTo": "readout",
-      "description": "The signature instrument readout: a mono, tabular numeral with an electric register tick and unit.",
-      "html": "<div class=\"ds-readout\"><span class=\"ds-readout-tick\"></span><span class=\"ds-readout-sym\">Na</span><span class=\"ds-readout-num\">1000</span><span class=\"ds-readout-unit\">mg</span></div>",
-      "css": ".ds-readout { position:relative; display:flex; align-items:baseline; gap:6px; padding-top:10px; } .ds-readout-tick { position:absolute; top:0; left:0; width:40px; height:1px; background:#0047ff; } .ds-readout-sym { font-family: var(--font-geist-mono), monospace; font-size:12px; text-transform:uppercase; letter-spacing:.14em; color:#0047ff; } .ds-readout-num { font-family: var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; font-weight:600; font-size:64px; line-height:.9; letter-spacing:-.03em; color:#0b0d12; } .ds-readout-unit { font-family: var(--font-geist-mono), monospace; font-size:16px; color:#626b7a; }"
+      "refersTo": "",
+      "description": "Back top left, five 4px bars, step name and count.",
+      "html": "<div class=\"ds-progress\"><span class=\"ds-back\">&larr; Back</span><div class=\"ds-bars\"><i class=\"on\"></i><i class=\"on\"></i><i></i><i></i><i></i></div><p class=\"ds-meta\"><span>YOUR SPORT</span><span>Step 2 of 5</span></p></div>",
+      "css": ".ds-progress{width:320px;display:flex;flex-direction:column;gap:10px;font-family:Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;color:#191919}.ds-back{font-size:15px;font-weight:600}.ds-bars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.ds-bars i{height:4px;background:#f2f2f2}.ds-bars i.on{background:#191919}.ds-meta{margin:0;display:flex;justify-content:space-between;font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em;color:#6b6b6b}"
     }
   ],
   "narrative": {
-    "northStar": "The Transparency Lab",
-    "overview": "WITHIN reads like a bench instrument, not a sports-drink billboard. Its one honest claim is its dosing, so the page is built to let a visitor measure it: a paper-white clinical field ruled with a faint measurement grid, the sachet framed as a specimen, and every number set in a mono readout that ticks up like a meter settling. Persuasion is proof, not volume. The system is quiet in hue and loud in precision: one electric-blue voice spent only on live data or an active choice, everything else ink on paper separated by hairlines. It rejects the sugary sports-drink hero and the generic three-up supplement card grid.",
+    "northStar": "Quiet ink, one orange",
+    "overview": "WITHIN is quiet. Ink on white, square edges, regular-weight Inter, and a single warm accent. Persuasion comes from plain facts and space, not volume. Headlines stay regular; emphasis comes from weight, never colour. This system runs / and every /sample page; /cohort, the 404 and /admin still run the older Transparency Lab tokens.",
     "keyCharacteristics": [
-      "Clinical paper-white canvas over a hairline measurement grid",
-      "One electric-blue signal, reserved for actives, live data, and focus",
-      "Geist Sans display over Geist Mono numerals (every number is a readout)",
-      "Crisp ~2px edges; register marks and crosshairs frame the product as a specimen",
-      "Exactly one dark instrument section (the dose); the rest stays light",
-      "Motion is instrumentation: hairlines draw, numbers count up, the specimen dissects on scroll"
+      "White ground, #191919 ink, #f2f2f2 mist",
+      "One accent, Flavor Orange, once per view",
+      "Inter 400 headlines, 600 to 700 for emphasis and labels",
+      "Square corners everywhere; only the orbit circle is round",
+      "No UI shadows",
+      "One breakpoint, desk at 900px"
     ],
     "rules": [
-      { "name": "The Single Signal Rule", "body": "Electric appears only where there is live data or an active choice. If it is decorating a surface, remove it.", "section": "colors" },
-      { "name": "The Flag Red Rule", "body": "Red is national provenance, not brand color. The only red on the page is the Indonesian flag itself.", "section": "colors" },
-      { "name": "The One Dark Room Rule", "body": "Exactly one section inverts to the dark instrument panel (the dose). No other section flips theme; the footer stays light.", "section": "colors" },
-      { "name": "The Measurement Voice Rule", "body": "Every number is Geist Mono and tabular. Prose is never mono. Mono is for data, units, and measurement, never as a costume.", "section": "typography" },
-      { "name": "The No-Eyebrow Rule", "body": "Headings carry their own weight. No small uppercase kicker above any heading, anywhere.", "section": "typography" },
-      { "name": "The Tone-Not-Shadow Rule", "body": "Surfaces are flat at rest. Layering is tonal surface plus hairline, never an ambient shadow. Shadows only under floating elements and focus.", "section": "elevation" }
+      {
+        "name": "One accent per view",
+        "body": "If two things on a screen are orange, one of them is wrong. Text on orange is Ink; never set text in orange.",
+        "section": "colors"
+      },
+      {
+        "name": "Emphasis is weight, never colour",
+        "body": "Bold a phrase; don't tint it.",
+        "section": "colors"
+      },
+      {
+        "name": "Regular headlines",
+        "body": "Headlines stay at 400. Weight is spent on labels, emphasis and buttons.",
+        "section": "typography"
+      },
+      {
+        "name": "Labels are the only uppercase",
+        "body": "One small uppercase label may sit above a headline. Everything else is sentence case.",
+        "section": "typography"
+      },
+      {
+        "name": "Flat",
+        "body": "Layers come from Ink rules and space. Only product renders carry a floor shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "Red means something went wrong",
+        "body": "Error Red (#d0312d) is the only status colour. It marks field errors and failures, directly under what caused them.",
+        "section": "colors"
+      }
     ],
     "dos": [
-      "Do keep electric to actives, live data, and focus.",
-      "Do set every numeral in Geist Mono, tabular, counting up on first view.",
-      "Do build depth from tonal surfaces and hairlines, framing the product with register marks.",
-      "Do let each headline stand alone in sentence case, tight tracking, medium weight.",
-      "Do hold exactly one dark instrument section and keep the rest on the clinical light field."
+      "Keep one orange moment per view, with Ink text on it.",
+      "Set headlines at 400 and let space carry them.",
+      "Keep every corner square.",
+      "Keep every visitor-facing string in the route's copy file.",
+      "Show every error in Error Red, directly under what caused it."
     ],
     "donts": [
-      "Don't put a kicker or eyebrow above any heading.",
-      "Don't use mono for prose or as decoration; mono is data only.",
-      "Don't use red for anything but the literal Indonesian flag.",
-      "Don't ship the sugary sports-drink hero or the three-up icon-heading-text card grid.",
-      "Don't add ambient drop shadows or glass for depth; only floating elements and focus earn a shadow.",
-      "Don't claim any certification (BPOM and Halal are pending, not certified)."
+      "Don't set text in orange or use orange as a page ground.",
+      "Don't add shadows, gradients or rounded corners to UI.",
+      "Don't add a second accent colour.",
+      "Don't use Transparency Lab tokens on / or /sample.",
+      "Don't claim any certification; BPOM and Halal are pending.",
+      "No em dashes, no exclamation marks, no hype words in copy."
     ]
   }
 }

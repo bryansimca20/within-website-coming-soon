@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "sample_batches_one_open" ON "sample_batches" USING btree ("phase") WHERE "sample_batches"."phase" = 'open';

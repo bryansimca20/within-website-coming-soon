@@ -1,0 +1,37 @@
+/* Floating WITHIN bottle. Stage height follows the bottle (H = 3.12 W) plus room for the float gap and shadow. */
+.stage {
+  --h: calc(var(--w) * 3.12);
+  position: relative;
+  width: 100%;
+  height: calc(var(--h) * 1.36);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.stage[data-dragging] { cursor: grabbing; }
+.stage:focus-visible { outline: 2px solid var(--color-brand-ink); outline-offset: 2px; }
+
+/* Still render (same pose and framing as the scene), shown only when WebGL is unavailable. */
+.poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0;
+}
+.stage[data-failed] .poster { opacity: 1; }
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.stage[data-ready] canvas { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .stage canvas { transition-duration: 0.2s; }
+}

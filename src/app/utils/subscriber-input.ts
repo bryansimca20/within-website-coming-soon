@@ -68,7 +68,7 @@ export function normalizeInstagramHandle(raw: string): string | null {
 /** Field-level error copy, shared by the server validator and the waitlist form so they never drift. */
 export const SUBSCRIBER_FIELD_ERROR: Record<keyof ISubscriberInput, string> = {
   fullName: "Add your name.",
-  email: "Check your email address.",
+  email: "Invalid email address.",
   instagramHandle: "Add your Instagram handle: letters, numbers, dots or underscores.",
 };
 

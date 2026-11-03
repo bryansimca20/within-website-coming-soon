@@ -155,7 +155,7 @@ export function WaitlistForm({ values, onValuesChange, onJoined, firstInputRef }
       <input name={HONEYPOT_TIMESTAMP_FIELD} type="hidden" value={renderedAt} readOnly />
 
       {serverError !== null && (
-        <p role="alert" className="mt-2.5 mb-0 text-[13px] leading-[18px] font-semibold text-brand-ink">
+        <p role="alert" className="mt-2.5 mb-0 text-[13px] leading-[18px] font-semibold text-brand-error">
           {serverError}
         </p>
       )}
