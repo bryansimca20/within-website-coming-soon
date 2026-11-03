@@ -12,8 +12,8 @@ interface SampleShellProps {
 /** The sample pages' frame: the waitlist header, then one centred, scrolling column. */
 export function SampleShell({ children, isWide = false }: SampleShellProps) {
   return (
-    // Wide: a definite h-dvh so the intro's box can size from 100cqh; min-h-max still lets long content scroll.
-    <main className={cn("flex flex-col bg-white px-4 pb-12 font-brand text-brand-ink desk:px-0", isWide ? "h-dvh min-h-max" : "min-h-dvh")}>
+    // One-screen views need a definite height so their box can size from 100cqh.
+    <main className="flex min-h-dvh flex-col bg-white px-4 pb-12 font-brand text-brand-ink has-[[data-fill-screen]]:h-dvh desk:px-0">
       <WaitlistHeader />
       <div className={cn("mx-auto flex w-full flex-1 flex-col pt-8 desk:pt-14", isWide ? "max-w-[560px] desk:max-w-[1040px] desk:px-12" : "max-w-[560px]")}>
         {children}
