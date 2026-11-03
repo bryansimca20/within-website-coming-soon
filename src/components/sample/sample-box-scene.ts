@@ -175,7 +175,7 @@ export function createBoxScene(host: HTMLElement, opts: BoxSceneOptions): BoxSce
   const frameHalf = (FLOAT_Y + halfSpan) / 2 + 0.15;
   const target = new THREE.Vector3(0, frameHalf - 0.15, 0);
   function placeCamera(t: number, floatY: number) {
-    const fit = (frameHalf * 1.12) / Math.tan(rad(camera.fov / 2));
+    const fit = (frameHalf * 1.04) / Math.tan(rad(camera.fov / 2));
     const e = rad(-t);
     camera.position.set(0, floatY + fit * Math.sin(e), fit * Math.cos(e));
     camera.position.y = Math.max(1.2, camera.position.y); // keep the floor shadow readable
