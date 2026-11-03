@@ -33,7 +33,7 @@ export function SampleIntro({ batch, onContinue }: SampleIntroProps) {
       variants={cascade}
       initial="hidden"
       animate="shown"
-      className="-mb-12 flex flex-1 flex-col desk:mb-0 desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
+      className="flex flex-1 flex-col desk:grid desk:grid-cols-2 desk:grid-rows-[1fr_auto_auto_auto_auto_1fr] desk:gap-x-12"
     >
       <motion.p variants={rise} className="m-0 text-xs leading-4 font-bold tracking-[0.06em] text-brand-muted desk:col-start-2 desk:row-start-2">
         {named.label}
