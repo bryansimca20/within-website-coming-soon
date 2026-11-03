@@ -21,7 +21,7 @@ npm run test          # Vitest once
 npm run test:watch    # Vitest watch mode
 npx tsc --noEmit      # Type-check (Vitest does not)
 npm run db:generate   # Generate a Drizzle migration from src/db/schema.ts
-npm run db:migrate    # Apply migrations to DATABASE_URL
+npm run db:migrate    # Apply migrations to DATABASE_URL (Vercel builds run this first via vercel-build)
 ```
 
 Package manager is **npm**. Do not introduce another lockfile.

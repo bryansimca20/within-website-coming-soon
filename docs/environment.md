@@ -36,4 +36,6 @@ Set `NEXT_PUBLIC_SITE_URL` only for a custom staging domain, scoped to that envi
 ## Vercel
 
 - Web Analytics must be enabled on the project. Nothing is sent in local dev.
+- Vercel runs the `vercel-build` script, which applies migrations before `next build`. A build without `DATABASE_URL`, or with a failing migration, fails and nothing deploys. Local `npm run build` does not migrate.
+- The migration runs while the previous deployment still serves traffic, so it must work with the code already live: add first, remove or rename in a later deploy.
 - `next.config.ts` is wrapped in `withBotId()`. Locally `checkBotId()` always returns `isBot: false`.
