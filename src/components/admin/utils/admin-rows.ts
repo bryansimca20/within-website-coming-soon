@@ -22,6 +22,7 @@ export interface IAdminRow {
   needsAttention: boolean;
   intent: string | null;
   source: string;
+  isTest: boolean;
   /** No shipment yet, or the latest one failed: a founder can book it. */
   isBookable: boolean;
 }
@@ -40,6 +41,7 @@ export function toAdminRow(request: SampleRequest, shipment: SampleShipment | nu
     courier: request.courierServiceName ?? "",
     fee: request.shippingFee ?? 0,
     status: request.status,
+    isTest: request.isTest,
     createdAt: request.createdAt.toISOString(),
     paidAt: request.paidAt?.toISOString() ?? null,
     shipmentStatus: shipment?.status ?? null,

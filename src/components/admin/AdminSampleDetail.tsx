@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { cancelRequestAction, saveAdminNoteAction } from "@/app/actions/admin-sample.action";
+import { cancelRequestAction, saveAdminNoteAction, setTestRequestAction } from "@/app/actions/admin-sample.action";
 import { Button } from "@/components/ui/button";
 import type { SampleFeedbackRow, SamplePayment, SampleRequest, SampleShipment, SampleWebhookEvent } from "@/db/schema";
 
@@ -78,6 +78,12 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
       <Card title="Feedback">{feedback === null ? <p className="m-0 text-wi-ink-500">None yet.</p> : <Fields entries={Object.entries(feedback)} />}</Card>
       <Card title={`Webhook events (${events.length})`}>
         {events.map((event) => <p key={event.id} className="wi-readout m-0 text-xs">{event.receivedAt.toISOString()} {event.provider} {event.error ?? "ok"}</p>)}
+      </Card>
+      <Card title="Test order">
+        <form action={setTestRequestAction.bind(null, request.id, !request.isTest)} className="flex flex-col gap-2">
+          <Button type="submit" size="sm" variant="outline" className="self-start">{request.isTest ? "Unmark test" : "Mark as test"}</Button>
+          <p className="m-0 text-xs text-wi-ink-500">Test orders are left out of capacity, stats and exports.</p>
+        </form>
       </Card>
       <Card title="Founder note">
         <form action={saveAdminNoteAction} className="flex flex-col gap-2">

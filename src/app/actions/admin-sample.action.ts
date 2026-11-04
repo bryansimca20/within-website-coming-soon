@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import type { AdminActionResult, ShipRunState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
@@ -117,3 +118,9 @@ export async function saveAdminNoteAction(formData: FormData): Promise<void> {
   revalidate();
 }
 
+/** Flags a request as a test order, or back to a real one. Test orders are left out of capacity, stats and exports. */
+export async function setTestRequestAction(requestId: string, isTest: boolean): Promise<void> {
+  await requireAdmin();
+  await SampleRequestService.setTest(db, z.string().uuid().parse(requestId), isTest);
+  revalidate();
+}
