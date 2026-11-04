@@ -25,6 +25,19 @@ export type SampleRequestState =
   | { outcome: SampleRequestOutcome.AlreadyRequested; email: string }
   | { outcome: SampleRequestOutcome.Error; message: string; field: SampleRequestField | null };
 
+/** Outcome of registering one in-person sample. */
+export enum SampleSeedOutcome {
+  Seeded = "seeded",
+  AlreadyRequested = "already-requested",
+  Error = "error",
+}
+
+/** What the seed action hands back to the seeding form. */
+export type SampleSeedState =
+  | { outcome: SampleSeedOutcome.Seeded; firstName: string }
+  | { outcome: SampleSeedOutcome.AlreadyRequested; email: string }
+  | { outcome: SampleSeedOutcome.Error; message: string; field: SampleRequestField | null };
+
 /** Outcome of asking the status page to reopen payment. */
 export enum ReopenOutcome {
   Pay = "pay",

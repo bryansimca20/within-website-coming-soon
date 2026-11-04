@@ -108,6 +108,18 @@ export const SAMPLE_COPY = {
   },
   steps: ["About you", "Your training", "Your sessions", "You and WITHIN", "Shipping"] as const,
   stepCounter: (step: number) => `Step ${step} of 5`,
+  seed: {
+    title: "Register your samples",
+    intro: "A few questions about how you train, so we can read your check-in properly. Takes about two minutes.",
+    steps: ["About you", "Your training", "Your sessions", "You and WITHIN", "Phone"] as const,
+    submit: "Register",
+    submitting: "Registering",
+    signedOut: "This phone is signed out of WITHIN admin. Hand it back to the WITHIN team.",
+    thanksTitle: (name: string) => `Thanks, ${name}.`,
+    thanksBody: "Your samples are registered. We'll email you a check-in link. Try WITHIN over a few sessions, then tell us how it went.",
+    seedAnother: "Register another",
+    already: "This email already has WITHIN samples registered.",
+  },
   headings: {
     contact: "Who are the samples for?",
     training: "How do you train?",
