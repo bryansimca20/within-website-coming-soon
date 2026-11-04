@@ -96,7 +96,7 @@ export function SampleSeedForm() {
     submit(formData);
   }
 
-  if (seededName !== null) return <SampleSeedThanks firstName={seededName} onAgain={() => window.location.assign("/sample/seed")} />;
+  if (seededName !== null) return <SampleSeedThanks firstName={seededName} onAgain={() => window.location.replace("/sample/seed")} />;
 
   const StepScreen = STEP_SCREENS[step];
   const buttonLabel = !isLast ? SAMPLE_COPY.continue : isPending ? seed.submitting : seed.submit;
