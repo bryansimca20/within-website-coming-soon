@@ -48,11 +48,11 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
         <section className="mb-10 flex flex-col gap-4 border-t-[6px] border-brand-ink pt-5">
           <div className="flex items-baseline justify-between">
             <span className="text-[15px]">{status.payLabel}</span>
-            <span className="text-[15px] font-semibold tabular-nums">{formatRupiah(request.shippingFee)}</span>
+            <span className="text-[15px] font-semibold tabular-nums">{formatRupiah(request.shippingFee ?? 0)}</span>
           </div>
           <p className="m-0 text-[15px] leading-[22px] text-brand-muted">{status.holdLeft(formatMinutes(props.minutesLeft))}</p>
           <SampleSnapScript src={props.snapScriptUrl} />
-          <SamplePayNow token={request.accessToken} amount={request.shippingFee} redirectUrl={props.payment?.snapRedirectUrl ?? null} />
+          <SamplePayNow token={request.accessToken} amount={request.shippingFee ?? 0} redirectUrl={props.payment?.snapRedirectUrl ?? null} />
         </section>
       )}
 

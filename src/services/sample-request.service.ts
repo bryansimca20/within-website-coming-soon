@@ -176,7 +176,8 @@ export class SampleRequestService {
     });
   }
 
-  static async findBatch(db: SampleDatabase, batchId: string): Promise<SampleBatch | null> {
+  static async findBatch(db: SampleDatabase, batchId: string | null): Promise<SampleBatch | null> {
+    if (batchId === null) return null;
     const [batch] = await db.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).limit(1);
 
     return batch ?? null;
@@ -229,7 +230,9 @@ export class SampleRequestService {
       if (unlocked === null) {
         return { kind: "repeat" };
       }
-      await tx.select({ id: sampleBatches.id }).from(sampleBatches).where(eq(sampleBatches.id, unlocked.batchId)).for("update");
+      if (unlocked.batchId !== null) {
+        await tx.select({ id: sampleBatches.id }).from(sampleBatches).where(eq(sampleBatches.id, unlocked.batchId)).for("update");
+      }
       const request = (await SampleRequestService.findById(tx, requestId)) ?? unlocked;
       if (request.paidAt !== null) {
         return { kind: "repeat" };
@@ -369,13 +372,15 @@ export class SampleRequestService {
     return summary;
   }
 
-  /** `B01-042`: the human identifier printed in admin and emails. */
-  static boxLabel(batchId: string, boxNumber: number): string {
+  /** `B01-042`: the human identifier printed in admin and emails. Null for an in-person request, which has no box. */
+  static boxLabel(batchId: string | null, boxNumber: number | null): string | null {
+    if (batchId === null || boxNumber === null) return null;
     return `${batchId.toUpperCase()}-${String(boxNumber).padStart(3, "0")}`;
   }
 
-  /** `No. 042`: how the sampler reads their number. */
-  static boxWord(boxNumber: number): string {
+  /** `No. 042`: how the sampler reads their number. Empty for an in-person request, which has no box. */
+  static boxWord(boxNumber: number | null): string {
+    if (boxNumber === null) return "";
     return `No. ${String(boxNumber).padStart(3, "0")}`;
   }
 

@@ -78,6 +78,13 @@
       "when": 1793360101261,
       "tag": "0010_batch_01_starts_upcoming",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793765802461,
+      "tag": "0011_early_magik",
+      "breakpoints": true
     }
   ]
 }

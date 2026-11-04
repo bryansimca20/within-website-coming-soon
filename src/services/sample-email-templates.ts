@@ -13,7 +13,7 @@ export enum SampleEmailKind {
 /** Everything a template needs; the notifier builds it from the request and shipment rows. */
 export interface ISampleEmailContext {
   firstName: string;
-  batchLabel: string;
+  batchLabel: string | null;
   statusUrl: string;
   feedbackUrl: string;
   /** Set once a shipment exists. `name` is the courier service as the sampler chose it ("JNE Reguler"). */
@@ -75,7 +75,7 @@ function fill(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
-function renderHtml(email: INoteEmail, batchLabel: string): string {
+function renderHtml(email: INoteEmail, batchLabel: string | null): string {
   const paragraphs = email.paragraphs
     .map((text) => `<p style="margin:0 0 16px;font-family:${FONT};font-size:17px;line-height:26px;color:${INK};">${escapeHtml(text)}</p>`)
     .join("");
@@ -103,7 +103,7 @@ function renderHtml(email: INoteEmail, batchLabel: string): string {
     `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(email.preheader)}</div>` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MIST};"><tr><td align="center" style="padding:24px 12px;">` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-top:6px solid ${INK};"><tr><td style="padding:32px 28px 28px;">` +
-    `<p style="margin:0 0 10px;font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(`SAMPLE ${batchLabel}`.toUpperCase())}</p>` +
+    `<p style="margin:0 0 10px;font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml((batchLabel === null ? "SAMPLE" : `SAMPLE ${batchLabel}`).toUpperCase())}</p>` +
     `<h1 style="margin:0 0 20px;font-family:${FONT};font-size:30px;line-height:36px;font-weight:400;letter-spacing:-0.02em;color:${INK};">${escapeHtml(email.headline)}</h1>` +
     paragraphs + waybill + (email.stars === undefined ? "" : renderStars(email.stars)) + buttonHtml +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid ${LINE};"><tr>` +
@@ -187,7 +187,7 @@ function shippedEmail(context: ISampleEmailContext, name: Record<string, string>
 }
 
 function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmail {
-  const name = { name: context.firstName, batch: context.batchLabel };
+  const name = { name: context.firstName, batch: context.batchLabel ?? "" };
   if (kind === SampleEmailKind.Shipped) {
     return shippedEmail(context, name);
   }

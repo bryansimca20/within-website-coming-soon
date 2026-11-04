@@ -7,6 +7,10 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { describe, expect, test } from "vitest";
 
+import { sampleRequests, type NewSampleRequest } from "@/db/schema";
+import type { SampleDatabase } from "@/db/database";
+import { makeTestDb } from "../../test/sample-db";
+
 /** A copy of the migrations folder holding only the first `count` migrations. */
 function firstMigrations(count: number): string {
   const folder = mkdtempSync(join(tmpdir(), "within-migrations-"));
@@ -101,6 +105,43 @@ describe("batch 01 starts upcoming migration", () => {
 
     const { rows } = await pg.query<{ phase: string }>("SELECT phase FROM sample_batches");
     expect(rows[0]?.phase).toBe("open");
+    await pg.close();
+  });
+});
+
+describe("in-person source migration", () => {
+  /** Inserts a valid shipped request merged with the overrides. */
+  async function insertRequest(db: SampleDatabase, overrides: Partial<NewSampleRequest> = {}) {
+    const [row] = await db
+      .insert(sampleRequests)
+      .values({
+        batchId: "b01", boxNumber: 1, accessToken: "tok-seed", sessionsPerWeek: "three_to_four", sessionLength: "over_90",
+        fullName: "Fanny Lie", firstName: "Fanny", email: "fanny@example.com", whatsapp: "+6281234567890",
+        instagramHandle: "fanny.runs", addressLine: "Jl. Sudirman No. 12", areaId: "area", areaName: "Area",
+        province: "DKI Jakarta", city: "Jakarta Selatan", district: "Pesanggrahan", postalCode: "12250",
+        courierCompany: "jne", courierType: "reg", courierServiceName: "JNE Regular", shippingFee: 10000,
+        shippingEta: "2 to 3 days", expiresAt: new Date(), ...overrides,
+      })
+      .returning();
+    if (!row) throw new Error("insert returned no row");
+    return row;
+  }
+
+  test("rejects a shipped request without an address", async () => {
+    const { db, pg } = await makeTestDb();
+    await expect(insertRequest(db, { source: "shipped", addressLine: null })).rejects.toThrow();
+    await pg.close();
+  });
+
+  test("accepts an in-person request with no batch, box, address or courier", async () => {
+    const { db, pg } = await makeTestDb();
+    const row = await insertRequest(db, {
+      source: "in_person", status: "delivered", batchId: null, boxNumber: null,
+      addressLine: null, areaId: null, areaName: null, province: null, city: null, district: null, postalCode: null,
+      courierCompany: null, courierType: null, courierServiceName: null, shippingFee: null, shippingEta: null,
+    });
+    expect(row.isTest).toBe(false);
+    expect(row.batchId).toBeNull();
     await pg.close();
   });
 });

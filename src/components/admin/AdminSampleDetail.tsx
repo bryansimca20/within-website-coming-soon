@@ -18,6 +18,12 @@ interface AdminSampleDetailProps {
   shipForm: ReactNode;
 }
 
+/** Request fields that only a shipped request has. */
+const DELIVERY_FIELDS = new Set([
+  "addressLine", "deliveryNote", "areaId", "areaName", "province", "city", "district", "postalCode",
+  "courierCompany", "courierType", "courierServiceName", "shippingFee", "shippingEta",
+]);
+
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3 rounded-[var(--wi-radius-card)] bg-wi-paper p-5 text-sm shadow-[var(--wi-shadow-card)]">
@@ -46,6 +52,8 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
   void id;
   void accessToken;
   const live = shipments.at(-1) ?? null;
+  const isShipped = request.source !== "in_person";
+  const requestFields = Object.entries(fields).filter(([key]) => isShipped || !DELIVERY_FIELDS.has(key));
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,18 +63,18 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
       </div>
       <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} />
       {shipForm}
-      <Card title="Request"><Fields entries={Object.entries(fields)} /></Card>
+      <Card title="Request"><Fields entries={requestFields} /></Card>
       <Card title={`Payments (${payments.length})`}>
         {payments.map((payment) => <Fields key={payment.id} entries={[["order", payment.midtransOrderId], ["status", payment.status], ["amount", payment.grossAmount], ["method", payment.paymentType], ["settled", payment.settledAt], ["created", payment.createdAt]]} />)}
       </Card>
-      <Card title={`Shipments (${shipments.length})`}>
+      {isShipped && <Card title={`Shipments (${shipments.length})`}>
         {shipments.map((shipment) => (
           <div key={shipment.id} className="flex flex-col gap-2 border-t border-wi-line/70 pt-3 first:border-0 first:pt-0">
             <Fields entries={[["attempt", shipment.attempt], ["reference", shipment.referenceId], ["biteship id", shipment.biteshipOrderId], ["status", shipment.status], ["waybill", shipment.waybillId], ["link", shipment.trackingLink], ["price", shipment.price], ["shipped email", shipment.shippedEmailSentAt], ["delivered email", shipment.deliveredEmailSentAt]]} />
             <pre className="m-0 overflow-x-auto rounded-[calc(var(--wi-radius-card)-6px)] bg-wi-paper-dim p-3 text-xs text-wi-ink-500">{JSON.stringify(shipment.history, null, 2)}</pre>
           </div>
         ))}
-      </Card>
+      </Card>}
       <Card title="Feedback">{feedback === null ? <p className="m-0 text-wi-ink-500">None yet.</p> : <Fields entries={Object.entries(feedback)} />}</Card>
       <Card title={`Webhook events (${events.length})`}>
         {events.map((event) => <p key={event.id} className="wi-readout m-0 text-xs">{event.receivedAt.toISOString()} {event.provider} {event.error ?? "ok"}</p>)}

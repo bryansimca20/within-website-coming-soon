@@ -33,12 +33,12 @@ export function toAdminRow(request: SampleRequest, shipment: SampleShipment | nu
 
   return {
     id: request.id,
-    boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber),
+    boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber) ?? "In person",
     name: request.fullName,
     email: request.email,
-    city: request.city,
-    courier: request.courierServiceName,
-    fee: request.shippingFee,
+    city: request.city ?? "",
+    courier: request.courierServiceName ?? "",
+    fee: request.shippingFee ?? 0,
     status: request.status,
     createdAt: request.createdAt.toISOString(),
     paidAt: request.paidAt?.toISOString() ?? null,

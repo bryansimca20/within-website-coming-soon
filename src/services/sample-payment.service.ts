@@ -40,26 +40,31 @@ export class SamplePaymentService {
     now: Date,
     finishUrl: string
   ): Promise<SamplePayment | null> {
+    const { boxNumber, shippingFee, courierServiceName, addressLine, city, postalCode } = request;
+    // Only shipped requests are paid, and they always carry these.
+    if (boxNumber === null || shippingFee === null || courierServiceName === null || addressLine === null || city === null || postalCode === null) {
+      return null;
+    }
     const expiryMinutes = SampleRequestService.minutesLeft(request, now);
     if (expiryMinutes < 1) {
       return null;
     }
 
-    const orderId = SamplePaymentService.buildOrderId(batch.id, request.boxNumber, generateOrderSuffix());
+    const orderId = SamplePaymentService.buildOrderId(batch.id, boxNumber, generateOrderSuffix());
     const snap = await MidtransService.createSnapTransaction({
       orderId,
-      grossAmount: request.shippingFee,
+      grossAmount: shippingFee,
       expiryMinutes,
-      itemName: `Shipping: ${request.courierServiceName}`,
+      itemName: `Shipping: ${courierServiceName}`,
       finishUrl,
       customer: {
         firstName: request.firstName,
         lastName: request.fullName.slice(request.firstName.length).trim() || null,
         email: request.email,
         phone: request.whatsapp,
-        address: request.addressLine,
-        city: request.city,
-        postalCode: request.postalCode,
+        address: addressLine,
+        city,
+        postalCode,
       },
     });
     if (snap === null) {
@@ -71,7 +76,7 @@ export class SamplePaymentService {
       .values({
         requestId: request.id,
         midtransOrderId: orderId,
-        grossAmount: request.shippingFee,
+        grossAmount: shippingFee,
         snapToken: snap.token,
         snapRedirectUrl: snap.redirectUrl,
         status: "pending",

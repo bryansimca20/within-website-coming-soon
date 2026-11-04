@@ -22,13 +22,13 @@ export async function GET(request: Request) {
   const due = await SampleFeedbackService.dueReminders(db, now);
   const batches = new Map((await db.select().from(sampleBatches)).map((batch) => [batch.id, batch]));
   for (const sampleRequest of await SampleRequestService.duePaidEmails(db)) {
-    const batch = batches.get(sampleRequest.batchId);
+    const batch = sampleRequest.batchId === null ? undefined : batches.get(sampleRequest.batchId);
     if (batch !== undefined) await dispatchPaidEmail(db, sampleRequest, batch, now);
   }
   let sent = 0;
   for (const sampleRequest of due) {
-    const batch = batches.get(sampleRequest.batchId);
-    if (batch === undefined) continue;
+    const batch = sampleRequest.batchId === null ? null : batches.get(sampleRequest.batchId) ?? null;
+    if (sampleRequest.batchId !== null && batch === null) continue;
     if (await SampleNotifier.sendFeedbackReminder(sampleRequest, batch)) {
       await SampleFeedbackService.markReminderSent(db, sampleRequest.id, now);
       sent += 1;

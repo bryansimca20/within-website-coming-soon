@@ -80,6 +80,8 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
   const byBatch: Record<string, IDeliveryCounts> = {};
 
   for (const { request, shipment } of entries) {
+    // In-person requests have no batch and no shipment.
+    if (request.batchId === null) continue;
     const counts = (byBatch[request.batchId] ??= emptyCounts());
     const phase = shipment === null ? null : phaseForBiteshipStatus(shipment.status);
     if (request.status === "delivered" || phase === ShipmentPhase.Delivered) {
@@ -104,9 +106,9 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
 
     issues.push({
       requestId: request.id,
-      boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber),
+      boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber) ?? "In person",
       name: request.fullName,
-      courier: request.courierServiceName,
+      courier: request.courierServiceName ?? "",
       waybillId: shipment.waybillId,
       trackingLink: shipment.trackingLink,
       state: isFailed ? DeliveryState.Failed : DeliveryState.Stuck,
