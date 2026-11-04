@@ -261,7 +261,14 @@ export class SampleRequestService {
       await tx
         .update(sampleRequests)
         .set({ status: "expired" })
-        .where(and(eq(sampleRequests.email, request.email), eq(sampleRequests.status, "pending_payment"), ne(sampleRequests.id, request.id)));
+        .where(
+          and(
+            eq(sampleRequests.email, request.email),
+            eq(sampleRequests.status, "pending_payment"),
+            eq(sampleRequests.isTest, request.isTest),
+            ne(sampleRequests.id, request.id)
+          )
+        );
 
       return { kind: "paid", request: paid };
     });

@@ -321,6 +321,14 @@ describe("test orders", () => {
     expect((await SampleRequestService.settle(db, test.id, NOW)).kind).toBe("paid");
   });
 
+  test("paying a test order leaves a real hold for the same email pending", async () => {
+    const real = await claimed("a@example.com");
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.findById(db, real.id))?.status).toBe("pending_payment");
+  });
+
   test("setTest flips the flag", async () => {
     const request = await claimed("a@example.com");
     await SampleRequestService.setTest(db, request.id, true);

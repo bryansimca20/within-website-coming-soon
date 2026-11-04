@@ -155,6 +155,10 @@ describe("per-batch exports", () => {
 
 describe("test orders in exports", () => {
   test("loadBatch leaves test requests out of both lists", async () => {
+    const real = await SampleRequestService.claim(db, "b01", sampleValues({ email: "real@example.com" }), NOW);
+    if (real.kind !== "claimed") throw new Error(real.kind);
+    await SampleRequestService.markPaid(db, real.request.id, NOW);
+    await SampleFeedbackService.saveReview(db, real.request.id, { rating: 5, review: "Good" }, "real@example.com", NOW);
     const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     await SampleRequestService.markPaid(db, claim.request.id, NOW);
@@ -162,7 +166,7 @@ describe("test orders in exports", () => {
 
     const exported = await SampleExportService.loadBatch(db, "b01");
 
-    expect(exported.registrations).toEqual([]);
-    expect(exported.feedback).toEqual([]);
+    expect(exported.registrations.map((row) => row.request.id)).toEqual([real.request.id]);
+    expect(exported.feedback.map((row) => row.request.id)).toEqual([real.request.id]);
   });
 });

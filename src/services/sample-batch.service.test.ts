@@ -210,6 +210,9 @@ describe("SampleBatchService.remove", () => {
 
 describe("SampleBatchService.list with test orders", () => {
   test("leaves test requests out of every count", async () => {
+    const real = await SampleRequestService.claim(db, "b01", sampleValues({ email: "real@example.com" }), NOW);
+    if (real.kind !== "claimed") throw new Error(real.kind);
+    await SampleRequestService.markPaid(db, real.request.id, NOW);
     const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     await SampleRequestService.markPaid(db, claim.request.id, NOW);
@@ -217,6 +220,6 @@ describe("SampleBatchService.list with test orders", () => {
 
     const [summary] = await SampleBatchService.list(db, NOW);
 
-    expect(summary).toMatchObject({ requests: 0, claimed: 0, paid: 0, shipped: 0, delivered: 0, feedback: 0 });
+    expect(summary).toMatchObject({ requests: 1, claimed: 1, paid: 1, shipped: 0, delivered: 0, feedback: 0 });
   });
 });
