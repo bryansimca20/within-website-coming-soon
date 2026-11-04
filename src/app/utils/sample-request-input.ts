@@ -243,7 +243,7 @@ export function multiChoice<T extends string>(set: readonly T[]) {
 }
 
 /** Zod carries the shape rules; the normalizers from the waitlist carry email, name and handle. */
-const sampleRequestShape = z.object({
+export const sampleRequestShape = z.object({
     trainingTypes: multiChoice(TRAINING_TYPE),
     trainingOther: optionalText(100),
     trainingPrimary: z.string().trim(),
@@ -325,7 +325,7 @@ function hasOther(value: string | string[] | undefined): boolean {
 }
 
 /** Cross-field rules: "Other" needs its text, and two or more ways of training need a primary that is one of them. */
-function crossFieldIssues(value: {
+export function crossFieldIssues(value: {
   trainingTypes?: string[];
   trainingOther?: string | null;
   trainingPrimary?: string;
@@ -359,9 +359,9 @@ const sampleRequestSchema = sampleRequestShape.superRefine((value, context) => {
   }
 });
 
-const FIELD_NAMES = Object.keys(EMPTY_SAMPLE_REQUEST_INPUT) as SampleRequestField[];
+export const FIELD_NAMES = Object.keys(EMPTY_SAMPLE_REQUEST_INPUT) as SampleRequestField[];
 
-function isSampleRequestField(name: unknown): name is SampleRequestField {
+export function isSampleRequestField(name: unknown): name is SampleRequestField {
   return typeof name === "string" && (FIELD_NAMES as string[]).includes(name);
 }
 
@@ -377,7 +377,7 @@ export function readSampleRequestInput(formData: FormData): ISampleRequestInput 
 }
 
 /** The first failing field in form order, with that field's own message. */
-function firstIssue(issues: z.ZodError["issues"]): { field: SampleRequestField; message: string } {
+export function firstIssue(issues: z.ZodError["issues"]): { field: SampleRequestField; message: string } {
   const sorted = [...issues].sort(
     (a, b) => FIELD_NAMES.indexOf(a.path[0] as SampleRequestField) - FIELD_NAMES.indexOf(b.path[0] as SampleRequestField)
   );
@@ -450,7 +450,14 @@ export function validateSampleStep(
   step: SampleStep,
   input: ISampleRequestInput
 ): Partial<Record<SampleRequestField, string>> {
-  const fields = SAMPLE_STEP_FIELDS[step];
+  return validateFields(SAMPLE_STEP_FIELDS[step], input);
+}
+
+/** Errors for a list of fields only, keyed by field. */
+export function validateFields(
+  fields: SampleRequestField[],
+  input: ISampleRequestInput
+): Partial<Record<SampleRequestField, string>> {
   const stepSchema = sampleRequestShape.pick(
     Object.fromEntries(fields.map((field) => [field, true])) as Record<SampleRequestField, true>
   );

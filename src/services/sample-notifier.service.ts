@@ -54,6 +54,11 @@ export class SampleNotifier {
     return SampleNotifier.send(SampleEmailKind.Delivered, request, batch, shipment);
   }
 
+  /** The in-person hand-over: no batch, and a button straight to the check-in. */
+  static sendSeeded(request: SampleRequest): Promise<boolean> {
+    return SampleNotifier.send(SampleEmailKind.Seeded, request, null, null);
+  }
+
   static sendFeedbackReminder(request: SampleRequest, batch: SampleBatch | null): Promise<boolean> {
     return SampleNotifier.send(SampleEmailKind.FeedbackReminder, request, batch, null);
   }

@@ -7,6 +7,7 @@ export enum SampleEmailKind {
   Paid = "paid",
   Shipped = "shipped",
   Delivered = "delivered",
+  Seeded = "seeded",
   FeedbackReminder = "feedback-reminder",
 }
 
@@ -195,7 +196,7 @@ function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmai
     return reminderEmail(context, name);
   }
 
-  const copy = kind === SampleEmailKind.Paid ? SAMPLE_EMAIL_COPY.paid : SAMPLE_EMAIL_COPY.delivered;
+  const copy = { [SampleEmailKind.Paid]: SAMPLE_EMAIL_COPY.paid, [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered, [SampleEmailKind.Seeded]: SAMPLE_EMAIL_COPY.seeded }[kind];
   const href = kind === SampleEmailKind.Paid ? context.statusUrl : context.feedbackUrl;
 
   return {
@@ -207,7 +208,7 @@ function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmai
   };
 }
 
-/** Renders one of the four emails for a sampler. Pure: no sending, no database. */
+/** Renders one of the five emails for a sampler. Pure: no sending, no database. */
 export function renderSampleEmail(kind: SampleEmailKind, context: ISampleEmailContext): IRenderedEmail {
   const email = noteFor(kind, context);
 

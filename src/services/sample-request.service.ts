@@ -3,6 +3,7 @@ import "server-only";
 import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, max, ne, or, type SQL, sql } from "drizzle-orm";
 
 import type { ISampleRequestValues } from "@/app/utils/sample-request-input";
+import type { ISampleSeedValues } from "@/app/utils/sample-seed-input";
 import { generateAccessToken } from "@/app/utils/token";
 import type { SampleDatabase } from "@/db/database";
 import {
@@ -22,6 +23,9 @@ export type ClaimResult =
   | { kind: "full" }
   | { kind: "already-requested"; request: SampleRequest }
   | { kind: "closed" };
+
+/** What a seed attempt produced. */
+export type SeedResult = { kind: "seeded"; request: SampleRequest } | { kind: "already-requested"; request: SampleRequest };
 
 /** What a settled payment did: paid the request, was a repeat, or must be refunded by a founder. */
 export type SettleResult =
@@ -182,6 +186,47 @@ export class SampleRequestService {
         .returning();
 
       return { kind: "claimed", request };
+    });
+  }
+
+  /**
+   * Records a box handed over in person: delivered at once, in no batch, with no box number and no
+   * delivery. An email that already owns a box is refused, the same rule as a claim.
+   */
+  static async seed(db: SampleDatabase, values: ISampleSeedValues, now: Date): Promise<SeedResult> {
+    return db.transaction(async (tx) => {
+      await tx
+        .update(sampleRequests)
+        .set({ status: "expired" })
+        .where(and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment"), eq(sampleRequests.isTest, false)));
+
+      const existing = await SampleRequestService.findActiveByEmail(tx, values.email);
+      if (existing !== null) {
+        return { kind: "already-requested", request: existing };
+      }
+
+      const { attribution, wantsLaunchEmail, ...rest } = values;
+      const [request] = await tx
+        .insert(sampleRequests)
+        .values({
+          ...rest,
+          ref: attribution.ref,
+          utmSource: attribution.utmSource,
+          utmMedium: attribution.utmMedium,
+          utmCampaign: attribution.utmCampaign,
+          utmContent: attribution.utmContent,
+          utmTerm: attribution.utmTerm,
+          source: "in_person",
+          status: "delivered",
+          deliveredAt: now,
+          accessToken: generateAccessToken(),
+          consentedAt: wantsLaunchEmail ? now : null,
+          createdAt: now,
+          expiresAt: now,
+        })
+        .returning();
+
+      return { kind: "seeded", request };
     });
   }
 

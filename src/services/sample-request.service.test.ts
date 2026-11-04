@@ -5,7 +5,7 @@ import type { SampleDatabase } from "@/db/database";
 import { sampleBatches, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
-import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
+import { minutesAfter, NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
 import { SampleBatchService } from "./sample-batch.service";
 import { SampleRequestService } from "./sample-request.service";
 
@@ -334,5 +334,35 @@ describe("test orders", () => {
     await SampleRequestService.setTest(db, request.id, true);
 
     expect((await SampleRequestService.findById(db, request.id))?.isTest).toBe(true);
+  });
+});
+
+describe("SampleRequestService.seed", () => {
+  test("seeds a delivered in-person request with no batch", async () => {
+    const result = await SampleRequestService.seed(db, seedValues(), NOW);
+
+    expect(result.kind).toBe("seeded");
+    if (result.kind !== "seeded") return;
+    expect(result.request).toMatchObject({ source: "in_person", status: "delivered", batchId: null, boxNumber: null, isTest: false });
+    expect(result.request.deliveredAt).toEqual(NOW);
+  });
+
+  test("refuses to seed an email that already owns a shipped box", async () => {
+    const real = await claimed("a@example.com");
+    await SampleRequestService.settle(db, real.id, NOW);
+
+    expect((await SampleRequestService.seed(db, seedValues({ email: "a@example.com" }), NOW)).kind).toBe("already-requested");
+  });
+
+  test("refuses a shipped claim for an email that was seeded", async () => {
+    await SampleRequestService.seed(db, seedValues({ email: "a@example.com" }), NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW)).kind).toBe("already-requested");
+  });
+
+  test("does not count a seeded request in any batch", async () => {
+    await SampleRequestService.seed(db, seedValues(), NOW);
+
+    expect(await SampleRequestService.countClaimed(db, "b01", NOW)).toBe(0);
   });
 });

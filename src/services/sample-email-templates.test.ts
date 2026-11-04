@@ -85,6 +85,23 @@ describe("renderSampleEmail", () => {
     expect(email.text).toContain("under a minute");
   });
 
+  test("the seeded email asks for feedback and prints SAMPLE with no batch", () => {
+    const email = renderSampleEmail(SampleEmailKind.Seeded, { ...CONTEXT, batchLabel: null });
+
+    expect(email.subject).toBe("Your WITHIN samples");
+    expect(email.html).toContain(CONTEXT.feedbackUrl);
+    expect(email.text).toContain(`Check in: ${CONTEXT.feedbackUrl}`);
+    expect(email.html).toContain(">SAMPLE</p>");
+    expect(email.html).not.toContain("SAMPLE BATCH");
+  });
+
+  test("the reminder reads naturally with no batch", () => {
+    const email = renderSampleEmail(SampleEmailKind.FeedbackReminder, { ...CONTEXT, batchLabel: null });
+
+    expect(email.html).not.toContain("{batch}");
+    expect(email.text).not.toContain("{batch}");
+  });
+
   test("the reminder has five stars, each opening the review with its rating, and no button", () => {
     const email = renderSampleEmail(SampleEmailKind.FeedbackReminder, CONTEXT);
 
