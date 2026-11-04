@@ -1,6 +1,6 @@
 # Sampling Program
 
-Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays the courier). Specs are local in `docs/superpowers/specs/` (gitignored): `2026-10-20-sampling-program-design.md` and `2026-10-28-sample-batches-and-admin-design.md`.
+Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays the courier). Specs are local in `docs/superpowers/specs/` (gitignored): `2026-10-20-sampling-program-design.md` and `2026-10-28-sample-batches-and-admin-design.md`, `2026-11-03-sample-seeding-and-test-orders-design.md`.
 
 ## Routes and flow
 
@@ -25,7 +25,11 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 /admin/reviews[?batch=&stars=]          review score: average stars, star split, taste, effectiveness, felt, each review
 /admin/batches/[batchId]/requests       one batch: status, capacity, counts, search, ship runs
 /admin/batches/[batchId]/export (+ /registrations, /feedback)  that batch's two CSVs
-/admin/requests/[id]                    request detail, resends, reship
+/admin/requests/[id]                    request detail, resends, reship, Mark as test / Unmark test
+/sample/seed                            in-person seeding form (admin session or redirect to /sample)
+  └─ seedSampleAction                   requireAdmin + honeypot + zod, then SampleRequestService.seed
+/admin/seeded[?checkedIn=]              in-person recipients, summary, checked-in filter
+/admin/seeded/export (+ /registrations, /feedback)  the seeded CSVs
 ```
 
 ## Holds, webhooks and failures
@@ -41,7 +45,7 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 - The check-in has two doors. The personal link (`?code=`, in the delivered and reminder emails and on the status page) identifies the sampler outright. The card's QR asks for the email first: it must belong to a shipped or delivered order with no check-in yet, or the form says why it can't go on. That does reveal whether an email claimed samples; the founder accepted it on 2026-10-22. Older unmatched rows are still listed in admin.
 - The check-in is a review in four screens: stars + review (required), headline (optional, skippable), taste + effectiveness (1 to 5), how they felt. The first screen saves the row (`submitFeedbackAction`); each later one adds to it by its id (`addToFeedbackAction`), only within two hours of the last save, so leaving early still leaves a review.
 - Rows from the old six-question form keep `session_type`, `session_length`, `would_reach_again` and `comment`; new rows leave them null, so intent is empty for them. Nothing publishes reviews yet; the share note under the first screen is the notice.
-- One check-in reminder goes out 7 days after delivery, from the daily Vercel Cron in `vercel.json` (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it. It carries five text stars (U+2606), each linking `?code=…&rating=N`, which pre-fills the stars. There is no thank-you email; the thank-you screen carries the Instagram follow.
+- One check-in reminder goes out 7 days after delivery (seeded rows included, they are `delivered`), from the daily Vercel Cron in `vercel.json` (`/api/cron/feedback-reminders`, 02:00 UTC = 09:00 WIB). `feedback_reminder_sent_at` guards it. It carries five text stars (U+2606), each linking `?code=…&rating=N`, which pre-fills the stars. There is no thank-you email; the thank-you screen carries the Instagram follow.
 - Review score (`summarizeReviews`) averages only rows with stars; old six-question check-ins have none but still count toward taste. Their `comment` shows as the review text.
 
 ## Copy, consent and routing
@@ -57,7 +61,23 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 - Each batch has a phase. At most one is `open`, enforced in `setPhase` ("Close Batch 01 first.") and by the partial unique index `sample_batches_one_open`. A new batch starts `upcoming`, and so does the seeded Batch 01 on a fresh database (migration 0010), so deploying never opens the form.
 - `closed` is final: `setPhase` refuses to move a closed batch anywhere else, and `setCapacity` refuses a closed batch. `remove` deletes only a batch with no requests at all (expired included) that is not open; anything with requests is closed instead. New batch is refused while one is open.
 - `/sample` serves the open batch (its form, or its claimed notice once full); with none open, the newest `upcoming` batch's coming-soon page; otherwise the newest batch's claimed notice. Every visitor line that names the batch or its size comes from `batchCopy()` in `sample-copy.ts`; never hard-code "Batch 01" or "100".
-- One email, one sample: an email with a paid, shipped or delivered request in any batch is refused (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid hold in any batch is expired by a new claim.
+- One email, one sample: an email with a paid, shipped or delivered request in any batch, or an in-person one, is refused (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid hold in any batch is expired by a new claim. Test and real requests are counted apart (see Test orders).
+
+## Test orders
+
+- `sample_requests.is_test`. Set automatically when `requestSampleAction` runs with a valid admin session (`isAdmin()`), or by hand with "Mark as test" / "Unmark test" on the request detail (`setTestRequestAction`) for a partner who was not logged in.
+- The full real flow still runs: Midtrans, Biteship, emails, webhooks, check-in, reminder cron. The charge and the courier booking are real; refund in Midtrans.
+- Excluded: batch capacity and the public claimed notice, one-email-one-sample against real requests (a test is blocked only by other tests, use `+alias` emails), overview, delivery board, review score, `/admin/reviews`, batch request counts, both CSV exports. A test still takes a box number, and still shows in the batch request list with a "Test" pill.
+- Shopify `customerCreate` is skipped when flagged at claim. Flagging later undoes nothing; delete the customer by hand.
+
+## In-person seeding
+
+- An owner logged into admin opens `/sample/seed` ("Seed a sample" in the sidebar) and hands over the phone. The page uses the WITHIN brand with no admin links, and redirects to `/sample` without an admin session. The recipient does the training steps, then name, email, WhatsApp, Instagram and the optional launch and share boxes. No address, courier or payment. "Seed another" resets the form; the session stays. The session is shared by all owners, so who handed a box out is not recorded.
+- `seedSampleAction` needs `requireAdmin` (no BotID) and keeps the honeypot. `SampleRequestService.seed` writes a row with `source = in_person`, `status = delivered`, `delivered_at = now`, no batch, no box number, no payment or shipment rows. Batch, address and courier columns are nullable; a check constraint keeps them required when `source = shipped`.
+- One email, one sample holds across sources. A live unpaid hold for the email is expired, as a new claim does.
+- One "seeded" email goes out with the personal check-in link (`?code=`), no paid, shipped or delivered emails. The QR check-in and the 7-day reminder work as for any delivered row.
+- Shopify customer tagged `prelaunch`, `coming-soon`, `sampling-in-person`; subscribed only if the launch box is ticked.
+- `/admin/seeded` is its own sidebar section: name, Instagram (linked), WhatsApp, date, check-in status, stars, headline, and a checked-in filter; summary of seeded total, checked-in rate and average stars. Exports are `within-seeded-registrations.csv` and `within-seeded-feedback.csv`. `/admin/reviews` has a "Seeded" tab; the batch review score, overview and delivery board leave seeded rows out.
 
 ## Admin
 
