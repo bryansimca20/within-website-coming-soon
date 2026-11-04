@@ -366,3 +366,16 @@ describe("SampleRequestService.seed", () => {
     expect(await SampleRequestService.countClaimed(db, "b01", NOW)).toBe(0);
   });
 });
+
+describe("SampleRequestService.listSeeded", () => {
+  test("returns only non-test in-person rows, newest first", async () => {
+    await claimed("shipped@example.com");
+    const older = await SampleRequestService.seed(db, seedValues({ email: "old@example.com" }), NOW);
+    const newer = await SampleRequestService.seed(db, seedValues({ email: "new@example.com" }), minutesAfter(5));
+    const hidden = await SampleRequestService.seed(db, seedValues({ email: "test@example.com" }), minutesAfter(10));
+    if (older.kind !== "seeded" || newer.kind !== "seeded" || hidden.kind !== "seeded") throw new Error("not seeded");
+    await db.update(sampleRequests).set({ isTest: true }).where(eq(sampleRequests.id, hidden.request.id));
+
+    expect((await SampleRequestService.listSeeded(db)).map((row) => row.id)).toEqual([newer.request.id, older.request.id]);
+  });
+});

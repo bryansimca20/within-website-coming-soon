@@ -4,7 +4,7 @@ import type { SampleDatabase } from "@/db/database";
 import { sampleFeedback } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
-import { NOW, sampleValues } from "../../test/sample-fixtures";
+import { NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
 import { buildFeedbackCsv, buildRegistrationsCsv, REGISTRATION_CSV_COLUMNS, SampleExportService } from "./sample-export.service";
 import { SampleBatchService } from "./sample-batch.service";
 import { SampleFeedbackService } from "./sample-feedback.service";
@@ -168,5 +168,24 @@ describe("test orders in exports", () => {
 
     expect(exported.registrations.map((row) => row.request.id)).toEqual([real.request.id]);
     expect(exported.feedback.map((row) => row.request.id)).toEqual([real.request.id]);
+  });
+});
+
+describe("seeded exports", () => {
+  test("a seeded row with feedback exports with empty box, address and courier cells", async () => {
+    const seeded = await SampleRequestService.seed(db, seedValues(), NOW);
+    if (seeded.kind !== "seeded") throw new Error(seeded.kind);
+    await SampleFeedbackService.saveReview(db, seeded.request.id, { rating: 5, review: "Good" }, "fanny@example.com", NOW);
+
+    const exported = await SampleExportService.loadSeeded(db);
+    const registrations = buildRegistrationsCsv(exported.registrations, "In person").slice(1).split("\r\n");
+    const columns = registrations[0].split(",");
+    const cells = registrations[1].split(",");
+    const feedback = buildFeedbackCsv(exported.feedback, "In person").slice(1).split("\r\n");
+
+    expect(exported.feedback).toHaveLength(1);
+    for (const column of ["box", "address", "courier"]) expect(cells[columns.indexOf(column)]).toBe("");
+    expect(cells[columns.indexOf("batch")]).toBe("In person");
+    expect(feedback[1].split(",")[feedback[0].split(",").indexOf("box")]).toBe("");
   });
 });

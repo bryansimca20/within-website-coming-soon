@@ -393,6 +393,15 @@ export class SampleRequestService {
     await db.update(sampleBatches).set(patch).where(eq(sampleBatches.id, batchId));
   }
 
+  /** Real in-person rows for the Seeded page, newest first. */
+  static async listSeeded(db: SampleDatabase): Promise<SampleRequest[]> {
+    return db
+      .select()
+      .from(sampleRequests)
+      .where(and(eq(sampleRequests.source, "in_person"), eq(sampleRequests.isTest, false)))
+      .orderBy(desc(sampleRequests.createdAt));
+  }
+
   /** Requests for the admin table, newest box first. `query` matches a box number, a name or an email. */
   static async listForAdmin(
     db: SampleDatabase,

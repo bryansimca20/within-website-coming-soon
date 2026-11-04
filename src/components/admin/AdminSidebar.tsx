@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatCenteredText, CircleNotch, DownloadSimple, SignOut, SquaresFour, Tray } from "@phosphor-icons/react";
+import { ChatCenteredText, CircleNotch, DownloadSimple, Gift, HandHeart, SignOut, SquaresFour, Tray } from "@phosphor-icons/react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useFormStatus } from "react-dom";
@@ -47,6 +47,12 @@ interface AdminSidebarProps {
 const BATCH_PAGES = [
   { segment: "requests", label: "Requests", icon: Tray },
   { segment: "export", label: "Export", icon: DownloadSimple },
+] as const;
+
+const SEEDED_PAGES = [
+  { href: "/admin/seeded", label: "Seeded", icon: Gift },
+  { href: "/admin/seeded/export", label: "Export", icon: DownloadSimple },
+  { href: "/sample/seed", label: "Seed a sample", icon: HandHeart },
 ] as const;
 
 /** The current page lifts off the rail as a white tile. */
@@ -150,6 +156,22 @@ export function AdminSidebar({ batches, issues }: AdminSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Seeded</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {SEEDED_PAGES.map((page) => (
+                <SidebarMenuItem key={page.href}>
+                  <SidebarMenuButton className={ACTIVE} isActive={pathname === page.href || (page.href !== "/sample/seed" && pathname.startsWith(`${page.href}/`))} render={<Link href={page.href} />}>
+                    <page.icon />
+                    <span>{page.label}</span>
+                    <AdminNavPending />
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
