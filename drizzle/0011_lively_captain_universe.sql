@@ -13,8 +13,6 @@ ALTER TABLE "sample_requests" ALTER COLUMN "courier_type" DROP NOT NULL;--> stat
 ALTER TABLE "sample_requests" ALTER COLUMN "courier_service_name" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "sample_requests" ALTER COLUMN "shipping_fee" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "sample_requests" ALTER COLUMN "shipping_eta" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "sample_shipments" ALTER COLUMN "courier_company" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "sample_shipments" ALTER COLUMN "courier_type" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "sample_requests" ADD COLUMN "source" "sample_request_source" DEFAULT 'shipped' NOT NULL;--> statement-breakpoint
 ALTER TABLE "sample_requests" ADD COLUMN "is_test" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE "sample_requests" ADD CONSTRAINT "sample_requests_shipped_has_delivery" CHECK ("sample_requests"."source" <> 'shipped' or ("sample_requests"."batch_id" is not null and "sample_requests"."box_number" is not null and "sample_requests"."address_line" is not null and "sample_requests"."area_id" is not null and "sample_requests"."postal_code" is not null and "sample_requests"."courier_company" is not null and "sample_requests"."shipping_fee" is not null));

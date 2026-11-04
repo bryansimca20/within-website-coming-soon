@@ -1,5 +1,5 @@
 {
-  "id": "9bff428a-cf09-47ea-bc9f-ea389e877d6d",
+  "id": "dbcfcd97-4640-4e79-b6aa-6b144fbe1243",
   "prevId": "6c020653-638d-4fd2-ba9c-8ad6e2dd50eb",
   "version": "7",
   "dialect": "postgresql",
@@ -851,13 +851,13 @@
           "name": "courier_company",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "courier_type": {
           "name": "courier_type",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "tracking_link": {
           "name": "tracking_link",
