@@ -13,12 +13,12 @@ const noop = () => undefined;
 export function SampleStepSeedPhone({ values, errors, onChange }: ISampleStepProps) {
   return (
     <div className="flex flex-col gap-4">
-      <SampleStepHeading>{SAMPLE_COPY.headings.shipping}</SampleStepHeading>
+      <SampleStepHeading>{SAMPLE_COPY.seed.phoneHeading}</SampleStepHeading>
       <div>
         <WaitlistField id="whatsapp" name="whatsapp" label={delivery.whatsapp} value={values.whatsapp}
           onValueChange={(whatsapp) => onChange({ whatsapp })} onValueBlur={noop} error={errors.whatsapp}
           inputProps={{ type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: delivery.whatsappPlaceholder }} />
-        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{delivery.whatsappHint}</p>
+        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{SAMPLE_COPY.seed.phoneHint}</p>
       </div>
     </div>
   );

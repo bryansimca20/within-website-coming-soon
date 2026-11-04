@@ -32,20 +32,11 @@ const STEP_SCREENS: Record<SampleStep, (props: ISampleStepProps) => JSX.Element>
   5: SampleStepSeedPhone,
 };
 
-interface SampleSeedFormProps {
-  /** Starts a fresh form for the next person. */
-  onAgain: () => void;
-}
-
-/** The in-person form, remounted from scratch for each next person. */
+/**
+ * The public form's four survey steps, then WhatsApp. No intro, no payment. "Register another" reloads the page:
+ * the step history hook leaves earlier steps in the browser history, and a reload is the clean reset for them.
+ */
 export function SampleSeedForm() {
-  const [round, setRound] = useState(0);
-
-  return <SampleSeedFlow key={round} onAgain={() => setRound((previous) => previous + 1)} />;
-}
-
-/** The public form's four survey steps, then WhatsApp. No intro, no payment. */
-function SampleSeedFlow({ onAgain }: SampleSeedFormProps) {
   const { screen, direction, goForward, goBack, returnTo } = useSampleStepHistory();
   const [values, setValues] = useState<ISampleRequestInput>(EMPTY_SAMPLE_REQUEST_INPUT);
   const [errors, setErrors] = useState<SampleFieldErrors>({});
@@ -105,7 +96,7 @@ function SampleSeedFlow({ onAgain }: SampleSeedFormProps) {
     submit(formData);
   }
 
-  if (seededName !== null) return <SampleSeedThanks firstName={seededName} onAgain={onAgain} />;
+  if (seededName !== null) return <SampleSeedThanks firstName={seededName} onAgain={() => window.location.assign("/sample/seed")} />;
 
   const StepScreen = STEP_SCREENS[step];
   const buttonLabel = !isLast ? SAMPLE_COPY.continue : isPending ? seed.submitting : seed.submit;
