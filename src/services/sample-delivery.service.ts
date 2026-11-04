@@ -1,6 +1,6 @@
 import "server-only";
 
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import type { SampleDatabase } from "@/db/database";
 import { type SampleRequest, sampleRequests, type SampleShipment } from "@/db/schema";
@@ -127,7 +127,7 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
 /** Delivery tracking for the admin overview: every paid or later box and its latest attempt. Paid is here for orders that fail before pickup. */
 export class SampleDeliveryService {
   static async board(db: SampleDatabase, now: Date): Promise<IDeliveryBoard> {
-    const requests = await db.select().from(sampleRequests).where(inArray(sampleRequests.status, ["paid", "shipped", "delivered"]));
+    const requests = await db.select().from(sampleRequests).where(and(inArray(sampleRequests.status, ["paid", "shipped", "delivered"]), eq(sampleRequests.isTest, false)));
     const shipments = await SampleAdminDataService.latestShipments(db, requests.map((request) => request.id));
 
     return buildDeliveryBoard(requests.map((request) => ({ request, shipment: shipments.get(request.id) ?? null })), now);

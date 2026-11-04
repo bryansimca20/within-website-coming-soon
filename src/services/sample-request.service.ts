@@ -107,7 +107,9 @@ export class SampleRequestService {
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(sampleRequests)
-      .where(and(eq(sampleRequests.batchId, batchId), inArray(sampleRequests.status, CLAIMING_STATUSES)));
+      .where(
+        and(eq(sampleRequests.batchId, batchId), inArray(sampleRequests.status, CLAIMING_STATUSES), eq(sampleRequests.isTest, false))
+      );
 
     return row?.count ?? 0;
   }
@@ -116,13 +118,17 @@ export class SampleRequestService {
    * Holds a box for one request, in one transaction with the batch row locked: lapsed holds are
    * closed, a pending hold from the same email is replaced, a paid box for the same email is
    * returned instead, a full or closed batch is refused, and the next box number is taken.
+   * A test claim only meets other test claims and never counts toward capacity.
    */
   static async claim(
     db: SampleDatabase,
     batchId: string,
     values: ISampleRequestValues,
-    now: Date
+    now: Date,
+    options: { isTest?: boolean } = {}
   ): Promise<ClaimResult> {
+    const isTest = options.isTest ?? false;
+
     return db.transaction(async (tx) => {
       const [batch] = await tx.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).for("update");
       if (batch === undefined || batch.phase !== "open") {
@@ -134,14 +140,16 @@ export class SampleRequestService {
         .update(sampleRequests)
         .set({ status: "expired" })
         // In every batch: one email never holds boxes in two batches at once.
-        .where(and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment")));
+        .where(
+          and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment"), eq(sampleRequests.isTest, isTest))
+        );
 
-      const existing = await SampleRequestService.findActiveByEmail(tx, values.email);
+      const existing = await SampleRequestService.findActiveByEmail(tx, values.email, { isTest });
       if (existing !== null) {
         return { kind: "already-requested", request: existing };
       }
 
-      if ((await SampleRequestService.countClaiming(tx, batchId)) >= batch.capacity) {
+      if (!isTest && (await SampleRequestService.countClaiming(tx, batchId)) >= batch.capacity) {
         return { kind: "full" };
       }
 
@@ -166,6 +174,7 @@ export class SampleRequestService {
           boxNumber,
           accessToken: generateAccessToken(),
           status: "pending_payment",
+          isTest,
           consentedAt: wantsLaunchEmail ? now : null,
           createdAt: now,
           expiresAt: new Date(now.getTime() + batch.paymentWindowMinutes * MS_PER_MINUTE),
@@ -195,13 +204,17 @@ export class SampleRequestService {
     return request ?? null;
   }
 
-  /** The newest paid, shipped or delivered request for an email, in any batch. */
-  static async findActiveByEmail(db: SampleDatabase, email: string): Promise<SampleRequest | null> {
+  /** The newest paid, shipped or delivered request for an email, in any batch, among rows with the same test flag. */
+  static async findActiveByEmail(db: SampleDatabase, email: string, options: { isTest?: boolean } = {}): Promise<SampleRequest | null> {
     const [request] = await db
       .select()
       .from(sampleRequests)
       .where(
-        and(eq(sampleRequests.email, email.trim().toLowerCase()), inArray(sampleRequests.status, ACTIVE_STATUSES))
+        and(
+          eq(sampleRequests.email, email.trim().toLowerCase()),
+          inArray(sampleRequests.status, ACTIVE_STATUSES),
+          eq(sampleRequests.isTest, options.isTest ?? false)
+        )
       )
       .orderBy(desc(sampleRequests.createdAt))
       .limit(1);
@@ -237,7 +250,7 @@ export class SampleRequestService {
       if (request.paidAt !== null) {
         return { kind: "repeat" };
       }
-      if (request.status === "cancelled" || (await SampleRequestService.findActiveByEmail(tx, request.email)) !== null) {
+      if (request.status === "cancelled" || (await SampleRequestService.findActiveByEmail(tx, request.email, { isTest: request.isTest })) !== null) {
         return { kind: "refund", request };
       }
 
@@ -311,6 +324,11 @@ export class SampleRequestService {
     await db.update(sampleRequests).set({ status, ...patch }).where(eq(sampleRequests.id, id));
   }
 
+  /** Marks a request as a test order, or back to a real one. */
+  static async setTest(db: SampleDatabase, id: string, isTest: boolean): Promise<void> {
+    await db.update(sampleRequests).set({ isTest }).where(eq(sampleRequests.id, id));
+  }
+
   static async setShopifyOutcome(db: SampleDatabase, id: string, outcome: string): Promise<void> {
     await db.update(sampleRequests).set({ shopifyOutcome: outcome }).where(eq(sampleRequests.id, id));
   }
@@ -357,7 +375,7 @@ export class SampleRequestService {
     const rows = await db
       .select({ status: sampleRequests.status, count: sql<number>`count(*)::int` })
       .from(sampleRequests)
-      .where(eq(sampleRequests.batchId, batchId))
+      .where(and(eq(sampleRequests.batchId, batchId), eq(sampleRequests.isTest, false)))
       .groupBy(sampleRequests.status);
     const summary: Record<SampleRequestStatus, number> = {
       pending_payment: 0,

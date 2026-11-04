@@ -284,3 +284,47 @@ describe("SampleRequestService.claim across batches", () => {
     expect((await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), minutesAfter(2001))).kind).toBe("claimed");
   });
 });
+
+describe("test orders", () => {
+  async function claimTest(email: string) {
+    const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW, { isTest: true });
+    if (result.kind !== "claimed") throw new Error(`expected claimed, got ${result.kind}`);
+    return result.request;
+  }
+
+  test("does not count test claims against capacity", async () => {
+    await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
+    await claimTest("t@example.com");
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "r@example.com" }), NOW)).kind).toBe("claimed");
+  });
+
+  test("lets a real request through after a test request for the same email", async () => {
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW)).kind).toBe("claimed");
+  });
+
+  test("refuses a second test request for an email with a paid test request", async () => {
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW, { isTest: true })).kind).toBe("already-requested");
+  });
+
+  test("pays a test order for an email that already owns a real box", async () => {
+    const real = await claimed("a@example.com");
+    await SampleRequestService.settle(db, real.id, NOW);
+    const test = await claimTest("a@example.com");
+
+    expect((await SampleRequestService.settle(db, test.id, NOW)).kind).toBe("paid");
+  });
+
+  test("setTest flips the flag", async () => {
+    const request = await claimed("a@example.com");
+    await SampleRequestService.setTest(db, request.id, true);
+
+    expect((await SampleRequestService.findById(db, request.id))?.isTest).toBe(true);
+  });
+});

@@ -4,7 +4,7 @@ import { NOW } from "../../test/sample-fixtures";
 import { type IReviewRow, summarizeReviews } from "./sample-review.service";
 
 function row(patch: Partial<IReviewRow>): IReviewRow {
-  return { id: "f", requestId: "r", batchId: "b02", name: "Putri", boxLabel: "B02-001", rating: null, headline: null, review: null, taste: null, effectiveness: null, felt: [], createdAt: NOW, ...patch };
+  return { id: "f", requestId: "r", batchId: "b02", source: "shipped", name: "Putri", boxLabel: "B02-001", rating: null, headline: null, review: null, taste: null, effectiveness: null, felt: [], createdAt: NOW, ...patch };
 }
 
 describe("summarizeReviews", () => {

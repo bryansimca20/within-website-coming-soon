@@ -248,7 +248,7 @@ export function buildFeedbackCsv(rows: IFeedbackExportRow[], batchLabel: string)
 /** Reads everything a batch's two exports need. Feedback with no matching request belongs to no batch. */
 export class SampleExportService {
   static async loadBatch(db: SampleDatabase, batchId: string): Promise<{ registrations: IExportRow[]; feedback: IFeedbackExportRow[] }> {
-    const requests = (await SampleRequestService.listForAdmin(db, batchId, {})).reverse();
+    const requests = (await SampleRequestService.listForAdmin(db, batchId, {})).filter((request) => !request.isTest).reverse();
     const ids = requests.map((request) => request.id);
     const [shipments, feedback] = await Promise.all([
       SampleAdminDataService.latestShipments(db, ids),

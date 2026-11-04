@@ -152,3 +152,17 @@ describe("per-batch exports", () => {
     expect(cells[columns.indexOf("intent")]).toBe("");
   });
 });
+
+describe("test orders in exports", () => {
+  test("loadBatch leaves test requests out of both lists", async () => {
+    const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
+    if (claim.kind !== "claimed") throw new Error(claim.kind);
+    await SampleRequestService.markPaid(db, claim.request.id, NOW);
+    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine" }, "test@example.com", NOW);
+
+    const exported = await SampleExportService.loadBatch(db, "b01");
+
+    expect(exported.registrations).toEqual([]);
+    expect(exported.feedback).toEqual([]);
+  });
+});
