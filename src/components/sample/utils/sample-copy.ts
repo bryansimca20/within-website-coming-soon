@@ -113,6 +113,7 @@ export const SAMPLE_COPY = {
     intro: "A few questions about how you train, so we can read your check-in properly. Takes about two minutes.",
     steps: ["About you", "Your training", "Your sessions", "You and WITHIN", "Phone"] as const,
     phoneHeading: "How can we reach you?",
+    emailHint: "We'll send your check-in link here.",
     phoneHint: "We'll only message you about your samples.",
     submit: "Register",
     submitting: "Registering",

@@ -61,7 +61,7 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
         <h1 className="wi-readout m-0 text-h1 text-wi-black">{boxLabel}</h1>
         <AdminStatusPill status={request.status} />
       </div>
-      <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} />
+      <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} isInPerson={!isShipped} />
       {shipForm}
       <Card title="Request"><Fields entries={requestFields} /></Card>
       <Card title={`Payments (${payments.length})`}>
@@ -92,7 +92,7 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
           <Button type="submit" size="sm" variant="secondary" className="self-start">Save note</Button>
         </form>
       </Card>
-      {request.status !== "cancelled" && (
+      {isShipped && request.status !== "cancelled" && (
         <Card title="Cancel">
           <form action={cancelRequestAction} className="flex flex-wrap gap-2">
             <input type="hidden" name="requestId" value={request.id} />

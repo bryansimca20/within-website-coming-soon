@@ -30,12 +30,15 @@ function SeededStat({ label, value, detail }: { label: string; value: ReactNode;
 /** Samples handed out in person: how many, how many checked in, and what they scored. */
 export default async function AdminSeededPage({ searchParams }: { searchParams: Promise<{ checkedIn?: string }> }) {
   await requireAdmin();
-  const [{ checkedIn }, requests, reviews] = await Promise.all([searchParams, SampleRequestService.listSeeded(db), SampleReviewService.list(db)]);
-  const feedback = await SampleAdminDataService.feedbackByRequest(db, requests.map((request) => request.id));
+  const [{ checkedIn }, listed, reviews] = await Promise.all([searchParams, SampleRequestService.listSeeded(db, { includeTest: true }), SampleReviewService.list(db)]);
+  // Test rows are listed so they can be found and unmarked, but never counted.
+  const requests = listed.filter((request) => !request.isTest);
+  const feedback = await SampleAdminDataService.feedbackByRequest(db, listed.map((request) => request.id));
   const filter = checkedIn === "yes" || checkedIn === "no" ? checkedIn : null;
-  const visible = filter === null ? requests : requests.filter((request) => feedback.has(request.id) === (filter === "yes"));
+  const visible = filter === null ? listed : listed.filter((request) => feedback.has(request.id) === (filter === "yes"));
   const summary = summarizeReviews(reviews.filter((review) => review.source === "in_person"));
-  const rate = requests.length === 0 ? null : feedback.size / requests.length;
+  const checkedInCount = requests.filter((request) => feedback.has(request.id)).length;
+  const rate = requests.length === 0 ? null : checkedInCount / requests.length;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-10 md:py-10">
@@ -60,7 +63,7 @@ export default async function AdminSeededPage({ searchParams }: { searchParams: 
 
       <dl className="m-0 grid rounded-[var(--wi-radius-card)] bg-wi-paper shadow-[var(--wi-shadow-card)] sm:grid-cols-3">
         <SeededStat label="Seeded" value={requests.length} detail="Handed out in person" />
-        <SeededStat label="Checked in" value={<>{feedback.size}<span className="ml-1.5 text-sm font-normal tracking-normal text-wi-ink-500">of {requests.length}</span></>} detail={rate === null ? "Nobody seeded yet." : `${Math.round(rate * 100)}% checked in`} />
+        <SeededStat label="Checked in" value={<>{checkedInCount}<span className="ml-1.5 text-sm font-normal tracking-normal text-wi-ink-500">of {requests.length}</span></>} detail={rate === null ? "Nobody seeded yet." : `${Math.round(rate * 100)}% checked in`} />
         <SeededStat label="Average stars" value={summary.average === null ? "–" : summary.average.toFixed(1)} detail={`${summary.rated} rated`} />
       </dl>
 

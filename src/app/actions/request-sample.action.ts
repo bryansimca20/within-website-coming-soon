@@ -97,9 +97,13 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       return { outcome: SampleRequestOutcome.Full };
     }
     if (claim.kind === "already-requested") {
-      // Their samples may be from an earlier batch: the email must name that batch, not the open one.
-      const ownBatch = await SampleRequestService.findBatch(db, claim.request.batchId);
-      await SampleNotifier.sendPaid(claim.request, ownBatch ?? batch);
+      if (claim.request.source === "in_person") {
+        await SampleNotifier.sendSeeded(claim.request);
+      } else {
+        // Their samples may be from an earlier batch: the email must name that batch, not the open one.
+        const ownBatch = await SampleRequestService.findBatch(db, claim.request.batchId);
+        await SampleNotifier.sendPaid(claim.request, ownBatch ?? batch);
+      }
       return { outcome: SampleRequestOutcome.AlreadyRequested, email: values.email };
     }
 

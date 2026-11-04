@@ -377,5 +377,6 @@ describe("SampleRequestService.listSeeded", () => {
     await db.update(sampleRequests).set({ isTest: true }).where(eq(sampleRequests.id, hidden.request.id));
 
     expect((await SampleRequestService.listSeeded(db)).map((row) => row.id)).toEqual([newer.request.id, older.request.id]);
+    expect((await SampleRequestService.listSeeded(db, { includeTest: true })).map((row) => row.id)).toEqual([hidden.request.id, newer.request.id, older.request.id]);
   });
 });

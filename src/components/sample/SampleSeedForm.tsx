@@ -110,7 +110,7 @@ export function SampleSeedForm() {
       <SampleStepIndicator step={step} labels={seed.steps} counter={SAMPLE_COPY.stepCounter} onBack={step > 1 ? goBack : undefined} />
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.div key={step} custom={direction} variants={SAMPLE_STEP_SLIDE} initial="enter" animate="center" exit="exit" className={SAMPLE_ALERT_FADE}>
-          <StepScreen values={values} errors={errors} onChange={change} />
+          <StepScreen values={values} errors={errors} onChange={change} emailHint={seed.emailHint} />
         </motion.div>
       </AnimatePresence>
 

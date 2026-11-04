@@ -393,12 +393,12 @@ export class SampleRequestService {
     await db.update(sampleBatches).set(patch).where(eq(sampleBatches.id, batchId));
   }
 
-  /** Real in-person rows for the Seeded page, newest first. */
-  static async listSeeded(db: SampleDatabase): Promise<SampleRequest[]> {
+  /** In-person rows for the Seeded page, newest first. Test rows only come back with `includeTest`, for the list. */
+  static async listSeeded(db: SampleDatabase, { includeTest = false }: { includeTest?: boolean } = {}): Promise<SampleRequest[]> {
     return db
       .select()
       .from(sampleRequests)
-      .where(and(eq(sampleRequests.source, "in_person"), eq(sampleRequests.isTest, false)))
+      .where(and(eq(sampleRequests.source, "in_person"), includeTest ? undefined : eq(sampleRequests.isTest, false)))
       .orderBy(desc(sampleRequests.createdAt));
   }
 

@@ -9,6 +9,7 @@ import { GENERIC_ERROR_MESSAGE, SampleSeedOutcome, type SampleSeedState } from "
 import { SAMPLE_COPY } from "@/components/sample/utils/sample-copy";
 import { db } from "@/db/client";
 import { isAdmin } from "@/lib/admin-session";
+import { SamplePaymentService } from "@/services/sample-payment.service";
 import { SampleNotifier } from "@/services/sample-notifier.service";
 import { SampleRequestService } from "@/services/sample-request.service";
 import { SAMPLING_TAG_PREFIX, ShopifyCustomerService } from "@/services/shopify-customer.service";
@@ -43,6 +44,10 @@ export async function seedSampleAction(formData: FormData): Promise<SampleSeedSt
       return { outcome: SampleSeedOutcome.AlreadyRequested, email: values.email };
     }
 
+    // A live unpaid hold from /sample must stop being payable. If this fails, a late payment is flagged for refund instead.
+    await SamplePaymentService.cancelSuperseded(db, values.email, now).catch((error: unknown) => {
+      console.error("[seed-sample] cancelling replaced attempts failed", error);
+    });
     await SampleNotifier.sendSeeded(result.request);
     const ref = values.attribution.ref;
     try {

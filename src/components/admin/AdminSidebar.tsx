@@ -165,7 +165,7 @@ export function AdminSidebar({ batches, issues }: AdminSidebarProps) {
             <SidebarMenu>
               {SEEDED_PAGES.map((page) => (
                 <SidebarMenuItem key={page.href}>
-                  <SidebarMenuButton className={ACTIVE} isActive={pathname === page.href || (page.href !== "/sample/seed" && pathname.startsWith(`${page.href}/`))} render={<Link href={page.href} />}>
+                  <SidebarMenuButton className={ACTIVE} isActive={pathname === page.href} render={<Link href={page.href} />}>
                     <page.icon />
                     <span>{page.label}</span>
                     <AdminNavPending />

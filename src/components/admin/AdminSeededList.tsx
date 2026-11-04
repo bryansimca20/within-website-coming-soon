@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { formatJakarta } from "@/components/sample/utils/jakarta-date";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { SampleFeedbackRow, SampleRequest } from "@/db/schema";
 
@@ -45,6 +46,7 @@ export function AdminSeededList({ requests, feedback, isFiltered }: AdminSeededL
               <TableRow key={request.id}>
                 <TableCell>
                   <Link href={`/admin/requests/${request.id}`} className="font-medium text-wi-black hover:underline">{request.fullName}</Link>
+                  {request.isTest && <Badge variant="secondary" className="ml-1.5">Test</Badge>}
                 </TableCell>
                 <TableCell>
                   <a href={`https://instagram.com/${request.instagramHandle}`} target="_blank" rel="noreferrer" className="text-wi-ink-700 hover:text-wi-black hover:underline">@{request.instagramHandle}</a>

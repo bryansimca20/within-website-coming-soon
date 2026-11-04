@@ -121,6 +121,6 @@ export async function saveAdminNoteAction(formData: FormData): Promise<void> {
 /** Flags a request as a test order, or back to a real one. Test orders are left out of capacity, stats and exports. */
 export async function setTestRequestAction(requestId: string, isTest: boolean): Promise<void> {
   await requireAdmin();
-  await SampleRequestService.setTest(db, z.string().uuid().parse(requestId), isTest);
+  await SampleRequestService.setTest(db, z.string().uuid().parse(requestId), z.boolean().parse(isTest));
   revalidate();
 }
