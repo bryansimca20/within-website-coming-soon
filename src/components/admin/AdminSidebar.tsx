@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatCenteredText, CircleNotch, DownloadSimple, SignOut, SquaresFour, Tray } from "@phosphor-icons/react";
+import { ChatCenteredText, CircleNotch, DownloadSimple, Gift, HandHeart, SignOut, SquaresFour, Tray } from "@phosphor-icons/react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useFormStatus } from "react-dom";
@@ -47,6 +47,13 @@ interface AdminSidebarProps {
 const BATCH_PAGES = [
   { segment: "requests", label: "Requests", icon: Tray },
   { segment: "export", label: "Export", icon: DownloadSimple },
+] as const;
+
+/** newTab: the seed form is handed to a recipient, so it opens in its own tab and Back cannot reach admin. */
+const SEEDED_PAGES = [
+  { href: "/admin/seeded", label: "Seeded", icon: Gift, newTab: false },
+  { href: "/admin/seeded/export", label: "Export", icon: DownloadSimple, newTab: false },
+  { href: "/sample/seed", label: "Seed a sample", icon: HandHeart, newTab: true },
 ] as const;
 
 /** The current page lifts off the rail as a white tile. */
@@ -150,6 +157,22 @@ export function AdminSidebar({ batches, issues }: AdminSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Seeded</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {SEEDED_PAGES.map((page) => (
+                <SidebarMenuItem key={page.href}>
+                  <SidebarMenuButton className={ACTIVE} isActive={pathname === page.href} render={page.newTab ? <Link href={page.href} target="_blank" rel="noopener noreferrer" /> : <Link href={page.href} />}>
+                    <page.icon />
+                    <span>{page.label}</span>
+                    {!page.newTab && <AdminNavPending />}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

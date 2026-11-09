@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -35,6 +36,9 @@ export const samplePaymentStatusEnum = pgEnum("sample_payment_status", [
 /** A batch's public state, set by a founder in admin. */
 export const sampleBatchPhaseEnum = pgEnum("sample_batch_phase", ["upcoming", "open", "closed"]);
 
+/** How a request came in: the public form (shipped) or a founder seeding a sample by hand (in_person). */
+export const sampleRequestSourceEnum = pgEnum("sample_request_source", ["shipped", "in_person"]);
+
 /** Who sent a stored webhook body. */
 export const webhookProviderEnum = pgEnum("webhook_provider", ["midtrans", "biteship"]);
 
@@ -59,10 +63,12 @@ export const sampleRequests = pgTable(
   "sample_requests",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    batchId: text("batch_id")
-      .notNull()
-      .references(() => sampleBatches.id),
-    boxNumber: integer("box_number").notNull(),
+    // Null only for in-person requests (`source = in_person`), which belong to no batch or box.
+    batchId: text("batch_id").references(() => sampleBatches.id),
+    boxNumber: integer("box_number"),
+    source: sampleRequestSourceEnum("source").notNull().default("shipped"),
+    // Test orders are excluded from counts, exports and the Shopify draft path.
+    isTest: boolean("is_test").notNull().default(false),
     accessToken: text("access_token").notNull().unique(),
     status: sampleRequestStatusEnum("status").notNull().default("pending_payment"),
     // Training profile. Closed sets are stored as option keys from sample-options.ts.
@@ -90,15 +96,15 @@ export const sampleRequests = pgTable(
     email: text("email").notNull(),
     whatsapp: text("whatsapp").notNull(),
     instagramHandle: text("instagram_handle").notNull(),
-    // Delivery address, resolved through the Biteship area search.
-    addressLine: text("address_line").notNull(),
+    // Delivery address, resolved through the Biteship area search. Null only for in-person requests (`source = in_person`).
+    addressLine: text("address_line"),
     deliveryNote: text("delivery_note"),
-    areaId: text("area_id").notNull(),
-    areaName: text("area_name").notNull(),
-    province: text("province").notNull(),
-    city: text("city").notNull(),
-    district: text("district").notNull(),
-    postalCode: text("postal_code").notNull(),
+    areaId: text("area_id"),
+    areaName: text("area_name"),
+    province: text("province"),
+    city: text("city"),
+    district: text("district"),
+    postalCode: text("postal_code"),
     // The two checkboxes.
     willShare: boolean("will_share").notNull().default(false),
     // When they ticked "Email me when WITHIN launches"; null when they didn't.
@@ -111,12 +117,12 @@ export const sampleRequests = pgTable(
     utmContent: text("utm_content"),
     utmTerm: text("utm_term"),
     landingPath: text("landing_path"),
-    // The courier the sampler chose and the fee they agreed to pay.
-    courierCompany: text("courier_company").notNull(),
-    courierType: text("courier_type").notNull(),
-    courierServiceName: text("courier_service_name").notNull(),
-    shippingFee: integer("shipping_fee").notNull(),
-    shippingEta: text("shipping_eta").notNull(),
+    // The courier the sampler chose and the fee they agreed to pay. Null only for in-person requests.
+    courierCompany: text("courier_company"),
+    courierType: text("courier_type"),
+    courierServiceName: text("courier_service_name"),
+    shippingFee: integer("shipping_fee"),
+    shippingEta: text("shipping_eta"),
     shopifyOutcome: text("shopify_outcome"),
     createdAt: timestamptz("created_at").notNull().defaultNow(),
     expiresAt: timestamptz("expires_at").notNull(),
@@ -133,6 +139,10 @@ export const sampleRequests = pgTable(
     uniqueIndex("sample_requests_batch_box").on(table.batchId, table.boxNumber),
     index("sample_requests_email").on(table.email),
     index("sample_requests_status").on(table.status),
+    check(
+      "sample_requests_shipped_has_delivery",
+      sql`${table.source} <> 'shipped' or (${table.batchId} is not null and ${table.boxNumber} is not null and ${table.addressLine} is not null and ${table.areaId} is not null and ${table.postalCode} is not null and ${table.courierCompany} is not null and ${table.shippingFee} is not null)`
+    ),
   ]
 );
 
@@ -229,4 +239,5 @@ export type SampleFeedbackRow = typeof sampleFeedback.$inferSelect;
 export type SampleWebhookEvent = typeof sampleWebhookEvents.$inferSelect;
 export type SampleRequestStatus = (typeof sampleRequestStatusEnum.enumValues)[number];
 export type SamplePaymentStatus = (typeof samplePaymentStatusEnum.enumValues)[number];
+export type SampleRequestSource = (typeof sampleRequestSourceEnum.enumValues)[number];
 export type SampleBatchPhase = (typeof sampleBatchPhaseEnum.enumValues)[number];

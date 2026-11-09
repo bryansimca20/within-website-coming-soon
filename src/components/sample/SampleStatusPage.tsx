@@ -35,12 +35,13 @@ function headline(request: SampleRequest): string {
 /** `/sample/r/[token]`: where a sampler's box is, what they owe if anything, and the one ask. */
 export function SampleStatusPage(props: SampleStatusPageProps) {
   const { request, shipment, feedback } = props;
+  const isInPerson = request.source === "in_person";
   const hasShipped = request.status === "shipped" || request.status === "delivered";
 
   return (
     <SampleShell>
       <div className="flex flex-col gap-2 pb-8">
-        <p className={LABEL_CLASS}>{status.boxOf(props.boxWord, props.batchLabel).toUpperCase()}</p>
+        {!isInPerson && <p className={LABEL_CLASS}>{status.boxOf(props.boxWord, props.batchLabel).toUpperCase()}</p>}
         <h1 className="m-0 text-[32px] leading-9 font-normal tracking-[-0.02em] desk:text-[44px] desk:leading-[48px]">{headline(request)}</h1>
       </div>
 
@@ -48,11 +49,11 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
         <section className="mb-10 flex flex-col gap-4 border-t-[6px] border-brand-ink pt-5">
           <div className="flex items-baseline justify-between">
             <span className="text-[15px]">{status.payLabel}</span>
-            <span className="text-[15px] font-semibold tabular-nums">{formatRupiah(request.shippingFee)}</span>
+            <span className="text-[15px] font-semibold tabular-nums">{formatRupiah(request.shippingFee ?? 0)}</span>
           </div>
           <p className="m-0 text-[15px] leading-[22px] text-brand-muted">{status.holdLeft(formatMinutes(props.minutesLeft))}</p>
           <SampleSnapScript src={props.snapScriptUrl} />
-          <SamplePayNow token={request.accessToken} amount={request.shippingFee} redirectUrl={props.payment?.snapRedirectUrl ?? null} />
+          <SamplePayNow token={request.accessToken} amount={request.shippingFee ?? 0} redirectUrl={props.payment?.snapRedirectUrl ?? null} />
         </section>
       )}
 
@@ -65,7 +66,7 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
         </section>
       )}
 
-      {request.status !== "expired" && request.status !== "cancelled" && (
+      {!isInPerson && request.status !== "expired" && request.status !== "cancelled" && (
         <section className="mb-10">
           <SampleStatusTimeline steps={buildStatusSteps(request, shipment)} />
           {shipment?.trackingLink && (
@@ -92,13 +93,15 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
         </section>
       )}
 
-      <section className="flex flex-col gap-1 border-t border-brand-ink pt-4 text-[15px] leading-[22px]">
-        <p className={`${LABEL_CLASS} mb-1`}>{status.deliveryHeading}</p>
-        <span>{request.fullName}</span>
-        <span>{request.addressLine}</span>
-        <span className="text-brand-muted">{request.areaName}</span>
-        <span className="text-brand-muted">{request.courierServiceName}</span>
-      </section>
+      {!isInPerson && (
+        <section className="flex flex-col gap-1 border-t border-brand-ink pt-4 text-[15px] leading-[22px]">
+          <p className={`${LABEL_CLASS} mb-1`}>{status.deliveryHeading}</p>
+          <span>{request.fullName}</span>
+          <span>{request.addressLine}</span>
+          <span className="text-brand-muted">{request.areaName}</span>
+          <span className="text-brand-muted">{request.courierServiceName}</span>
+        </section>
+      )}
     </SampleShell>
   );
 }

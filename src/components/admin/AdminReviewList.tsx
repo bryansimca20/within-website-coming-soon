@@ -43,7 +43,7 @@ export function AdminReviewList({ reviews, isFiltered }: AdminReviewListProps) {
               "Email matched no box"
             ) : (
               <Link href={`/admin/requests/${review.requestId}`} className="text-wi-ink-700 underline-offset-4 hover:text-wi-black hover:underline">
-                {review.name} · <span className="wi-readout">{review.boxLabel}</span>
+                {review.name}{review.boxLabel !== null && review.boxLabel !== "" && <> · <span className="wi-readout">{review.boxLabel}</span></>}
               </Link>
             )}
             <span className="tabular-nums"> · {formatJakarta(review.createdAt)}</span>

@@ -7,7 +7,7 @@ import { FeedbackEligibility } from "@/app/utils/feedback-eligibility";
 import { sampleFeedback, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
-import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
+import { minutesAfter, NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
 import { SampleFeedbackService } from "./sample-feedback.service";
 import { SampleRequestService } from "./sample-request.service";
 
@@ -168,5 +168,15 @@ describe("SampleFeedbackService.dueReminders", () => {
     const rows = await SampleFeedbackService.dueReminders(db, NOW);
 
     expect(rows.map((row) => row.id)).toEqual([due.id]);
+  });
+});
+
+describe("seeded requests", () => {
+  test("can check in, and get a reminder 7 days after seeding", async () => {
+    const result = await SampleRequestService.seed(db, seedValues({ email: "s@example.com" }), NOW);
+    if (result.kind !== "seeded") throw new Error("expected seeded");
+
+    expect((await SampleFeedbackService.checkEmail(db, "s@example.com")).eligibility).toBe(FeedbackEligibility.Ok);
+    expect((await SampleFeedbackService.dueReminders(db, new Date(NOW.getTime() + 7 * DAY))).map((row) => row.id)).toEqual([result.request.id]);
   });
 });

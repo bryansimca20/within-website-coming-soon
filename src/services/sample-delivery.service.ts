@@ -1,6 +1,6 @@
 import "server-only";
 
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import type { SampleDatabase } from "@/db/database";
 import { type SampleRequest, sampleRequests, type SampleShipment } from "@/db/schema";
@@ -80,6 +80,8 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
   const byBatch: Record<string, IDeliveryCounts> = {};
 
   for (const { request, shipment } of entries) {
+    // In-person requests have no batch and no shipment.
+    if (request.batchId === null) continue;
     const counts = (byBatch[request.batchId] ??= emptyCounts());
     const phase = shipment === null ? null : phaseForBiteshipStatus(shipment.status);
     if (request.status === "delivered" || phase === ShipmentPhase.Delivered) {
@@ -104,9 +106,9 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
 
     issues.push({
       requestId: request.id,
-      boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber),
+      boxLabel: SampleRequestService.boxLabel(request.batchId, request.boxNumber) ?? "In person",
       name: request.fullName,
-      courier: request.courierServiceName,
+      courier: request.courierServiceName ?? "",
       waybillId: shipment.waybillId,
       trackingLink: shipment.trackingLink,
       state: isFailed ? DeliveryState.Failed : DeliveryState.Stuck,
@@ -125,7 +127,7 @@ export function buildDeliveryBoard(entries: Array<{ request: SampleRequest; ship
 /** Delivery tracking for the admin overview: every paid or later box and its latest attempt. Paid is here for orders that fail before pickup. */
 export class SampleDeliveryService {
   static async board(db: SampleDatabase, now: Date): Promise<IDeliveryBoard> {
-    const requests = await db.select().from(sampleRequests).where(inArray(sampleRequests.status, ["paid", "shipped", "delivered"]));
+    const requests = await db.select().from(sampleRequests).where(and(inArray(sampleRequests.status, ["paid", "shipped", "delivered"]), eq(sampleRequests.isTest, false)));
     const shipments = await SampleAdminDataService.latestShipments(db, requests.map((request) => request.id));
 
     return buildDeliveryBoard(requests.map((request) => ({ request, shipment: shipments.get(request.id) ?? null })), now);

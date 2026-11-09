@@ -3,6 +3,7 @@ import "server-only";
 import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, max, ne, or, type SQL, sql } from "drizzle-orm";
 
 import type { ISampleRequestValues } from "@/app/utils/sample-request-input";
+import type { ISampleSeedValues } from "@/app/utils/sample-seed-input";
 import { generateAccessToken } from "@/app/utils/token";
 import type { SampleDatabase } from "@/db/database";
 import {
@@ -22,6 +23,9 @@ export type ClaimResult =
   | { kind: "full" }
   | { kind: "already-requested"; request: SampleRequest }
   | { kind: "closed" };
+
+/** What a seed attempt produced. */
+export type SeedResult = { kind: "seeded"; request: SampleRequest } | { kind: "already-requested"; request: SampleRequest };
 
 /** What a settled payment did: paid the request, was a repeat, or must be refunded by a founder. */
 export type SettleResult =
@@ -107,7 +111,9 @@ export class SampleRequestService {
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(sampleRequests)
-      .where(and(eq(sampleRequests.batchId, batchId), inArray(sampleRequests.status, CLAIMING_STATUSES)));
+      .where(
+        and(eq(sampleRequests.batchId, batchId), inArray(sampleRequests.status, CLAIMING_STATUSES), eq(sampleRequests.isTest, false))
+      );
 
     return row?.count ?? 0;
   }
@@ -116,13 +122,17 @@ export class SampleRequestService {
    * Holds a box for one request, in one transaction with the batch row locked: lapsed holds are
    * closed, a pending hold from the same email is replaced, a paid box for the same email is
    * returned instead, a full or closed batch is refused, and the next box number is taken.
+   * A test claim only meets other test claims and never counts toward capacity.
    */
   static async claim(
     db: SampleDatabase,
     batchId: string,
     values: ISampleRequestValues,
-    now: Date
+    now: Date,
+    options: { isTest?: boolean } = {}
   ): Promise<ClaimResult> {
+    const isTest = options.isTest ?? false;
+
     return db.transaction(async (tx) => {
       const [batch] = await tx.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).for("update");
       if (batch === undefined || batch.phase !== "open") {
@@ -134,14 +144,16 @@ export class SampleRequestService {
         .update(sampleRequests)
         .set({ status: "expired" })
         // In every batch: one email never holds boxes in two batches at once.
-        .where(and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment")));
+        .where(
+          and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment"), eq(sampleRequests.isTest, isTest))
+        );
 
-      const existing = await SampleRequestService.findActiveByEmail(tx, values.email);
+      const existing = await SampleRequestService.findActiveByEmail(tx, values.email, { isTest });
       if (existing !== null) {
         return { kind: "already-requested", request: existing };
       }
 
-      if ((await SampleRequestService.countClaiming(tx, batchId)) >= batch.capacity) {
+      if (!isTest && (await SampleRequestService.countClaiming(tx, batchId)) >= batch.capacity) {
         return { kind: "full" };
       }
 
@@ -166,6 +178,7 @@ export class SampleRequestService {
           boxNumber,
           accessToken: generateAccessToken(),
           status: "pending_payment",
+          isTest,
           consentedAt: wantsLaunchEmail ? now : null,
           createdAt: now,
           expiresAt: new Date(now.getTime() + batch.paymentWindowMinutes * MS_PER_MINUTE),
@@ -176,7 +189,49 @@ export class SampleRequestService {
     });
   }
 
-  static async findBatch(db: SampleDatabase, batchId: string): Promise<SampleBatch | null> {
+  /**
+   * Records a box handed over in person: delivered at once, in no batch, with no box number and no
+   * delivery. An email that already owns a box is refused, the same rule as a claim.
+   */
+  static async seed(db: SampleDatabase, values: ISampleSeedValues, now: Date): Promise<SeedResult> {
+    return db.transaction(async (tx) => {
+      await tx
+        .update(sampleRequests)
+        .set({ status: "expired" })
+        .where(and(eq(sampleRequests.email, values.email), eq(sampleRequests.status, "pending_payment"), eq(sampleRequests.isTest, false)));
+
+      const existing = await SampleRequestService.findActiveByEmail(tx, values.email);
+      if (existing !== null) {
+        return { kind: "already-requested", request: existing };
+      }
+
+      const { attribution, wantsLaunchEmail, ...rest } = values;
+      const [request] = await tx
+        .insert(sampleRequests)
+        .values({
+          ...rest,
+          ref: attribution.ref,
+          utmSource: attribution.utmSource,
+          utmMedium: attribution.utmMedium,
+          utmCampaign: attribution.utmCampaign,
+          utmContent: attribution.utmContent,
+          utmTerm: attribution.utmTerm,
+          source: "in_person",
+          status: "delivered",
+          deliveredAt: now,
+          accessToken: generateAccessToken(),
+          consentedAt: wantsLaunchEmail ? now : null,
+          createdAt: now,
+          expiresAt: now,
+        })
+        .returning();
+
+      return { kind: "seeded", request };
+    });
+  }
+
+  static async findBatch(db: SampleDatabase, batchId: string | null): Promise<SampleBatch | null> {
+    if (batchId === null) return null;
     const [batch] = await db.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).limit(1);
 
     return batch ?? null;
@@ -194,13 +249,17 @@ export class SampleRequestService {
     return request ?? null;
   }
 
-  /** The newest paid, shipped or delivered request for an email, in any batch. */
-  static async findActiveByEmail(db: SampleDatabase, email: string): Promise<SampleRequest | null> {
+  /** The newest paid, shipped or delivered request for an email, in any batch, among rows with the same test flag. */
+  static async findActiveByEmail(db: SampleDatabase, email: string, options: { isTest?: boolean } = {}): Promise<SampleRequest | null> {
     const [request] = await db
       .select()
       .from(sampleRequests)
       .where(
-        and(eq(sampleRequests.email, email.trim().toLowerCase()), inArray(sampleRequests.status, ACTIVE_STATUSES))
+        and(
+          eq(sampleRequests.email, email.trim().toLowerCase()),
+          inArray(sampleRequests.status, ACTIVE_STATUSES),
+          eq(sampleRequests.isTest, options.isTest ?? false)
+        )
       )
       .orderBy(desc(sampleRequests.createdAt))
       .limit(1);
@@ -229,12 +288,14 @@ export class SampleRequestService {
       if (unlocked === null) {
         return { kind: "repeat" };
       }
-      await tx.select({ id: sampleBatches.id }).from(sampleBatches).where(eq(sampleBatches.id, unlocked.batchId)).for("update");
+      if (unlocked.batchId !== null) {
+        await tx.select({ id: sampleBatches.id }).from(sampleBatches).where(eq(sampleBatches.id, unlocked.batchId)).for("update");
+      }
       const request = (await SampleRequestService.findById(tx, requestId)) ?? unlocked;
       if (request.paidAt !== null) {
         return { kind: "repeat" };
       }
-      if (request.status === "cancelled" || (await SampleRequestService.findActiveByEmail(tx, request.email)) !== null) {
+      if (request.status === "cancelled" || (await SampleRequestService.findActiveByEmail(tx, request.email, { isTest: request.isTest })) !== null) {
         return { kind: "refund", request };
       }
 
@@ -245,7 +306,14 @@ export class SampleRequestService {
       await tx
         .update(sampleRequests)
         .set({ status: "expired" })
-        .where(and(eq(sampleRequests.email, request.email), eq(sampleRequests.status, "pending_payment"), ne(sampleRequests.id, request.id)));
+        .where(
+          and(
+            eq(sampleRequests.email, request.email),
+            eq(sampleRequests.status, "pending_payment"),
+            eq(sampleRequests.isTest, request.isTest),
+            ne(sampleRequests.id, request.id)
+          )
+        );
 
       return { kind: "paid", request: paid };
     });
@@ -308,6 +376,11 @@ export class SampleRequestService {
     await db.update(sampleRequests).set({ status, ...patch }).where(eq(sampleRequests.id, id));
   }
 
+  /** Marks a request as a test order, or back to a real one. */
+  static async setTest(db: SampleDatabase, id: string, isTest: boolean): Promise<void> {
+    await db.update(sampleRequests).set({ isTest }).where(eq(sampleRequests.id, id));
+  }
+
   static async setShopifyOutcome(db: SampleDatabase, id: string, outcome: string): Promise<void> {
     await db.update(sampleRequests).set({ shopifyOutcome: outcome }).where(eq(sampleRequests.id, id));
   }
@@ -318,6 +391,15 @@ export class SampleRequestService {
     patch: { capacity?: number; phase?: SampleBatchPhase }
   ): Promise<void> {
     await db.update(sampleBatches).set(patch).where(eq(sampleBatches.id, batchId));
+  }
+
+  /** In-person rows for the Seeded page, newest first. Test rows only come back with `includeTest`, for the list. */
+  static async listSeeded(db: SampleDatabase, { includeTest = false }: { includeTest?: boolean } = {}): Promise<SampleRequest[]> {
+    return db
+      .select()
+      .from(sampleRequests)
+      .where(and(eq(sampleRequests.source, "in_person"), includeTest ? undefined : eq(sampleRequests.isTest, false)))
+      .orderBy(desc(sampleRequests.createdAt));
   }
 
   /** Requests for the admin table, newest box first. `query` matches a box number, a name or an email. */
@@ -354,7 +436,7 @@ export class SampleRequestService {
     const rows = await db
       .select({ status: sampleRequests.status, count: sql<number>`count(*)::int` })
       .from(sampleRequests)
-      .where(eq(sampleRequests.batchId, batchId))
+      .where(and(eq(sampleRequests.batchId, batchId), eq(sampleRequests.isTest, false)))
       .groupBy(sampleRequests.status);
     const summary: Record<SampleRequestStatus, number> = {
       pending_payment: 0,
@@ -369,13 +451,15 @@ export class SampleRequestService {
     return summary;
   }
 
-  /** `B01-042`: the human identifier printed in admin and emails. */
-  static boxLabel(batchId: string, boxNumber: number): string {
+  /** `B01-042`: the human identifier printed in admin and emails. Null for an in-person request, which has no box. */
+  static boxLabel(batchId: string | null, boxNumber: number | null): string | null {
+    if (batchId === null || boxNumber === null) return null;
     return `${batchId.toUpperCase()}-${String(boxNumber).padStart(3, "0")}`;
   }
 
-  /** `No. 042`: how the sampler reads their number. */
-  static boxWord(boxNumber: number): string {
+  /** `No. 042`: how the sampler reads their number. Empty for an in-person request, which has no box. */
+  static boxWord(boxNumber: number | null): string {
+    if (boxNumber === null) return "";
     return `No. ${String(boxNumber).padStart(3, "0")}`;
   }
 

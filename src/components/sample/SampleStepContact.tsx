@@ -9,7 +9,7 @@ const { delivery } = SAMPLE_COPY;
 const noop = () => undefined;
 
 /** Step 1: name, email (with why it matters), Instagram, and the two promises. No phone here. */
-export function SampleStepContact({ values, errors, onChange }: ISampleStepProps) {
+export function SampleStepContact({ values, errors, onChange, emailHint }: ISampleStepProps) {
   return (
     <div className="flex flex-col gap-4">
       <SampleStepHeading>{SAMPLE_COPY.headings.contact}</SampleStepHeading>
@@ -20,7 +20,7 @@ export function SampleStepContact({ values, errors, onChange }: ISampleStepProps
         <WaitlistField id="email" name="email" label={delivery.email} value={values.email}
           onValueChange={(email) => onChange({ email })} onValueBlur={noop} error={errors.email}
           inputProps={{ type: "email", inputMode: "email", autoComplete: "email", autoCapitalize: "none", spellCheck: false, placeholder: delivery.emailPlaceholder }} />
-        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{delivery.emailHint}</p>
+        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{emailHint ?? delivery.emailHint}</p>
       </div>
       <WaitlistField id="instagramHandle" name="instagramHandle" label={delivery.instagram} value={values.instagramHandle}
         onValueChange={(handle) => onChange({ instagramHandle: handle.replace(/^@+/, "") })} onValueBlur={noop}

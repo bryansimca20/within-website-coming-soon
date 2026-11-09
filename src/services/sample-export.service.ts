@@ -245,22 +245,37 @@ export function buildFeedbackCsv(rows: IFeedbackExportRow[], batchLabel: string)
   return BOM + lines.join(LINE) + LINE;
 }
 
+/** Both exports' rows. */
+export interface IExportData {
+  registrations: IExportRow[];
+  feedback: IFeedbackExportRow[];
+}
+
+/** Pairs requests with their shipments and feedback; feedback with no matching request is left out. */
+async function assemble(db: SampleDatabase, requests: SampleRequest[]): Promise<IExportData> {
+  const ids = requests.map((request) => request.id);
+  const [shipments, feedback] = await Promise.all([
+    SampleAdminDataService.latestShipments(db, ids),
+    SampleAdminDataService.feedbackByRequest(db, ids),
+  ]);
+
+  return {
+    registrations: requests.map((request) => ({ request, shipment: shipments.get(request.id) ?? null, feedback: feedback.get(request.id) ?? null })),
+    feedback: requests.flatMap((request) => {
+      const row = feedback.get(request.id);
+      return row === undefined ? [] : [{ request, feedback: row }];
+    }),
+  };
+}
+
 /** Reads everything a batch's two exports need. Feedback with no matching request belongs to no batch. */
 export class SampleExportService {
-  static async loadBatch(db: SampleDatabase, batchId: string): Promise<{ registrations: IExportRow[]; feedback: IFeedbackExportRow[] }> {
-    const requests = (await SampleRequestService.listForAdmin(db, batchId, {})).reverse();
-    const ids = requests.map((request) => request.id);
-    const [shipments, feedback] = await Promise.all([
-      SampleAdminDataService.latestShipments(db, ids),
-      SampleAdminDataService.feedbackByRequest(db, ids),
-    ]);
+  static async loadBatch(db: SampleDatabase, batchId: string): Promise<IExportData> {
+    return assemble(db, (await SampleRequestService.listForAdmin(db, batchId, {})).filter((request) => !request.isTest).reverse());
+  }
 
-    return {
-      registrations: requests.map((request) => ({ request, shipment: shipments.get(request.id) ?? null, feedback: feedback.get(request.id) ?? null })),
-      feedback: requests.flatMap((request) => {
-        const row = feedback.get(request.id);
-        return row === undefined ? [] : [{ request, feedback: row }];
-      }),
-    };
+  /** The in-person rows, oldest first like a batch. */
+  static async loadSeeded(db: SampleDatabase): Promise<IExportData> {
+    return assemble(db, (await SampleRequestService.listSeeded(db)).reverse());
   }
 }

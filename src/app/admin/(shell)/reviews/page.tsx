@@ -9,6 +9,9 @@ import { SampleReviewService, summarizeReviews } from "@/services/sample-review.
 
 export const dynamic = "force-dynamic";
 
+/** The `?batch=` value for in-person reviews. */
+const SEEDED = "seeded";
+
 /** `/admin/reviews` with the given filters; null drops one. */
 function reviewsHref(batch: string | null, stars: number | null): string {
   const params = new URLSearchParams();
@@ -23,12 +26,13 @@ function reviewsHref(batch: string | null, stars: number | null): string {
 export default async function AdminReviewsPage({ searchParams }: { searchParams: Promise<{ batch?: string; stars?: string }> }) {
   await requireAdmin();
   const [query, batches, all] = await Promise.all([searchParams, SampleBatchService.list(db, new Date()), SampleReviewService.list(db)]);
-  const batch = batches.some((summary) => summary.batch.id === query.batch) ? (query.batch ?? null) : null;
+  const batch = query.batch === SEEDED || batches.some((summary) => summary.batch.id === query.batch) ? (query.batch ?? null) : null;
   const starsValue = Number(query.stars);
   const stars = Number.isInteger(starsValue) && starsValue >= 1 && starsValue <= 5 ? starsValue : null;
-  const inBatch = batch === null ? all : all.filter((review) => review.batchId === batch);
+  // Seeded reviews have no batch: they get their own tab and stay out of the batch score.
+  const inBatch = batch === SEEDED ? all.filter((review) => review.source === "in_person") : batch === null ? all.filter((review) => review.source !== "in_person") : all.filter((review) => review.batchId === batch);
   const visible = stars === null ? inBatch : inBatch.filter((review) => review.rating === stars);
-  const tabs = [{ id: null, label: "All batches" }, ...batches.map((summary) => ({ id: summary.batch.id, label: summary.batch.label }))];
+  const tabs = [{ id: null, label: "All batches" }, ...batches.map((summary) => ({ id: summary.batch.id, label: summary.batch.label })), { id: SEEDED, label: "Seeded" }];
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-10 md:py-10">

@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { SampleStatusPage } from "@/components/sample/SampleStatusPage";
 import { db } from "@/db/client";
-import { sampleBatches } from "@/db/schema";
 import { MidtransService } from "@/services/midtrans.service";
 import { SampleFeedbackService } from "@/services/sample-feedback.service";
 import { SamplePaymentService } from "@/services/sample-payment.service";
@@ -24,7 +22,7 @@ export default async function SampleStatusRoute({ params }: { params: Promise<{ 
 
   const now = new Date();
   const request = await SampleRequestService.markExpiredIfLapsed(db, found, now);
-  const [batch] = await db.select().from(sampleBatches).where(eq(sampleBatches.id, request.batchId)).limit(1);
+  const batch = await SampleRequestService.findBatch(db, request.batchId);
   const [payment, shipment, feedback] = await Promise.all([
     SamplePaymentService.latestForRequest(db, request.id),
     SampleShipmentService.latestForRequest(db, request.id),

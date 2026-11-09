@@ -5,7 +5,7 @@ import type { SampleDatabase } from "@/db/database";
 import { sampleBatches, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
-import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
+import { minutesAfter, NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
 import { SampleBatchService } from "./sample-batch.service";
 import { SampleRequestService } from "./sample-request.service";
 
@@ -282,5 +282,101 @@ describe("SampleRequestService.claim across batches", () => {
     await openBatch02();
 
     expect((await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), minutesAfter(2001))).kind).toBe("claimed");
+  });
+});
+
+describe("test orders", () => {
+  async function claimTest(email: string) {
+    const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW, { isTest: true });
+    if (result.kind !== "claimed") throw new Error(`expected claimed, got ${result.kind}`);
+    return result.request;
+  }
+
+  test("does not count test claims against capacity", async () => {
+    await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
+    await claimTest("t@example.com");
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "r@example.com" }), NOW)).kind).toBe("claimed");
+  });
+
+  test("lets a real request through after a test request for the same email", async () => {
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW)).kind).toBe("claimed");
+  });
+
+  test("refuses a second test request for an email with a paid test request", async () => {
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW, { isTest: true })).kind).toBe("already-requested");
+  });
+
+  test("pays a test order for an email that already owns a real box", async () => {
+    const real = await claimed("a@example.com");
+    await SampleRequestService.settle(db, real.id, NOW);
+    const test = await claimTest("a@example.com");
+
+    expect((await SampleRequestService.settle(db, test.id, NOW)).kind).toBe("paid");
+  });
+
+  test("paying a test order leaves a real hold for the same email pending", async () => {
+    const real = await claimed("a@example.com");
+    const test = await claimTest("a@example.com");
+    await SampleRequestService.settle(db, test.id, NOW);
+
+    expect((await SampleRequestService.findById(db, real.id))?.status).toBe("pending_payment");
+  });
+
+  test("setTest flips the flag", async () => {
+    const request = await claimed("a@example.com");
+    await SampleRequestService.setTest(db, request.id, true);
+
+    expect((await SampleRequestService.findById(db, request.id))?.isTest).toBe(true);
+  });
+});
+
+describe("SampleRequestService.seed", () => {
+  test("seeds a delivered in-person request with no batch", async () => {
+    const result = await SampleRequestService.seed(db, seedValues(), NOW);
+
+    expect(result.kind).toBe("seeded");
+    if (result.kind !== "seeded") return;
+    expect(result.request).toMatchObject({ source: "in_person", status: "delivered", batchId: null, boxNumber: null, isTest: false });
+    expect(result.request.deliveredAt).toEqual(NOW);
+  });
+
+  test("refuses to seed an email that already owns a shipped box", async () => {
+    const real = await claimed("a@example.com");
+    await SampleRequestService.settle(db, real.id, NOW);
+
+    expect((await SampleRequestService.seed(db, seedValues({ email: "a@example.com" }), NOW)).kind).toBe("already-requested");
+  });
+
+  test("refuses a shipped claim for an email that was seeded", async () => {
+    await SampleRequestService.seed(db, seedValues({ email: "a@example.com" }), NOW);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW)).kind).toBe("already-requested");
+  });
+
+  test("does not count a seeded request in any batch", async () => {
+    await SampleRequestService.seed(db, seedValues(), NOW);
+
+    expect(await SampleRequestService.countClaimed(db, "b01", NOW)).toBe(0);
+  });
+});
+
+describe("SampleRequestService.listSeeded", () => {
+  test("returns only non-test in-person rows, newest first", async () => {
+    await claimed("shipped@example.com");
+    const older = await SampleRequestService.seed(db, seedValues({ email: "old@example.com" }), NOW);
+    const newer = await SampleRequestService.seed(db, seedValues({ email: "new@example.com" }), minutesAfter(5));
+    const hidden = await SampleRequestService.seed(db, seedValues({ email: "test@example.com" }), minutesAfter(10));
+    if (older.kind !== "seeded" || newer.kind !== "seeded" || hidden.kind !== "seeded") throw new Error("not seeded");
+    await db.update(sampleRequests).set({ isTest: true }).where(eq(sampleRequests.id, hidden.request.id));
+
+    expect((await SampleRequestService.listSeeded(db)).map((row) => row.id)).toEqual([newer.request.id, older.request.id]);
+    expect((await SampleRequestService.listSeeded(db, { includeTest: true })).map((row) => row.id)).toEqual([hidden.request.id, newer.request.id, older.request.id]);
   });
 });

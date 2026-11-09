@@ -39,6 +39,15 @@ export const SAMPLE_EMAIL_COPY = {
     ],
     button: "Tell us how it went",
   },
+  seeded: {
+    subject: "Your WITHIN samples",
+    preheader: "Try them over your next few sessions, then tell us how they went.",
+    headline: "Your WITHIN samples.",
+    paragraphs: [
+      "Hi {name}, thanks for taking a box of WITHIN samples. Try them over your next few sessions, then tell us how they went. It takes two minutes.",
+    ],
+    button: "Check in",
+  },
   feedbackReminder: {
     subject: "{name}, how were your samples?",
     preheader: "Tap a star to rate them. It takes under a minute.",

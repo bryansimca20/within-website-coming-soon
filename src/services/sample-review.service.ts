@@ -1,10 +1,10 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, isNull, or } from "drizzle-orm";
 
 import { FEEDBACK_FELT, type FeedbackFelt, SCORE_MAX, SCORE_MIN } from "@/app/utils/sample-options";
 import type { SampleDatabase } from "@/db/database";
-import { sampleFeedback, sampleRequests } from "@/db/schema";
+import { sampleFeedback, sampleRequests, type SampleRequestSource } from "@/db/schema";
 
 import { SampleRequestService } from "./sample-request.service";
 
@@ -14,6 +14,7 @@ export interface IReviewRow {
   /** Null when the typed email matched no box. */
   requestId: string | null;
   batchId: string | null;
+  source: SampleRequestSource | null;
   name: string | null;
   boxLabel: string | null;
   rating: number | null;
@@ -74,12 +75,15 @@ export class SampleReviewService {
       .select({ feedback: sampleFeedback, request: sampleRequests })
       .from(sampleFeedback)
       .leftJoin(sampleRequests, eq(sampleFeedback.requestId, sampleRequests.id))
+      // Feedback with no matching request stays; feedback on a test request does not.
+      .where(or(isNull(sampleRequests.id), eq(sampleRequests.isTest, false)))
       .orderBy(desc(sampleFeedback.createdAt));
 
     return rows.map(({ feedback, request }) => ({
       id: feedback.id,
       requestId: feedback.requestId,
       batchId: request?.batchId ?? null,
+      source: request?.source ?? null,
       name: request?.fullName ?? null,
       boxLabel: request === null ? null : SampleRequestService.boxLabel(request.batchId, request.boxNumber),
       rating: feedback.rating,

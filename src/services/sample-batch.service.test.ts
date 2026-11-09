@@ -7,6 +7,7 @@ import { sampleBatches } from "@/db/schema";
 import { makeTestDb } from "../../test/sample-db";
 import { NOW, sampleValues } from "../../test/sample-fixtures";
 import { SampleBatchService } from "./sample-batch.service";
+import { SampleFeedbackService } from "./sample-feedback.service";
 import { SampleRequestService } from "./sample-request.service";
 
 let db: SampleDatabase;
@@ -204,5 +205,21 @@ describe("SampleBatchService.remove", () => {
 
   test("reports a batch that doesn't exist", async () => {
     expect(await SampleBatchService.remove(db, "b77")).toEqual({ ok: false, message: "That batch doesn't exist." });
+  });
+});
+
+describe("SampleBatchService.list with test orders", () => {
+  test("leaves test requests out of every count", async () => {
+    const real = await SampleRequestService.claim(db, "b01", sampleValues({ email: "real@example.com" }), NOW);
+    if (real.kind !== "claimed") throw new Error(real.kind);
+    await SampleRequestService.markPaid(db, real.request.id, NOW);
+    const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
+    if (claim.kind !== "claimed") throw new Error(claim.kind);
+    await SampleRequestService.markPaid(db, claim.request.id, NOW);
+    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine" }, "test@example.com", NOW);
+
+    const [summary] = await SampleBatchService.list(db, NOW);
+
+    expect(summary).toMatchObject({ requests: 1, claimed: 1, paid: 1, shipped: 0, delivered: 0, feedback: 0 });
   });
 });

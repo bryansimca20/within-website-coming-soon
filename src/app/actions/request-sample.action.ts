@@ -9,6 +9,7 @@ import { parseSampleRequestInput, readSampleRequestInput } from "@/app/utils/sam
 import { GENERIC_ERROR_MESSAGE, SampleRequestOutcome, type SampleRequestState } from "@/app/utils/sample-state";
 import { SAMPLE_COPY } from "@/components/sample/utils/sample-copy";
 import { db } from "@/db/client";
+import { isAdmin } from "@/lib/admin-session";
 import { clientKey } from "@/lib/rate-limit";
 import { createSampleRequestLimiter } from "@/lib/request-limit";
 import { SITE_URL } from "@/lib/site";
@@ -83,7 +84,9 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       shippingEta: quote.etaLabel,
     };
 
-    const claim = await SampleRequestService.claim(db, batch.id, values, now);
+    // An order placed from a founder session is a test: it never reaches capacity, stats or Shopify.
+    const isTest = await isAdmin();
+    const claim = await SampleRequestService.claim(db, batch.id, values, now, { isTest });
     if (claim.kind !== "closed") {
       // A hold this claim replaced must stop being payable. If this fails, a late payment is flagged for refund instead.
       await SamplePaymentService.cancelSuperseded(db, values.email, now).catch((error: unknown) => {
@@ -94,9 +97,13 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       return { outcome: SampleRequestOutcome.Full };
     }
     if (claim.kind === "already-requested") {
-      // Their samples may be from an earlier batch: the email must name that batch, not the open one.
-      const ownBatch = await SampleRequestService.findBatch(db, claim.request.batchId);
-      await SampleNotifier.sendPaid(claim.request, ownBatch ?? batch);
+      if (claim.request.source === "in_person") {
+        await SampleNotifier.sendSeeded(claim.request);
+      } else {
+        // Their samples may be from an earlier batch: the email must name that batch, not the open one.
+        const ownBatch = await SampleRequestService.findBatch(db, claim.request.batchId);
+        await SampleNotifier.sendPaid(claim.request, ownBatch ?? batch);
+      }
       return { outcome: SampleRequestOutcome.AlreadyRequested, email: values.email };
     }
 
@@ -108,20 +115,22 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       return GENERIC_ERROR;
     }
 
-    const ref = values.attribution.ref;
-    try {
-      const outcome = await ShopifyCustomerService.createPrelaunchSubscriber({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        instagramHandle: values.instagramHandle,
-        consentedAt: values.wantsLaunchEmail ? now.toISOString() : null,
-        extraTags: [`${SAMPLING_TAG_PREFIX}${batch.id}`, ...(ref !== null && isRosterSlug(ref) ? [buildReferralTag(ref)] : [])],
-      });
-      await SampleRequestService.setShopifyOutcome(db, request.id, outcome);
-    } catch (error) {
-      console.error("[request-sample] shopify join failed", error);
-      await SampleRequestService.setShopifyOutcome(db, request.id, "error");
+    if (!isTest) {
+      const ref = values.attribution.ref;
+      try {
+        const outcome = await ShopifyCustomerService.createPrelaunchSubscriber({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          instagramHandle: values.instagramHandle,
+          consentedAt: values.wantsLaunchEmail ? now.toISOString() : null,
+          extraTags: [`${SAMPLING_TAG_PREFIX}${batch.id}`, ...(ref !== null && isRosterSlug(ref) ? [buildReferralTag(ref)] : [])],
+        });
+        await SampleRequestService.setShopifyOutcome(db, request.id, outcome);
+      } catch (error) {
+        console.error("[request-sample] shopify join failed", error);
+        await SampleRequestService.setShopifyOutcome(db, request.id, "error");
+      }
     }
 
     return {

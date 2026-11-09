@@ -59,7 +59,7 @@ export class SampleShipmentService {
         results.push({ requestId, boxLabel: "", ok: false, waybillId: null, error: "Request not found." });
         continue;
       }
-      const boxLabel = SampleRequestService.boxLabel(request.batchId, request.boxNumber);
+      const boxLabel = SampleRequestService.boxLabel(request.batchId, request.boxNumber) ?? "In person";
       const attempts = await SampleShipmentService.listAttempts(db, requestId);
       const latestStatus = attempts.at(-1)?.status ?? null;
       if (!isBookable(request.status, latestStatus)) {
@@ -68,12 +68,17 @@ export class SampleShipmentService {
         continue;
       }
 
+      const { courierCompany, courierType, addressLine, areaId, postalCode } = request;
+      if (courierCompany === null || courierType === null || addressLine === null || areaId === null || postalCode === null) {
+        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: "Not bookable: no delivery details." });
+        continue;
+      }
       const attempt = attempts.length + 1;
       const referenceId = SampleShipmentService.referenceId(boxLabel, attempt);
       const order = await BiteshipService.createOrder({
         referenceId,
-        courierCompany: request.courierCompany,
-        courierType: request.courierType,
+        courierCompany,
+        courierType,
         deliveryType: input.deliveryType,
         deliveryDate: input.deliveryType === "scheduled" ? input.deliveryDate : null,
         deliveryTime: input.deliveryType === "scheduled" ? input.deliveryTime : null,
@@ -81,10 +86,10 @@ export class SampleShipmentService {
           name: request.fullName,
           phone: request.whatsapp,
           email: request.email,
-          address: request.addressLine,
+          address: addressLine,
           note: request.deliveryNote,
-          areaId: request.areaId,
-          postalCode: request.postalCode,
+          areaId,
+          postalCode,
         },
         origin,
       });
@@ -101,8 +106,8 @@ export class SampleShipmentService {
           biteshipOrderId: order.id,
           trackingId: order.trackingId,
           waybillId: order.waybillId,
-          courierCompany: request.courierCompany,
-          courierType: request.courierType,
+          courierCompany,
+          courierType,
           trackingLink: order.trackingLink,
           status: order.status,
           price: order.price,

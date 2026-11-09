@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { bookShipRunAction } from "@/app/actions/admin-sample.action";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export function AdminShipRunForm({ rows, isSingle = false }: AdminShipRunFormPro
                 <td className={CELL}><span className="font-medium text-wi-black">{row.name}</span><br /><span className="text-xs text-wi-ink-500">{row.email}</span></td>
                 <td className={CELL}>{row.city}</td>
                 <td className={CELL}>{row.courier}<br /><span className="wi-readout text-xs text-wi-ink-500">Rp {row.fee.toLocaleString("id-ID")}</span></td>
-                <td className={CELL}><AdminStatusPill status={row.status} /></td>
+                <td className={CELL}><AdminStatusPill status={row.status} />{row.isTest && <Badge variant="secondary" className="ml-1.5">Test</Badge>}</td>
                 <td className={CELL}>{row.shipmentStatus ?? ""}{row.waybillId !== null && <><br /><span className="wi-readout text-xs">{row.waybillId}</span></>}</td>
                 <td className={CELL}>{row.intent ?? ""}</td>
                 <td className={CELL}>{row.source}</td>

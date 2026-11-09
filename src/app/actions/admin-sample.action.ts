@@ -2,10 +2,11 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import type { AdminActionResult, ShipRunState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
-import { sampleBatches, sampleRequests } from "@/db/schema";
+import { sampleRequests } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin-session";
 import { BiteshipService } from "@/services/biteship.service";
 import { SampleAdminDataService } from "@/services/sample-admin-data.service";
@@ -85,8 +86,8 @@ export async function resendSampleEmailAction(requestId: string, kind: SampleEma
   if (request === null) {
     return { ok: false, message: "Request not found." };
   }
-  const [batch] = await db.select().from(sampleBatches).where(eq(sampleBatches.id, request.batchId));
-  if (batch === undefined) {
+  const batch = await SampleRequestService.findBatch(db, request.batchId);
+  if (request.batchId !== null && batch === null) {
     return { ok: false, message: "Batch not found." };
   }
   const shipment = await SampleShipmentService.latestForRequest(db, requestId);
@@ -117,3 +118,9 @@ export async function saveAdminNoteAction(formData: FormData): Promise<void> {
   revalidate();
 }
 
+/** Flags a request as a test order, or back to a real one. Test orders are left out of capacity, stats and exports. */
+export async function setTestRequestAction(requestId: string, isTest: boolean): Promise<void> {
+  await requireAdmin();
+  await SampleRequestService.setTest(db, z.string().uuid().parse(requestId), z.boolean().parse(isTest));
+  revalidate();
+}

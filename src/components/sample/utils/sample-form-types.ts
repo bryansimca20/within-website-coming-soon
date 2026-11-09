@@ -8,4 +8,6 @@ export interface ISampleStepProps {
   values: ISampleRequestInput;
   errors: SampleFieldErrors;
   onChange: (patch: Partial<ISampleRequestInput>) => void;
+  /** Overrides the hint under the email field. */
+  emailHint?: string;
 }

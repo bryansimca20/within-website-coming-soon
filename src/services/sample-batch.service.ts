@@ -194,7 +194,7 @@ export class SampleBatchService {
         .select({ count: sql<number>`count(*)::int` })
         .from(sampleFeedback)
         .innerJoin(sampleRequests, eq(sampleFeedback.requestId, sampleRequests.id))
-        .where(and(eq(sampleRequests.batchId, batch.id), isNotNull(sampleFeedback.requestId)));
+        .where(and(eq(sampleRequests.batchId, batch.id), isNotNull(sampleFeedback.requestId), eq(sampleRequests.isTest, false)));
       summaries.push({
         batch,
         requests: Object.values(counts).reduce((total, count) => total + count, 0),

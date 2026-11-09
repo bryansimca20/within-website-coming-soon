@@ -1,3 +1,4 @@
+import type { ISampleSeedValues } from "@/app/utils/sample-seed-input";
 import type { ISampleRequestValues } from "@/app/utils/sample-request-input";
 import { EMPTY_ATTRIBUTION } from "@/app/utils/attribution";
 
@@ -40,6 +41,18 @@ export function sampleValues(patch: Partial<ISampleRequestValues> = {}): ISample
     attribution: { ...EMPTY_ATTRIBUTION, ref: "fanny" },
     ...patch,
   };
+}
+
+const DELIVERY_KEYS = [
+  "addressLine", "deliveryNote", "areaId", "areaName", "province", "city", "district", "postalCode",
+  "courierCompany", "courierType", "courierServiceName", "shippingFee", "shippingEta",
+];
+
+/** A valid in-person request: the survey and contact, no delivery. */
+export function seedValues(patch: Partial<ISampleSeedValues> = {}): ISampleSeedValues {
+  const seed = Object.fromEntries(Object.entries(sampleValues()).filter(([key]) => !DELIVERY_KEYS.includes(key))) as ISampleSeedValues;
+
+  return { ...seed, ...patch };
 }
 
 /** A fixed "now" so expiry maths is deterministic. */
