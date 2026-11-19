@@ -50,9 +50,9 @@ export const WAITLIST_COPY = {
     sugarName: "Sugar",
     sugarAmount: "0 g",
     ingredientsName: "Clean ingredients",
-    ingredientsAmount: "6",
+    ingredientsAmount: "7",
     ingredients:
-      "Sodium, potassium, magnesium, acidity regulator, natural flavoring, natural sweetener.",
+      "Sodium, potassium, magnesium, acidity regulator, orange extract, natural orange flavoring, natural sweetener.",
   },
   heat: {
     rangeJoiner: "to",
