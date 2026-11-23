@@ -36,7 +36,7 @@ Node `>= 20.9`. Secrets live in `.env.local` locally and in Vercel settings for 
 - **Styling:** Tailwind CSS 4, configured in CSS through `@theme` in [globals.css](src/app/globals.css) · shadcn/ui (`base-nova`, on Base UI rather than Radix) · `@phosphor-icons/react`
 - **Motion and 3D:** `motion` · `three`
 - **Data:** Postgres (Neon) · Drizzle ORM · **Testing:** Vitest + PGlite
-- **Third parties:** Shopify Admin API · Midtrans · Biteship · Resend · BotID · Vercel Analytics and Cron
+- **Third parties:** Shopify Admin API · Midtrans (a batch can take a manual bank transfer instead, see [sampling-program.md](docs/sampling-program.md)) · Biteship · Resend · BotID · Vercel Analytics and Cron
 - **Auth:** `iron-session` founder cookie, no user accounts · **Forms:** native forms + Server Actions, `zod` on the sampling forms
 
 **Do NOT use without asking:**

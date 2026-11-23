@@ -104,8 +104,11 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
     startTransition(async () => {
       try {
         const result = await requestSampleAction(formData);
+        const isHeld = result.outcome === SampleRequestOutcome.Pay || result.outcome === SampleRequestOutcome.Transfer;
+        if (isHeld) trackSampleEvent(SampleEvent.SubmitSucceeded, { ref: attribution.ref ?? "", courier: values.courierCompany });
+        // A bank-transfer box is paid on the status page, which shows the account and the code.
+        if (result.outcome === SampleRequestOutcome.Transfer) return router.push(result.statusUrl);
         if (result.outcome === SampleRequestOutcome.Pay) {
-          trackSampleEvent(SampleEvent.SubmitSucceeded, { ref: attribution.ref ?? "", courier: values.courierCompany });
           trackSampleEvent(SampleEvent.PaymentOpened);
           if (!openSnap(result.snapToken, () => router.push(result.statusUrl))) router.push(result.statusUrl);
           return;
@@ -159,7 +162,7 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
       <SampleStepIndicator step={screen} labels={SAMPLE_COPY.steps} counter={SAMPLE_COPY.stepCounter} onBack={goBack} />
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.div key={screen} custom={direction} variants={SAMPLE_STEP_SLIDE} initial="enter" animate="center" exit="exit" className={SAMPLE_ALERT_FADE}>
-          <StepScreen values={values} errors={errors} onChange={change} />
+          <StepScreen values={values} errors={errors} onChange={change} phoneHint={batch.paymentMethod === "bank_transfer" ? SAMPLE_COPY.delivery.whatsappHintBankTransfer : undefined} />
         </motion.div>
       </AnimatePresence>
 

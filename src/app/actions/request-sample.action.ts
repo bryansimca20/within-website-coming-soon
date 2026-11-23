@@ -38,8 +38,8 @@ const COURIER_CHANGED: SampleRequestState = {
 const GENERIC_ERROR: SampleRequestState = { outcome: SampleRequestOutcome.Error, message: GENERIC_ERROR_MESSAGE, field: null };
 
 /**
- * Holds a box, joins the waitlist and opens the courier payment. Reachable by direct POST, so it
- * re-validates everything the form already checked.
+ * Holds a box, joins the waitlist and opens the courier payment: Midtrans Snap, or for a bank-transfer batch the
+ * status page and an instructions email. Reachable by direct POST, so it re-validates everything the form already checked.
  */
 export async function requestSampleAction(formData: FormData): Promise<SampleRequestState> {
   const verification = await checkBotId();
@@ -106,13 +106,24 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       }
       return { outcome: SampleRequestOutcome.AlreadyRequested, email: values.email };
     }
+    if (claim.kind === "awaiting") {
+      // They reported a transfer already: the box stays theirs, and the email carries the way back to it.
+      const ownBatch = await SampleRequestService.findBatch(db, claim.request.batchId);
+      await SampleNotifier.sendPaymentInstructions(claim.request, ownBatch);
+      return { outcome: SampleRequestOutcome.AlreadyRequested, email: values.email };
+    }
 
     const request = claim.request;
     const statusUrl = `${SITE_URL}/sample/r/${request.accessToken}`;
-    const payment = await SamplePaymentService.createAttempt(db, request, batch, now, statusUrl);
-    if (payment === null) {
+    // A bank-transfer batch gave the request a code: no Midtrans order, the status page takes the payment.
+    const payment = request.paymentCode === null ? await SamplePaymentService.createAttempt(db, request, batch, now, statusUrl) : null;
+    if (request.paymentCode === null && payment === null) {
       await SampleRequestService.setStatus(db, request.id, "cancelled", { adminNote: "Midtrans create failed at request time." });
       return GENERIC_ERROR;
+    }
+    if (request.paymentCode !== null && !(await SampleNotifier.sendPaymentInstructions(request, batch))) {
+      // Not fatal: the status page they land on shows the same bank details and code.
+      console.error("[request-sample] payment instructions email failed", request.id);
     }
 
     if (!isTest) {
@@ -133,6 +144,9 @@ export async function requestSampleAction(formData: FormData): Promise<SampleReq
       }
     }
 
+    if (payment === null) {
+      return { outcome: SampleRequestOutcome.Transfer, statusUrl: `/sample/r/${request.accessToken}` };
+    }
     return {
       outcome: SampleRequestOutcome.Pay,
       snapToken: payment.snapToken,

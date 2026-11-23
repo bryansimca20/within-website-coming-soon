@@ -10,4 +10,6 @@ export interface ISampleStepProps {
   onChange: (patch: Partial<ISampleRequestInput>) => void;
   /** Overrides the hint under the email field. */
   emailHint?: string;
+  /** Overrides the hint under the phone field. */
+  phoneHint?: string;
 }

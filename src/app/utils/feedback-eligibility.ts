@@ -1,5 +1,5 @@
 /** Every status a sample request can be in, as the database enum lists them. */
-export type SampleRequestStatusKey = "pending_payment" | "paid" | "shipped" | "delivered" | "expired" | "cancelled";
+export type SampleRequestStatusKey = "pending_payment" | "awaiting_confirmation" | "paid" | "shipped" | "delivered" | "expired" | "cancelled";
 
 /** Whether an email may open the check-in, and if not, why. */
 export enum FeedbackEligibility {

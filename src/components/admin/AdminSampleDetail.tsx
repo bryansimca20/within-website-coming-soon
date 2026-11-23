@@ -4,8 +4,11 @@ import { cancelRequestAction, saveAdminNoteAction, setTestRequestAction } from "
 import { Button } from "@/components/ui/button";
 import type { SampleFeedbackRow, SamplePayment, SampleRequest, SampleShipment, SampleWebhookEvent } from "@/db/schema";
 
+import { formatJakarta } from "@/components/sample/utils/jakarta-date";
+
 import { AdminRowActions } from "./AdminRowActions";
 import { AdminStatusPill } from "./AdminStatusPill";
+import { AdminTransferDecision } from "./AdminTransferDecision";
 
 interface AdminSampleDetailProps {
   request: SampleRequest;
@@ -54,6 +57,9 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
   const live = shipments.at(-1) ?? null;
   const isShipped = request.source !== "in_person";
   const requestFields = Object.entries(fields).filter(([key]) => isShipped || !DELIVERY_FIELDS.has(key));
+  // A late transfer on a lapsed hold can still be confirmed; only a live one can be rejected.
+  const canConfirm = request.status === "pending_payment" || request.status === "awaiting_confirmation" || request.status === "expired";
+  const canReject = request.status === "pending_payment" || request.status === "awaiting_confirmation";
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,7 +67,15 @@ export function AdminSampleDetail({ request, boxLabel, payments, shipments, feed
         <h1 className="wi-readout m-0 text-h1 text-wi-black">{boxLabel}</h1>
         <AdminStatusPill status={request.status} />
       </div>
-      <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} isInPerson={!isShipped} />
+      <AdminRowActions requestId={request.id} shipmentId={live?.id ?? null} isInPerson={!isShipped} isBankTransfer={request.paymentCode !== null} />
+      {request.paymentCode !== null && (canConfirm || canReject) && (
+        <Card title={`Bank transfer ${request.paymentCode}`}>
+          <p className="m-0 text-wi-ink-500">
+            {request.transferReportedAt === null ? "The sampler hasn't tapped I've transferred." : `Reported ${formatJakarta(request.transferReportedAt)}.`}
+          </p>
+          <AdminTransferDecision requestId={request.id} code={request.paymentCode} amount={request.shippingFee ?? 0} canConfirm={canConfirm} canReject={canReject} />
+        </Card>
+      )}
       {shipForm}
       <Card title="Request"><Fields entries={requestFields} /></Card>
       <Card title={`Payments (${payments.length})`}>

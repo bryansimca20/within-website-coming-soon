@@ -1,5 +1,7 @@
 import "server-only";
 
+import { formatJakarta } from "@/components/sample/utils/jakarta-date";
+import { formatRupiah } from "@/components/sample/utils/sample-copy";
 import type { SampleBatch, SampleRequest, SampleShipment } from "@/db/schema";
 import { SITE_URL } from "@/lib/site";
 
@@ -26,6 +28,15 @@ export function buildSampleEmailContext(
             waybillId: shipment.waybillId,
             trackingLink: shipment.trackingLink,
           },
+    // Truthy rather than `!== null`: only a bank-transfer request has a code.
+    transfer: request.paymentCode
+      ? {
+          code: request.paymentCode,
+          amount: formatRupiah(request.shippingFee ?? 0),
+          deadline: formatJakarta(request.expiresAt),
+          isReported: request.status === "awaiting_confirmation",
+        }
+      : null,
   };
 }
 
@@ -40,6 +51,11 @@ export class SampleNotifier {
     const rendered = renderSampleEmail(kind, buildSampleEmailContext(request, batch, shipment));
 
     return EmailService.send({ to: request.email, ...rendered });
+  }
+
+  /** A bank-transfer request's account, amount, code and deadline, with the link back to its payment page. */
+  static sendPaymentInstructions(request: SampleRequest, batch: SampleBatch | null): Promise<boolean> {
+    return SampleNotifier.send(SampleEmailKind.PaymentInstructions, request, batch, null);
   }
 
   static sendPaid(request: SampleRequest, batch: SampleBatch | null): Promise<boolean> {

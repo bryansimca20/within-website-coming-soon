@@ -17,6 +17,32 @@ describe("buildSampleEmailContext", () => {
     expect(context).not.toHaveProperty("boxWord");
   });
 
+  test("buildSampleEmailContext gives a bank-transfer request its transfer block", () => {
+    const bankTransfer = buildSampleEmailContext(
+      { firstName: "Fanny", accessToken: "t", paymentCode: "K7P2QX", shippingFee: 10000, expiresAt: new Date("2026-10-28T03:00:00.000Z") } as SampleRequest,
+      { label: "Batch 01" } as SampleBatch,
+      null
+    );
+    const midtrans = buildSampleEmailContext(
+      { firstName: "Fanny", accessToken: "t", paymentCode: null, shippingFee: 10000, expiresAt: new Date("2026-10-28T03:00:00.000Z") } as SampleRequest,
+      { label: "Batch 01" } as SampleBatch,
+      null
+    );
+
+    expect(bankTransfer.transfer).toEqual({ code: "K7P2QX", amount: "Rp 10.000", deadline: "28 Oct, 10:00", isReported: false });
+    expect(midtrans.transfer).toBeNull();
+  });
+
+  test("buildSampleEmailContext marks a transfer the sampler already reported", () => {
+    const reported = buildSampleEmailContext(
+      { firstName: "Fanny", accessToken: "t", status: "awaiting_confirmation", paymentCode: "K7P2QX", shippingFee: 10000, expiresAt: new Date("2026-10-28T03:00:00.000Z") } as SampleRequest,
+      { label: "Batch 01" } as SampleBatch,
+      null
+    );
+
+    expect(reported.transfer?.isReported).toBe(true);
+  });
+
   test("has no courier before a shipment exists", () => {
     const context = buildSampleEmailContext(
       { firstName: "Fanny", accessToken: "t", courierServiceName: "JNE Reguler", shippingEta: "1 to 2 days" } as SampleRequest,

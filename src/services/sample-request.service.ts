@@ -4,12 +4,13 @@ import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, max, ne, or, typ
 
 import type { ISampleRequestValues } from "@/app/utils/sample-request-input";
 import type { ISampleSeedValues } from "@/app/utils/sample-seed-input";
-import { generateAccessToken } from "@/app/utils/token";
+import { generateAccessToken, generatePaymentCode } from "@/app/utils/token";
 import type { SampleDatabase } from "@/db/database";
 import {
   type SampleBatch,
   type SampleBatchPhase,
   sampleBatches,
+  type SamplePaymentMethod,
   type SampleRequest,
   type SampleRequestStatus,
   sampleRequests,
@@ -17,11 +18,12 @@ import {
 
 import { SampleBatchService } from "./sample-batch.service";
 
-/** What a claim attempt produced. */
+/** What a claim attempt produced. `awaiting` is the email's reported transfer, left untouched. */
 export type ClaimResult =
   | { kind: "claimed"; request: SampleRequest }
   | { kind: "full" }
   | { kind: "already-requested"; request: SampleRequest }
+  | { kind: "awaiting"; request: SampleRequest }
   | { kind: "closed" };
 
 /** What a seed attempt produced. */
@@ -37,6 +39,8 @@ export type SettleResult =
 export interface ISampleBatchShown {
   label: string;
   capacity: number;
+  /** How a new request in this batch pays; the form's phone hint depends on it. */
+  paymentMethod: SamplePaymentMethod;
 }
 
 /** What `/sample` shows. */
@@ -49,10 +53,16 @@ export type SamplePageState =
 /** Statuses that own a box for good: a second request from the same email is refused. */
 export const ACTIVE_STATUSES: SampleRequestStatus[] = ["paid", "shipped", "delivered"];
 
-/** Statuses that occupy a slot in the batch count: active ones plus live holds. */
-const CLAIMING_STATUSES: SampleRequestStatus[] = ["pending_payment", ...ACTIVE_STATUSES];
+/** Requests that hold a box without a payment yet: a live hold, or a bank transfer waiting for a founder. */
+export const UNPAID_HOLDING_STATUSES: SampleRequestStatus[] = ["pending_payment", "awaiting_confirmation"];
+
+/** Statuses that occupy a slot in the batch count: active ones, live holds, and reported transfers. */
+const CLAIMING_STATUSES: SampleRequestStatus[] = [...UNPAID_HOLDING_STATUSES, ...ACTIVE_STATUSES];
 
 const MS_PER_MINUTE = 60_000;
+
+/** Fresh codes tried before a claim gives up; with 32^6 codes a single collision is already a one-in-a-billion event. */
+const PAYMENT_CODE_ATTEMPTS = 5;
 
 /** Requests and batches: the hold, the count, the box number, and the lifecycle writes. */
 export class SampleRequestService {
@@ -74,7 +84,7 @@ export class SampleRequestService {
     if (batch === null) {
       return { kind: "none" };
     }
-    const shown = { label: batch.label, capacity: batch.capacity };
+    const shown = { label: batch.label, capacity: batch.capacity, paymentMethod: batch.paymentMethod };
     if (batch.phase !== "open") {
       return { kind: batch.phase, batch: shown };
     }
@@ -107,7 +117,8 @@ export class SampleRequestService {
     return SampleRequestService.countClaiming(db, batchId);
   }
 
-  private static async countClaiming(db: SampleDatabase, batchId: string): Promise<number> {
+  /** Slots taken in a batch's count, without expiring lapsed holds first. Test rows never count. */
+  static async countClaiming(db: SampleDatabase, batchId: string): Promise<number> {
     const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(sampleRequests)
@@ -119,10 +130,11 @@ export class SampleRequestService {
   }
 
   /**
-   * Holds a box for one request, in one transaction with the batch row locked: lapsed holds are
-   * closed, a pending hold from the same email is replaced, a paid box for the same email is
-   * returned instead, a full or closed batch is refused, and the next box number is taken.
-   * A test claim only meets other test claims and never counts toward capacity.
+   * Holds a box for one request, in one transaction with the batch row locked: a reported transfer from the
+   * same email is returned untouched, lapsed holds are closed, a pending hold from the same email is replaced,
+   * a paid box for the same email is returned instead, a full or closed batch is refused, and the next box
+   * number is taken. A bank-transfer batch gives the request its payment code. A test claim only meets other
+   * test claims and never counts toward capacity.
    */
   static async claim(
     db: SampleDatabase,
@@ -152,6 +164,11 @@ export class SampleRequestService {
       if (existing !== null) {
         return { kind: "already-requested", request: existing };
       }
+      // They may already have paid: replacing this request would take their box. A founder decides it instead.
+      const awaiting = await SampleRequestService.findAwaitingByEmail(tx, values.email, { isTest });
+      if (awaiting !== null) {
+        return { kind: "awaiting", request: awaiting };
+      }
 
       if (!isTest && (await SampleRequestService.countClaiming(tx, batchId)) >= batch.capacity) {
         return { kind: "full" };
@@ -177,6 +194,7 @@ export class SampleRequestService {
           batchId,
           boxNumber,
           accessToken: generateAccessToken(),
+          paymentCode: batch.paymentMethod === "bank_transfer" ? await SampleRequestService.unusedPaymentCode(tx) : null,
           status: "pending_payment",
           isTest,
           consentedAt: wantsLaunchEmail ? now : null,
@@ -187,6 +205,19 @@ export class SampleRequestService {
 
       return { kind: "claimed", request };
     });
+  }
+
+  /** A payment code no request has yet. The unique index stays the final guard against a race between batches. */
+  private static async unusedPaymentCode(db: SampleDatabase): Promise<string> {
+    for (let attempt = 0; attempt < PAYMENT_CODE_ATTEMPTS; attempt += 1) {
+      const code = generatePaymentCode();
+      const [taken] = await db.select({ id: sampleRequests.id }).from(sampleRequests).where(eq(sampleRequests.paymentCode, code)).limit(1);
+      if (taken === undefined) {
+        return code;
+      }
+    }
+
+    throw new Error("No unused payment code after several attempts.");
   }
 
   /**
@@ -267,6 +298,24 @@ export class SampleRequestService {
     return request ?? null;
   }
 
+  /** The newest reported bank transfer for an email, in any batch, among rows with the same test flag. */
+  static async findAwaitingByEmail(db: SampleDatabase, email: string, options: { isTest?: boolean } = {}): Promise<SampleRequest | null> {
+    const [request] = await db
+      .select()
+      .from(sampleRequests)
+      .where(
+        and(
+          eq(sampleRequests.email, email.trim().toLowerCase()),
+          eq(sampleRequests.status, "awaiting_confirmation"),
+          eq(sampleRequests.isTest, options.isTest ?? false)
+        )
+      )
+      .orderBy(desc(sampleRequests.createdAt))
+      .limit(1);
+
+    return request ?? null;
+  }
+
   /** Moves a request to paid the first time only; a request already paid returns null. */
   static async markPaid(db: SampleDatabase, requestId: string, paidAt: Date): Promise<SampleRequest | null> {
     const [request] = await db
@@ -303,13 +352,14 @@ export class SampleRequestService {
       if (paid === null) {
         return { kind: "repeat" };
       }
+      // A reported transfer goes too: the sampler now owns a box, and a second transfer becomes a refund.
       await tx
         .update(sampleRequests)
         .set({ status: "expired" })
         .where(
           and(
             eq(sampleRequests.email, request.email),
-            eq(sampleRequests.status, "pending_payment"),
+            inArray(sampleRequests.status, UNPAID_HOLDING_STATUSES),
             eq(sampleRequests.isTest, request.isTest),
             ne(sampleRequests.id, request.id)
           )
@@ -402,7 +452,7 @@ export class SampleRequestService {
       .orderBy(desc(sampleRequests.createdAt));
   }
 
-  /** Requests for the admin table, newest box first. `query` matches a box number, a name or an email. */
+  /** Requests for the admin table, newest box first. `query` matches a box number, a name, an email or a payment code. */
   static async listForAdmin(
     db: SampleDatabase,
     batchId: string,
@@ -416,7 +466,12 @@ export class SampleRequestService {
     if (query !== "") {
       const digits = query.replace(/^b\d+-/i, "").replace(/^0+(?=\d)/, "");
       const pattern = `%${query.replace(/[%_\\]/g, (character) => `\\${character}`)}%`;
-      const matches: SQL[] = [ilike(sampleRequests.fullName, pattern), ilike(sampleRequests.email, pattern)];
+      const matches: SQL[] = [
+        ilike(sampleRequests.fullName, pattern),
+        ilike(sampleRequests.email, pattern),
+        // Typed from the bank's note, so case and spacing vary.
+        eq(sampleRequests.paymentCode, query.toUpperCase()),
+      ];
       if (/^\d+$/.test(digits)) {
         matches.push(eq(sampleRequests.boxNumber, Number(digits)));
       }
@@ -440,6 +495,7 @@ export class SampleRequestService {
       .groupBy(sampleRequests.status);
     const summary: Record<SampleRequestStatus, number> = {
       pending_payment: 0,
+      awaiting_confirmation: 0,
       paid: 0,
       shipped: 0,
       delivered: 0,

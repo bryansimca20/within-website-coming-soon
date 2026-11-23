@@ -20,6 +20,10 @@ export async function reopenPaymentAction(token: string): Promise<ReopenPaymentS
     if (request === null) {
       return { outcome: ReopenOutcome.Error, message: GENERIC_ERROR_MESSAGE };
     }
+    if (request.paymentCode !== null) {
+      // A bank-transfer request is paid on its status page, never through Midtrans.
+      return { outcome: ReopenOutcome.NotPending };
+    }
     const batch = await SampleRequestService.findBatch(db, request.batchId);
     if (batch === null) {
       return { outcome: ReopenOutcome.Error, message: GENERIC_ERROR_MESSAGE };

@@ -1,9 +1,18 @@
 import "server-only";
 
-import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 
+import { BANK_TRANSFER, type IBankTransferDetails, isBankTransferReady } from "@/app/utils/bank-transfer";
 import type { SampleDatabase } from "@/db/database";
-import { type SampleBatch, type SampleBatchPhase, sampleBatches, sampleFeedback, sampleRequests } from "@/db/schema";
+import {
+  type SampleBatch,
+  type SampleBatchPhase,
+  sampleBatches,
+  sampleFeedback,
+  type SamplePaymentMethod,
+  type SampleRequestStatus,
+  sampleRequests,
+} from "@/db/schema";
 
 import { SampleRequestService } from "./sample-request.service";
 
@@ -13,6 +22,8 @@ export interface IBatchSummary {
   /** Every request ever made in the batch, expired and cancelled included. Zero means it can be removed. */
   requests: number;
   claimed: number;
+  /** Reported bank transfers a founder has not confirmed or rejected yet. */
+  toConfirm: number;
   paid: number;
   shipped: number;
   delivered: number;
@@ -30,6 +41,12 @@ export type RemoveBatchResult = { ok: true } | { ok: false; message: string };
 
 /** Outcome of changing a batch's phase. */
 export type SetPhaseResult = { ok: true } | { ok: false; message: string };
+
+/** Outcome of changing how a batch's new requests pay. */
+export type SetPaymentMethodResult = { ok: true } | { ok: false; message: string };
+
+/** Requests still waiting on a payment decision: a method switch is refused while any exist. */
+const UNPAID_LIVE_STATUSES: SampleRequestStatus[] = ["pending_payment", "awaiting_confirmation"];
 
 const MIN_CAPACITY = 1;
 const MAX_CAPACITY = 10_000;
@@ -136,6 +153,46 @@ export class SampleBatchService {
   }
 
   /**
+   * Sets how a batch's new claims pay. Refused for a closed batch, while any request in it (test rows included)
+   * still holds a box unpaid, and for bank transfer until the bank details and WhatsApp number are filled in.
+   */
+  static async setPaymentMethod(
+    db: SampleDatabase,
+    batchId: string,
+    method: SamplePaymentMethod,
+    now: Date,
+    details: IBankTransferDetails = BANK_TRANSFER
+  ): Promise<SetPaymentMethodResult> {
+    return db.transaction(async (tx) => {
+      // Same row lock a claim takes, so no hold can land between the unpaid check and the write.
+      const [batch] = await tx.select().from(sampleBatches).where(eq(sampleBatches.id, batchId)).for("update");
+      if (batch === undefined) {
+        return { ok: false, message: "That batch doesn't exist." };
+      }
+      if (batch.phase === "closed") {
+        return { ok: false, message: `${batch.label} is closed. Closed is final.` };
+      }
+      if (batch.paymentMethod === method) {
+        return { ok: true };
+      }
+      await SampleRequestService.expireLapsedHolds(tx, batchId, now);
+      const [unpaid] = await tx
+        .select({ id: sampleRequests.id })
+        .from(sampleRequests)
+        .where(and(eq(sampleRequests.batchId, batchId), inArray(sampleRequests.status, UNPAID_LIVE_STATUSES)))
+        .limit(1);
+      if (unpaid !== undefined) {
+        return { ok: false, message: `${batch.label} has unpaid requests. Switch once they are paid, confirmed or lapsed.` };
+      }
+      if (method === "bank_transfer" && !isBankTransferReady(details)) {
+        return { ok: false, message: "Bank details or the WhatsApp number for proofs are missing." };
+      }
+      await tx.update(sampleBatches).set({ paymentMethod: method }).where(eq(sampleBatches.id, batchId));
+      return { ok: true };
+    });
+  }
+
+  /**
    * Removes a batch created by mistake: only one with no requests at all, and never the open one. A batch
    * with requests keeps its id forever (box labels, Midtrans, Biteship, Shopify tags), so it is closed instead.
    */
@@ -199,6 +256,7 @@ export class SampleBatchService {
         batch,
         requests: Object.values(counts).reduce((total, count) => total + count, 0),
         claimed,
+        toConfirm: counts.awaiting_confirmation,
         paid: counts.paid + counts.shipped + counts.delivered,
         shipped: counts.shipped + counts.delivered,
         delivered: counts.delivered,

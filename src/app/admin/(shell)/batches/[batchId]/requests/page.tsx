@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 
 import { AdminSampleSummary } from "@/components/admin/AdminSampleSummary";
 import { AdminShipRunForm } from "@/components/admin/AdminShipRunForm";
+import { AdminTransfersToConfirm } from "@/components/admin/AdminTransfersToConfirm";
 import { toAdminRow } from "@/components/admin/utils/admin-rows";
+import { adminStatusLook } from "@/components/admin/utils/admin-status";
 import { buttonVariants } from "@/components/ui/button";
 import { db } from "@/db/client";
 import { type SampleRequestStatus, sampleRequestStatusEnum } from "@/db/schema";
@@ -14,6 +16,7 @@ import { SampleAdminDataService } from "@/services/sample-admin-data.service";
 import { SampleBatchService } from "@/services/sample-batch.service";
 import { SampleFeedbackService } from "@/services/sample-feedback.service";
 import { SampleRequestService } from "@/services/sample-request.service";
+import { SampleTransferService } from "@/services/sample-transfer.service";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +32,13 @@ export default async function AdminRequestsPage({ params, searchParams }: { para
   if (batch === null) notFound();
   const path = `/admin/batches/${batch.id}/requests`;
 
-  await SampleRequestService.expireLapsedHolds(db, batch.id, new Date());
-  const [summary, requests, unmatched] = await Promise.all([
+  const now = new Date();
+  await SampleRequestService.expireLapsedHolds(db, batch.id, now);
+  const [summary, requests, unmatched, toConfirm] = await Promise.all([
     SampleRequestService.summary(db, batch.id),
     SampleRequestService.listForAdmin(db, batch.id, { status: isStatus(status) ? status : undefined, query: q }),
     SampleFeedbackService.listUnmatched(db),
+    SampleTransferService.listToConfirm(db, batch.id),
   ]);
   const ids = requests.map((request) => request.id);
   const [shipments, feedback] = await Promise.all([
@@ -50,6 +55,7 @@ export default async function AdminRequestsPage({ params, searchParams }: { para
         <span aria-current="page" className="text-wi-ink-700">{batch.label}</span>
       </nav>
       <AdminSampleSummary batch={batch} summary={summary} />
+      <AdminTransfersToConfirm requests={toConfirm} now={now} />
       <Form action={path} className="flex flex-wrap gap-2" role="search">
         <label className="relative flex min-w-56 flex-1 items-center">
           <span className="sr-only">Search requests</span>
@@ -58,7 +64,7 @@ export default async function AdminRequestsPage({ params, searchParams }: { para
         </label>
         <select name="status" aria-label="Status" defaultValue={isStatus(status) ? status : ""} className="h-9 rounded-[var(--wi-radius-control)] border-0 bg-wi-paper px-3 text-sm shadow-[var(--wi-shadow-card)] outline-none focus-visible:ring-2 focus-visible:ring-wi-black/15">
           <option value="">All statuses</option>
-          {sampleRequestStatusEnum.enumValues.map((value) => <option key={value} value={value}>{value === "pending_payment" ? "Holding" : value.charAt(0).toUpperCase() + value.slice(1)}</option>)}
+          {sampleRequestStatusEnum.enumValues.map((value) => <option key={value} value={value}>{adminStatusLook(value).label}</option>)}
         </select>
         <button type="submit" className={buttonVariants({ variant: "secondary", size: "sm" })}>Filter</button>
         {(q !== undefined || status !== undefined) && <Link href={path} className={buttonVariants({ variant: "ghost", size: "sm" })}>Clear</Link>}

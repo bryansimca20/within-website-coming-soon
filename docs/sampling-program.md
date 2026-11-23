@@ -1,6 +1,6 @@
 # Sampling Program
 
-Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays the courier). Specs are local in `docs/superpowers/specs/` (gitignored): `2026-10-20-sampling-program-design.md` and `2026-10-28-sample-batches-and-admin-design.md`, `2026-11-03-sample-seeding-and-test-orders-design.md`.
+Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, free, the sampler pays the courier). Specs are local in `docs/superpowers/specs/` (gitignored): `2026-10-20-sampling-program-design.md` and `2026-10-28-sample-batches-and-admin-design.md`, `2026-11-03-sample-seeding-and-test-orders-design.md`. The bank-transfer spec is at the workspace root: `../docs/superpowers/specs/2026-11-23-sample-manual-bank-transfer-design.md`.
 
 ## Routes and flow
 
@@ -9,13 +9,17 @@ Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, fre
   ├─ GET  /api/sample/areas?q=          Biteship area search (rate-limited proxy)
   ├─ POST /api/sample/rates             live courier quotes, cheapest 4
   └─ requestSampleAction                BotID + honeypot + zod, then:
-       ├─ SampleRequestService.claim    one transaction, batch row locked: lapsed holds expire,
+       ├─ SampleRequestService.claim    one transaction, batch row locked: a reported transfer from the
+       │                                same email is returned untouched, lapsed holds expire,
        │                                same-email unpaid hold replaced, paid duplicate refused,
-       │                                capacity checked, next box number taken
-       ├─ SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
+       │                                capacity checked, next box number taken, bank-transfer code issued
+       ├─ Midtrans batch: SamplePaymentService.createAttempt   Midtrans Snap, expiry = minutes left in the hold
+       ├─ Bank-transfer batch: payment-instructions email, then the form goes to the status page
        └─ Shopify customerCreate        tags prelaunch, coming-soon, sampling-<batch id>, ref-<slug>;
                                         SUBSCRIBED only if they ticked the optional launch email
-/sample/r/[token]                       status page; "Pay now" = reopenPaymentAction
+/sample/r/[token]                       status page; Midtrans: "Pay now" = reopenPaymentAction;
+                                        bank transfer: Pay (account, code), "I've transferred" =
+                                        reportTransferAction, then Send proof (WhatsApp)
 POST /api/webhooks/midtrans             signature checked, attempt updated, paid email once
 admin "Book selected"                   SampleShipmentService.bookRun, one Biteship order each
 POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/delivered email once
@@ -23,7 +27,8 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 /admin                                  overview: in transit, delivered, failed, feedback rate, failed and
                                         stuck deliveries with the courier's note, every batch side by side, New batch
 /admin/reviews[?batch=&stars=]          review score: average stars, star split, taste, effectiveness, felt, each review
-/admin/batches/[batchId]/requests       one batch: status, capacity, counts, search, ship runs
+/admin/batches/[batchId]/requests       one batch: status, payment method, capacity, counts, Payments to confirm,
+                                        search (box, name, email or payment code), ship runs
 /admin/batches/[batchId]/export (+ /registrations, /feedback)  that batch's two CSVs
 /admin/requests/[id]                    request detail, resends, reship, Mark as test / Unmark test
 /sample/seed                            in-person seeding form (admin session or redirect to /sample)
@@ -31,6 +36,18 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 /admin/seeded[?checkedIn=]              in-person recipients, summary, checked-in filter
 /admin/seeded/export (+ /registrations, /feedback)  the seeded CSVs
 ```
+
+## Payment methods: Midtrans or bank transfer
+
+Each batch has a `payment_method` (`midtrans`, the default, or `bank_transfer`), chosen in its admin header. It decides only what a new claim gets; every request keeps its own method, read from the request: one with a `payment_code` is a bank transfer. The status page, Confirm, Reject, the resend buttons and `reopenPaymentAction` all branch on the request, never the batch. Bank transfer exists because Midtrans and Xendit approval stalled (2026-11-23); the Midtrans path is unchanged.
+
+- **Switching** (`SampleBatchService.setPaymentMethod`, batch row locked): refused for a closed batch, and while the batch holds any unpaid live request (an unlapsed `pending_payment` or any `awaiting_confirmation`, test rows included; lapsed holds are expired first). Switching to bank transfer is also refused while any value in `src/app/utils/bank-transfer.ts` is empty, so a deploy can never show placeholder bank details. That file holds the bank, account holder, account number, the WhatsApp number that receives proofs, and the 24-hour confirmation promise.
+- **The code:** 6 characters from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no 0, O, 1, I), no dash, unique. One code does every job: the Berita Transfer note, the order id in the WhatsApp message, the admin search key (any case, spaces trimmed).
+- **The flow:** the claim issues the code and the action emails the payment instructions (account, amount, code, hold deadline, status link). The status page shows a two-step bar. Pay lists the amount, the account and the code with copy buttons (the amount copies as digits). "I've transferred" (`SampleTransferService.report`) moves a live hold to `awaiting_confirmation` with `transfer_reported_at`. Repeat taps change nothing; a tap after the hold lapsed expires it instead. Send proof opens `wa.me` with the code, amount and name prefilled. The site cannot see WhatsApp, so a founder confirms against the bank's transaction list, never a screenshot.
+- **`awaiting_confirmation`** holds the box until a founder decides, and never lapses: hold expiry only ever touches `pending_payment`. It counts toward capacity and blocks a method switch. A same-email claim returns it untouched instead of replacing it, and emails a short "we are checking your transfer" note in place of the instructions. Paying any request of that email (Confirm, or a Midtrans settlement) releases its other pending and reported requests; an email that already owns a box is told so before a reported transfer is looked up.
+- **Confirm** (`SampleTransferService.confirm`, batch row locked, bank-transfer requests only) pays through `SampleRequestService.settle` and then `dispatchPaidEmail`, the Midtrans path, so Biteship booking and every later email work unchanged. It also works from `pending_payment` (money arrived, never tapped) and from `expired` (late money). A late transfer is paid only while the batch has room, not counting the same sampler's own newer holds, which paying releases. Otherwise, and for a rejected (`cancelled`) request, nothing is paid and the note gets `REFUND DUE: <code>`, written once. A closed batch still confirms.
+- **Reject** (`pending_payment` or `awaiting_confirmation` only) cancels the request with `Transfer not found.` plus the founder's note, freeing the box. It is final: money that arrives after it is a refund. No email goes out on report or reject; the founder replies in the sampler's WhatsApp thread. The bank-transfer phone hint on the shipping step says so ("For the courier, and for us if we need to check your transfer.").
+- **Admin:** a "Payments to confirm" card on the batch's Requests page lists reported transfers oldest first, flags any older than 24 hours as Overdue, and links each sampler's WhatsApp. The request detail page has Confirm and Reject too, and "Resend payment instructions", which goes only to an unpaid bank-transfer request. Refunds are manual bank transfers.
 
 ## Holds, webhooks and failures
 
@@ -52,7 +69,7 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 
 - Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels live in `src/components/sample/utils/sample-copy.ts`; email copy in `src/services/sample-email-copy.ts`.
 - `/sample*` runs the WITHIN brand system from `/` (and scrolls). `/admin` runs Transparency Lab tokens. Both are `noindex` and out of the sitemap.
-- The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches."). Ticking it is the only marketing consent a sampler gives: it sets `consented_at` and subscribes them in Shopify. Order emails (paid, shipped, delivered, reminder) go to every sampler regardless.
+- The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches."). Ticking it is the only marketing consent a sampler gives: it sets `consented_at` and subscribes them in Shopify. Order emails (payment instructions for bank-transfer requests, paid, shipped, delivered, reminder) go to every sampler regardless. The payment-instructions email never repeats the typed name, since it goes out before anyone has paid.
 - `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`, as must `/api/sample/areas` and `/api/sample/rates`, because Biteship bills every search and quote.
 
 ## Batches (`SampleBatchService`)
@@ -82,6 +99,6 @@ POST /api/webhooks/biteship?token=      order re-fetched from Biteship, shipped/
 ## Admin
 
 - The batch an admin page shows is in its URL (`/admin/batches/b02/...`); the sidebar has one section per batch, and the open batch plus the one you are in show their Requests and Export.
-- Exports are one batch per file: `within-<id>-registrations.csv` and `within-<id>-feedback.csv`.
+- Exports are one batch per file: `within-<id>-registrations.csv` and `within-<id>-feedback.csv`. Registrations carry `payment_code` and `transfer_reported_at` right after `status` (empty for Midtrans rows).
 - Delivery tracking (`SampleDeliveryService.board`) reads each paid, shipped or delivered box's latest Biteship attempt, so an order that fails before pickup still shows. Failed is `ShipmentPhase.Attention`, and such a box can be booked again; a live shipment cannot (`isBookable`, enforced in `bookRun`); stuck is picked up or in transit with no courier scan for `STUCK_AFTER_DAYS` (5). The reason shown is the courier's latest non-empty history note. Feedback rate is check-ins over delivered boxes.
 - UI rules for admin are in [transparency-lab.md](transparency-lab.md).

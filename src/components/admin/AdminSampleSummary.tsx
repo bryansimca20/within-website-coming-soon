@@ -7,9 +7,10 @@ interface AdminSampleSummaryProps {
   summary: Record<SampleRequestStatus, number>;
 }
 
-const ORDER: SampleRequestStatus[] = ["pending_payment", "paid", "shipped", "delivered", "expired", "cancelled"];
+const ORDER: SampleRequestStatus[] = ["pending_payment", "awaiting_confirmation", "paid", "shipped", "delivered", "expired", "cancelled"];
 const LABEL: Record<SampleRequestStatus, string> = {
   pending_payment: "Holding",
+  awaiting_confirmation: "To confirm",
   paid: "Paid",
   shipped: "Shipped",
   delivered: "Delivered",
@@ -19,7 +20,7 @@ const LABEL: Record<SampleRequestStatus, string> = {
 
 /** A batch's header: its name, status and capacity controls, how full it is, and its counts by status. */
 export function AdminSampleSummary({ batch, summary }: AdminSampleSummaryProps) {
-  const claimed = summary.pending_payment + summary.paid + summary.shipped + summary.delivered;
+  const claimed = summary.pending_payment + summary.awaiting_confirmation + summary.paid + summary.shipped + summary.delivered;
   const filled = Math.min(1, claimed / batch.capacity);
 
   return (
@@ -27,7 +28,7 @@ export function AdminSampleSummary({ batch, summary }: AdminSampleSummaryProps) 
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="flex flex-col gap-3">
           <h1 className="m-0 text-h1 font-medium tracking-[-0.02em] text-wi-black">{batch.label}</h1>
-          <AdminBatchSettings id={batch.id} label={batch.label} capacity={batch.capacity} phase={batch.phase} requests={Object.values(summary).reduce((total, count) => total + count, 0)} />
+          <AdminBatchSettings id={batch.id} label={batch.label} capacity={batch.capacity} phase={batch.phase} paymentMethod={batch.paymentMethod} requests={Object.values(summary).reduce((total, count) => total + count, 0)} />
         </div>
         <div className="flex w-full max-w-64 flex-col gap-2">
           <p className="m-0 text-sm text-wi-ink-500">
@@ -38,7 +39,7 @@ export function AdminSampleSummary({ batch, summary }: AdminSampleSummaryProps) 
           </div>
         </div>
       </div>
-      <dl className="m-0 grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <dl className="m-0 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {ORDER.map((status) => (
           <div key={status} className="flex flex-col gap-1 rounded-[calc(var(--wi-radius-card)-6px)] bg-wi-paper-dim px-3.5 py-3">
             <dt className="text-xs text-wi-ink-500">{LABEL[status]}</dt>

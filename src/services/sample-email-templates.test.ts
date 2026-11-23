@@ -13,6 +13,7 @@ const CONTEXT: ISampleEmailContext = {
     waybillId: "JNE123456",
     trackingLink: "https://biteship.com/track/JNE123456",
   },
+  transfer: null,
 };
 
 const KINDS = Object.values(SampleEmailKind);
@@ -114,6 +115,51 @@ describe("renderSampleEmail", () => {
     expect(email.html.match(/&#9734;/g)).toHaveLength(5);
     expect(email.html).not.toContain("&rarr;");
     expect(email.text).toContain("These links keep working.");
+  });
+
+  test("payment instructions carry the code, amount, account and deadline", () => {
+    const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, {
+      ...CONTEXT,
+      courier: null,
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false },
+    });
+
+    for (const part of ["K7P2QX", "Rp 17.500", "800207642000", "DAYA RAGA INDONESIA", "CIMB Niaga", "28 Oct, 10:00", "within 24 hours", CONTEXT.statusUrl]) {
+      expect(email.html).toContain(part);
+      expect(email.text).toContain(part);
+    }
+  });
+
+  test("payment instructions never repeat the name someone typed", () => {
+    const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, {
+      ...CONTEXT,
+      firstName: "Visit evil.example now",
+      courier: null,
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false },
+    });
+
+    for (const part of [email.subject, email.html, email.text]) expect(part).not.toContain("evil.example");
+  });
+
+  test("a reported transfer gets a reminder, not a second set of payment instructions", () => {
+    const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, {
+      ...CONTEXT,
+      courier: null,
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: true },
+    });
+
+    for (const absent of ["800207642000", "28 Oct, 10:00", "Transfer Rp 17.500"]) {
+      expect(email.html).not.toContain(absent);
+      expect(email.text).not.toContain(absent);
+    }
+    for (const part of ["K7P2QX", "within 24 hours", CONTEXT.statusUrl]) expect(email.text).toContain(part);
+  });
+
+  test("payment instructions without a transfer leave out the bank box", () => {
+    const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, { ...CONTEXT, transfer: null });
+
+    expect(email.html).not.toContain("800207642000");
+    expect(email.html).toContain(CONTEXT.statusUrl);
   });
 
   test("escapes html in the first name", () => {

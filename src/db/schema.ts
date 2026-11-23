@@ -13,9 +13,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-/** Lifecycle of one sample request, from hold to delivered box. */
+/**
+ * Lifecycle of one sample request, from hold to delivered box. `awaiting_confirmation` is a bank transfer the
+ * sampler reported: it holds the box until a founder confirms or rejects it, and never lapses on its own.
+ */
 export const sampleRequestStatusEnum = pgEnum("sample_request_status", [
   "pending_payment",
+  "awaiting_confirmation",
   "paid",
   "shipped",
   "delivered",
@@ -36,6 +40,9 @@ export const samplePaymentStatusEnum = pgEnum("sample_payment_status", [
 /** A batch's public state, set by a founder in admin. */
 export const sampleBatchPhaseEnum = pgEnum("sample_batch_phase", ["upcoming", "open", "closed"]);
 
+/** How a batch's new requests pay the courier fee: Midtrans Snap, or a bank transfer a founder confirms by hand. */
+export const samplePaymentMethodEnum = pgEnum("sample_payment_method", ["midtrans", "bank_transfer"]);
+
 /** How a request came in: the public form (shipped) or a founder seeding a sample by hand (in_person). */
 export const sampleRequestSourceEnum = pgEnum("sample_request_source", ["shipped", "in_person"]);
 
@@ -51,6 +58,8 @@ export const sampleBatches = pgTable("sample_batches", {
   capacity: integer("capacity").notNull(),
   /** What `/sample` shows: coming soon, the request form (falls back to closed once full), or closed. */
   phase: sampleBatchPhaseEnum("phase").notNull().default("upcoming"),
+  /** What a new claim in this batch pays with. Each request keeps its own method (a bank transfer has a `payment_code`). */
+  paymentMethod: samplePaymentMethodEnum("payment_method").notNull().default("midtrans"),
   paymentWindowMinutes: integer("payment_window_minutes").notNull().default(1440),
   createdAt: timestamptz("created_at").notNull().defaultNow(),
 }, (table) => [
@@ -124,6 +133,10 @@ export const sampleRequests = pgTable(
     shippingFee: integer("shipping_fee"),
     shippingEta: text("shipping_eta"),
     shopifyOutcome: text("shopify_outcome"),
+    // Bank transfer only: the 6-character code for Berita Transfer, WhatsApp and admin search, and when the
+    // sampler tapped "I've transferred". Null for Midtrans and in-person requests.
+    paymentCode: text("payment_code").unique(),
+    transferReportedAt: timestamptz("transfer_reported_at"),
     createdAt: timestamptz("created_at").notNull().defaultNow(),
     expiresAt: timestamptz("expires_at").notNull(),
     paidAt: timestamptz("paid_at"),
@@ -241,3 +254,4 @@ export type SampleRequestStatus = (typeof sampleRequestStatusEnum.enumValues)[nu
 export type SamplePaymentStatus = (typeof samplePaymentStatusEnum.enumValues)[number];
 export type SampleRequestSource = (typeof sampleRequestSourceEnum.enumValues)[number];
 export type SampleBatchPhase = (typeof sampleBatchPhaseEnum.enumValues)[number];
+export type SamplePaymentMethod = (typeof samplePaymentMethodEnum.enumValues)[number];

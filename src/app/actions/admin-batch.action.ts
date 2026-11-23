@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { BatchPhaseResult, BatchSettingsState, CreateBatchState } from "@/app/utils/admin-state";
 import { db } from "@/db/client";
-import { sampleBatchPhaseEnum } from "@/db/schema";
+import { sampleBatchPhaseEnum, samplePaymentMethodEnum } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin-session";
 import { SampleBatchService } from "@/services/sample-batch.service";
 
@@ -42,6 +42,19 @@ export async function setBatchPhaseAction(batchId: string, phaseValue: string): 
     return { ok: false, message: "Unknown status." };
   }
   const result = await SampleBatchService.setPhase(db, batchId, phase);
+  revalidatePath("/admin", "layout");
+
+  return result;
+}
+
+/** Sets how a batch's new requests pay, after the founder confirmed it. Refused while it holds unpaid requests. */
+export async function setBatchPaymentMethodAction(batchId: string, methodValue: string): Promise<BatchPhaseResult> {
+  await requireAdmin();
+  const method = samplePaymentMethodEnum.enumValues.find((value) => value === methodValue);
+  if (method === undefined) {
+    return { ok: false, message: "Unknown payment method." };
+  }
+  const result = await SampleBatchService.setPaymentMethod(db, batchId, method, new Date());
   revalidatePath("/admin", "layout");
 
   return result;

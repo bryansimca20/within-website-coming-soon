@@ -20,6 +20,8 @@ export const REGISTRATION_CSV_COLUMNS = [
   "batch",
   "box",
   "status",
+  "payment_code",
+  "transfer_reported_at",
   "name",
   "email",
   "whatsapp",
@@ -108,6 +110,8 @@ function rowValues({ request, shipment, feedback }: IExportRow): string[] {
   return [
     SampleRequestService.boxLabel(request.batchId, request.boxNumber),
     request.status,
+    request.paymentCode,
+    request.transferReportedAt,
     request.fullName,
     request.email,
     request.whatsapp,

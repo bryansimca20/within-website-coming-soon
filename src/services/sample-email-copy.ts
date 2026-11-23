@@ -5,6 +5,34 @@
 export const SAMPLE_EMAIL_COPY = {
   footer: "You're getting this because you requested a WITHIN sample at getwithin.id. Reply to this email with any question and a person will answer.",
   place: "JAKARTA",
+  // Bank-transfer batches only, sent the moment a box is held and again when the same email asks a second time.
+  // `{amount}`, `{code}`, `{deadline}` (Jakarta time), `{hours}`. No `{name}`: it goes to whatever address was typed
+  // before anyone has paid, so it never repeats text a stranger typed.
+  paymentInstructions: {
+    subject: "How to pay for your WITHIN samples",
+    preheader: "Transfer {amount} with {code} in Berita Transfer before {deadline}.",
+    preheaderPlain: "Your payment page has the bank details and your code.",
+    headline: "Almost there.",
+    paragraphs: [
+      "Transfer {amount} for the courier before {deadline}, Jakarta time, and put {code} in Berita Transfer so we can match your payment.",
+      "Then open your payment page, tap I've transferred, and send us the screenshot on WhatsApp. We confirm transfers within {hours} hours.",
+    ],
+    withoutTransfer: "Your payment page has the bank details, the amount and your code.",
+    // Sent instead when they already tapped I've transferred: no account and no deadline, so nobody pays twice.
+    reportedSubject: "We're checking your WITHIN transfer",
+    reportedPreheader: "We confirm transfers within {hours} hours.",
+    reportedHeadline: "We're checking your transfer.",
+    reportedParagraphs: [
+      "You told us you transferred {amount} with {code}. We confirm transfers within {hours} hours.",
+      "If you haven't sent the screenshot yet, open your payment page and send it on WhatsApp.",
+    ],
+    bankLabel: "BANK",
+    holderLabel: "ACCOUNT HOLDER",
+    numberLabel: "ACCOUNT NUMBER",
+    amountLabel: "AMOUNT",
+    codeLabel: "BERITA TRANSFER",
+    button: "Open your payment page",
+  },
   paid: {
     subject: "{name}, you're in for {batch}",
     preheader: "A note from the small team making WITHIN in Jakarta.",

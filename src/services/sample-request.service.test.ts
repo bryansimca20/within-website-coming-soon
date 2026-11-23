@@ -207,26 +207,26 @@ describe("SampleRequestService.pageState", () => {
     await claimed("a@example.com");
     await SampleRequestService.updateBatch(db, "b01", { phase: "upcoming" });
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "upcoming", batch: { label: "Batch 01", capacity: 100 } });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "upcoming", batch: { label: "Batch 01", capacity: 100, paymentMethod: "midtrans" } });
   });
 
   test("an open batch with room is open, with its live count", async () => {
     await claimed("a@example.com");
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "open", batch: { label: "Batch 01", capacity: 100 }, claimed: 1 });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "open", batch: { label: "Batch 01", capacity: 100, paymentMethod: "midtrans" }, claimed: 1 });
   });
 
   test("an open batch that is full shows closed", async () => {
     await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
     await claimed("a@example.com");
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 1 } });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 1, paymentMethod: "midtrans" } });
   });
 
   test("a closed batch shows closed, even before any request", async () => {
     await SampleRequestService.updateBatch(db, "b01", { phase: "closed" });
 
-    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 100 } });
+    expect(await SampleRequestService.pageState(db, NOW)).toEqual({ kind: "closed", batch: { label: "Batch 01", capacity: 100, paymentMethod: "midtrans" } });
   });
 
   test("with no batches at all, there is nothing to show", async () => {
@@ -378,5 +378,97 @@ describe("SampleRequestService.listSeeded", () => {
 
     expect((await SampleRequestService.listSeeded(db)).map((row) => row.id)).toEqual([newer.request.id, older.request.id]);
     expect((await SampleRequestService.listSeeded(db, { includeTest: true })).map((row) => row.id)).toEqual([hidden.request.id, newer.request.id, older.request.id]);
+  });
+});
+
+describe("bank transfer claims", () => {
+  async function useBankTransfer(batchId = "b01") {
+    await db.update(sampleBatches).set({ paymentMethod: "bank_transfer" }).where(eq(sampleBatches.id, batchId));
+  }
+
+  async function markAwaiting(id: string) {
+    await db.update(sampleRequests).set({ status: "awaiting_confirmation", transferReportedAt: NOW }).where(eq(sampleRequests.id, id));
+  }
+
+  test("a bank-transfer claim gets a 6-character code", async () => {
+    await useBankTransfer();
+
+    expect((await claimed("a@example.com")).paymentCode).toMatch(/^[2-9A-HJ-NP-Z]{6}$/);
+  });
+
+  test("a Midtrans claim gets no code", async () => {
+    expect((await claimed("a@example.com")).paymentCode).toBeNull();
+  });
+
+  test("a same-email request awaiting confirmation is returned, not replaced", async () => {
+    await useBankTransfer();
+    const first = await claimed("a@example.com");
+    await markAwaiting(first.id);
+
+    const again = await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), minutesAfter(5));
+
+    expect(again.kind).toBe("awaiting");
+    expect(again.kind === "awaiting" ? again.request.id : null).toBe(first.id);
+    const rows = await db.select().from(sampleRequests).where(eq(sampleRequests.email, "a@example.com"));
+    expect(rows.map((row) => row.status)).toEqual(["awaiting_confirmation"]);
+  });
+
+  test("an awaiting request from an earlier batch is returned too", async () => {
+    await useBankTransfer();
+    const first = await claimed("a@example.com");
+    await markAwaiting(first.id);
+    await db.update(sampleBatches).set({ phase: "closed" }).where(eq(sampleBatches.id, "b01"));
+    await db.insert(sampleBatches).values({ id: "b02", label: "Batch 02", capacity: 10, phase: "open" });
+
+    const again = await SampleRequestService.claim(db, "b02", sampleValues({ email: "a@example.com" }), minutesAfter(5));
+
+    expect(again.kind === "awaiting" ? again.request.id : again.kind).toBe(first.id);
+  });
+
+  test("a founder's test transfer never blocks a real claim", async () => {
+    await useBankTransfer();
+    const founderOrder = await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW, { isTest: true });
+    if (founderOrder.kind !== "claimed") throw new Error(founderOrder.kind);
+    await markAwaiting(founderOrder.request.id);
+
+    expect((await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW)).kind).toBe("claimed");
+  });
+
+  test("a request awaiting confirmation holds its slot", async () => {
+    await useBankTransfer();
+    await SampleRequestService.updateBatch(db, "b01", { capacity: 1 });
+    await markAwaiting((await claimed("a@example.com")).id);
+
+    expect(await SampleRequestService.claim(db, "b01", sampleValues({ email: "b@example.com" }), NOW)).toEqual({ kind: "full" });
+  });
+
+  test("a request awaiting confirmation never lapses", async () => {
+    await useBankTransfer();
+    const request = await claimed("a@example.com");
+    await markAwaiting(request.id);
+    await db.update(sampleRequests).set({ expiresAt: minutesAfter(-1) }).where(eq(sampleRequests.id, request.id));
+    const stored = await SampleRequestService.findById(db, request.id);
+    if (stored === null) throw new Error("missing");
+
+    expect(await SampleRequestService.expireLapsedHolds(db, "b01", NOW)).toBe(0);
+    expect((await SampleRequestService.markExpiredIfLapsed(db, stored, NOW)).status).toBe("awaiting_confirmation");
+    expect(await SampleRequestService.countClaimed(db, "b01", NOW)).toBe(1);
+  });
+
+  test("admin search finds a payment code in any case", async () => {
+    await useBankTransfer();
+    const request = await claimed("a@example.com");
+    await claimed("b@example.com");
+    await db.update(sampleRequests).set({ paymentCode: "K7P2QX" }).where(eq(sampleRequests.id, request.id));
+
+    expect((await SampleRequestService.listForAdmin(db, "b01", { query: "  k7p2qx " })).map((row) => row.id)).toEqual([request.id]);
+  });
+
+  test("the page shows the batch's payment method", async () => {
+    await useBankTransfer();
+
+    const state = await SampleRequestService.pageState(db, NOW);
+
+    expect(state.kind === "open" ? state.batch.paymentMethod : state.kind).toBe("bank_transfer");
   });
 });
