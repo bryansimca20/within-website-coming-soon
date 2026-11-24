@@ -7,6 +7,11 @@ const NATIONAL_MOBILE_PATTERN = /^8\d{8,11}$/;
  */
 export function normalizeIndonesianPhone(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
+  // A leading + means the country code is spelled out, so it must be Indonesia's. Without this, "+81 90…" (Japan)
+  // would pass as an Indonesian number typed without its 0.
+  if (raw.trim().startsWith("+") && !digits.startsWith("62")) {
+    return null;
+  }
 
   let national: string;
   if (digits.startsWith("62")) {
