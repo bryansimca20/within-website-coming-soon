@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { BANK_TRANSFER, whatsappUrl } from "@/app/utils/bank-transfer";
+import { readBankTransferDetails, whatsappUrl } from "@/app/utils/bank-transfer";
 import type { SampleFeedbackRow, SamplePayment, SampleRequest, SampleShipment } from "@/db/schema";
 
 import { SamplePayNow } from "./SamplePayNow";
@@ -44,9 +44,10 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
   const isInPerson = request.source === "in_person";
   const hasShipped = request.status === "shipped" || request.status === "delivered";
   const code = request.paymentCode;
+  const bank = readBankTransferDetails();
   const transferStep: 1 | 2 | null = code === null ? null : request.status === "pending_payment" ? 1 : request.status === "awaiting_confirmation" ? 2 : null;
   const proofUrl =
-    code === null ? null : whatsappUrl(BANK_TRANSFER.whatsappNumber, transfer.proofMessage(code, formatRupiah(request.shippingFee ?? 0), request.fullName));
+    code === null ? null : whatsappUrl(bank.whatsappNumber, transfer.proofMessage(code, formatRupiah(request.shippingFee ?? 0), request.fullName));
 
   return (
     <SampleShell>
@@ -61,7 +62,7 @@ export function SampleStatusPage(props: SampleStatusPageProps) {
       </div>
 
       {request.status === "pending_payment" && code !== null && (
-        <SampleTransferPay token={request.accessToken} code={code} amount={request.shippingFee ?? 0} holdLeft={status.holdLeft(formatMinutes(props.minutesLeft))} />
+        <SampleTransferPay token={request.accessToken} code={code} bank={bank} amount={request.shippingFee ?? 0} holdLeft={status.holdLeft(formatMinutes(props.minutesLeft))} />
       )}
 
       {request.status === "awaiting_confirmation" && code !== null && <SampleTransferProof code={code} proofUrl={proofUrl} />}

@@ -29,7 +29,7 @@ describe("buildSampleEmailContext", () => {
       null
     );
 
-    expect(bankTransfer.transfer).toEqual({ code: "K7P2QX", amount: "Rp 10.000", deadline: "28 Oct, 10:00", isReported: false });
+    expect(bankTransfer.transfer).toMatchObject({ code: "K7P2QX", amount: "Rp 10.000", deadline: "28 Oct, 10:00", isReported: false });
     expect(midtrans.transfer).toBeNull();
   });
 

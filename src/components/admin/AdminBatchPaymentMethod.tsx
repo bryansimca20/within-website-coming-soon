@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 
 import { setBatchPaymentMethodAction } from "@/app/actions/admin-batch.action";
-import { BANK_TRANSFER } from "@/app/utils/bank-transfer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SamplePaymentMethod } from "@/db/schema";
 
@@ -20,7 +19,7 @@ function confirmCopy(method: SamplePaymentMethod, label: string) {
   if (method === "bank_transfer") {
     return {
       title: `Take ${label} payments by bank transfer?`,
-      body: `New requests in ${label} transfer the courier fee to ${BANK_TRANSFER.bankName} and send the proof on WhatsApp. You confirm each payment under Payments to confirm. Requests made before keep the way they started.`,
+      body: `New requests in ${label} pay the courier fee by bank transfer and send the proof on WhatsApp. You confirm each payment under Payments to confirm. Requests made before keep the way they started.`,
       confirm: "Use bank transfer",
     };
   }

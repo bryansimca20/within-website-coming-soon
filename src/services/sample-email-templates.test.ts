@@ -16,6 +16,8 @@ const CONTEXT: ISampleEmailContext = {
   transfer: null,
 };
 
+const BANK = { bankName: "CIMB Niaga", accountHolder: "DAYA RAGA INDONESIA", accountNumber: "800207642000", whatsappNumber: "081234567890" };
+
 const KINDS = Object.values(SampleEmailKind);
 
 describe("renderSampleEmail", () => {
@@ -121,7 +123,7 @@ describe("renderSampleEmail", () => {
     const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, {
       ...CONTEXT,
       courier: null,
-      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false },
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false, bank: BANK },
     });
 
     for (const part of ["K7P2QX", "Rp 17.500", "800207642000", "DAYA RAGA INDONESIA", "CIMB Niaga", "28 Oct, 10:00", "within 24 hours", CONTEXT.statusUrl]) {
@@ -135,7 +137,7 @@ describe("renderSampleEmail", () => {
       ...CONTEXT,
       firstName: "Visit evil.example now",
       courier: null,
-      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false },
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: false, bank: BANK },
     });
 
     for (const part of [email.subject, email.html, email.text]) expect(part).not.toContain("evil.example");
@@ -145,7 +147,7 @@ describe("renderSampleEmail", () => {
     const email = renderSampleEmail(SampleEmailKind.PaymentInstructions, {
       ...CONTEXT,
       courier: null,
-      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: true },
+      transfer: { code: "K7P2QX", amount: "Rp 17.500", deadline: "28 Oct, 10:00", isReported: true, bank: BANK },
     });
 
     for (const absent of ["800207642000", "28 Oct, 10:00", "Transfer Rp 17.500"]) {

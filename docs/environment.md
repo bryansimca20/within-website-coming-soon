@@ -17,6 +17,8 @@ Secrets live in `.env.local` (gitignored) locally and in Vercel project settings
 | `BITESHIP_WEBHOOK_TOKEN` | Secret `?token=` on the Biteship webhook URL (Biteship signs nothing) |
 | `SAMPLE_ORIGIN_CONTACT_NAME`, `_PHONE`, `_ADDRESS`, `_AREA_ID`, `_POSTAL_CODE`, `_NOTE` | The BSD office as Biteship origin (all prefixed `SAMPLE_ORIGIN_`) |
 | `RESEND_API_KEY`, `SAMPLE_EMAIL_FROM`, `SAMPLE_EMAIL_REPLY_TO` | Sampler emails through Resend |
+| `BANK_NAME`, `BANK_ACCOUNT_HOLDER`, `BANK_ACCOUNT_NUMBER` | The account bank-transfer samplers pay into (CIMB Niaga, DAYA RAGA INDONESIA, 800207642000). Not secret, server-only |
+| `WHATSAPP_NUMBER` | Receives transfer proofs; any local format (`0812…`, `+62…`). Use a test number on Preview. While any of these four is empty, admin refuses to switch a batch to bank transfer |
 | `CRON_SECRET` | Vercel Cron sends it as `Authorization: Bearer …`; `/api/cron/feedback-reminders` refuses anything else |
 
 ## Site URL

@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import { BANK_TRANSFER } from "@/app/utils/bank-transfer";
 import type { SampleDatabase } from "@/db/database";
 import { sampleBatches, sampleRequests } from "@/db/schema";
 
@@ -238,7 +237,7 @@ describe("SampleBatchService.list with bank transfers", () => {
 });
 
 describe("SampleBatchService.setPaymentMethod", () => {
-  const READY = { ...BANK_TRANSFER, whatsappNumber: "081234567890" };
+  const READY = { bankName: "CIMB Niaga", accountHolder: "DAYA RAGA INDONESIA", accountNumber: "800207642000", whatsappNumber: "081234567890" };
 
   async function claimFor(email: string, options: { isTest?: boolean } = {}) {
     const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW, options);

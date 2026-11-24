@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readBankTransferDetails } from "@/app/utils/bank-transfer";
 import { formatJakarta } from "@/components/sample/utils/jakarta-date";
 import { formatRupiah } from "@/components/sample/utils/sample-copy";
 import type { SampleBatch, SampleRequest, SampleShipment } from "@/db/schema";
@@ -35,6 +36,7 @@ export function buildSampleEmailContext(
           amount: formatRupiah(request.shippingFee ?? 0),
           deadline: formatJakarta(request.expiresAt),
           isReported: request.status === "awaiting_confirmation",
+          bank: readBankTransferDetails(),
         }
       : null,
   };

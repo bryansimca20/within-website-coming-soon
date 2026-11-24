@@ -2,7 +2,7 @@ import "server-only";
 
 import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 
-import { BANK_TRANSFER, type IBankTransferDetails, isBankTransferReady } from "@/app/utils/bank-transfer";
+import { type IBankTransferDetails, isBankTransferReady, readBankTransferDetails } from "@/app/utils/bank-transfer";
 import type { SampleDatabase } from "@/db/database";
 import {
   type SampleBatch,
@@ -161,7 +161,7 @@ export class SampleBatchService {
     batchId: string,
     method: SamplePaymentMethod,
     now: Date,
-    details: IBankTransferDetails = BANK_TRANSFER
+    details: IBankTransferDetails = readBankTransferDetails()
   ): Promise<SetPaymentMethodResult> {
     return db.transaction(async (tx) => {
       // Same row lock a claim takes, so no hold can land between the unpaid check and the write.

@@ -1,4 +1,4 @@
-import { BANK_TRANSFER, CONFIRM_WITHIN_HOURS } from "@/app/utils/bank-transfer";
+import { CONFIRM_WITHIN_HOURS, type IBankTransferDetails } from "@/app/utils/bank-transfer";
 import { SITE_URL } from "@/lib/site";
 
 import { SAMPLE_EMAIL_COPY } from "./sample-email-copy";
@@ -35,6 +35,8 @@ export interface ISampleEmailContext {
     amount: string;
     deadline: string;
     isReported: boolean;
+    /** This deployment's account, from env. */
+    bank: IBankTransferDetails;
   } | null;
 }
 
@@ -215,9 +217,9 @@ function paymentInstructionsEmail(context: ISampleEmailContext): INoteEmail {
     headline: fill(copy.headline, values),
     paragraphs: copy.paragraphs.map((text) => fill(text, values)),
     details: [
-      { label: copy.bankLabel, value: BANK_TRANSFER.bankName, isMono: false },
-      { label: copy.holderLabel, value: BANK_TRANSFER.accountHolder, isMono: false },
-      { label: copy.numberLabel, value: BANK_TRANSFER.accountNumber, isMono: true },
+      { label: copy.bankLabel, value: transfer.bank.bankName, isMono: false },
+      { label: copy.holderLabel, value: transfer.bank.accountHolder, isMono: false },
+      { label: copy.numberLabel, value: transfer.bank.accountNumber, isMono: true },
       { label: copy.amountLabel, value: transfer.amount, isMono: false },
       { label: copy.codeLabel, value: transfer.code, isMono: true },
     ],

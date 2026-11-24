@@ -1,4 +1,4 @@
-import { BANK_TRANSFER } from "@/app/utils/bank-transfer";
+import type { IBankTransferDetails } from "@/app/utils/bank-transfer";
 
 import { SampleCopyButton } from "./SampleCopyButton";
 import { SampleTransferReportButton } from "./SampleTransferReportButton";
@@ -11,6 +11,8 @@ const LABEL_CLASS = "m-0 text-xs leading-4 font-bold tracking-[0.06em] text-bran
 interface SampleTransferPayProps {
   token: string;
   code: string;
+  /** This deployment's account, read from env on the server. */
+  bank: IBankTransferDetails;
   /** The courier fee in rupiah. */
   amount: number;
   /** "Your samples are held for 23 h 40 min." */
@@ -18,11 +20,11 @@ interface SampleTransferPayProps {
 }
 
 /** Step 1 of a bank transfer: the amount, the account, the code for Berita Transfer, then "I've transferred". */
-export function SampleTransferPay({ token, code, amount, holdLeft }: SampleTransferPayProps) {
+export function SampleTransferPay({ token, code, bank, amount, holdLeft }: SampleTransferPayProps) {
   const rows = [
-    { label: transfer.bank, value: BANK_TRANSFER.bankName, copyAs: null },
-    { label: transfer.holder, value: BANK_TRANSFER.accountHolder, copyAs: null },
-    { label: transfer.number, value: BANK_TRANSFER.accountNumber, copyAs: transfer.numberWhat },
+    { label: transfer.bank, value: bank.bankName, copyAs: null },
+    { label: transfer.holder, value: bank.accountHolder, copyAs: null },
+    { label: transfer.number, value: bank.accountNumber, copyAs: transfer.numberWhat },
   ];
 
   return (

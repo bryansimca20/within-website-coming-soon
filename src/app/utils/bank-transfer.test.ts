@@ -1,8 +1,33 @@
 import { describe, expect, test } from "vitest";
 
-import { BANK_TRANSFER, isBankTransferReady, whatsappUrl } from "./bank-transfer";
+import { isBankTransferReady, readBankTransferDetails, whatsappUrl } from "./bank-transfer";
 
-const READY = { ...BANK_TRANSFER, whatsappNumber: "0812 3456 7890" };
+const READY = {
+  bankName: "CIMB Niaga",
+  accountHolder: "DAYA RAGA INDONESIA",
+  accountNumber: "800207642000",
+  whatsappNumber: "0812 3456 7890",
+};
+
+describe("readBankTransferDetails", () => {
+  test("reads the four values from the environment, trimmed", () => {
+    expect(
+      readBankTransferDetails({
+        BANK_NAME: " CIMB Niaga ",
+        BANK_ACCOUNT_HOLDER: "DAYA RAGA INDONESIA",
+        BANK_ACCOUNT_NUMBER: "800207642000\n",
+        WHATSAPP_NUMBER: "0812 3456 7890",
+      })
+    ).toEqual(READY);
+  });
+
+  test("a missing value reads as empty, so bank transfer is not ready", () => {
+    const details = readBankTransferDetails({ BANK_NAME: "CIMB Niaga" });
+
+    expect(details.whatsappNumber).toBe("");
+    expect(isBankTransferReady(details)).toBe(false);
+  });
+});
 
 describe("whatsappUrl", () => {
   test("whatsappUrl normalizes Indonesian numbers", () => {
