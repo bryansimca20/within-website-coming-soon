@@ -75,7 +75,7 @@ export class SampleShipmentService {
       }
       const attempt = attempts.length + 1;
       const referenceId = SampleShipmentService.referenceId(boxLabel, attempt);
-      const order = await BiteshipService.createOrder({
+      const booked = await BiteshipService.createOrder({
         referenceId,
         courierCompany,
         courierType,
@@ -93,10 +93,12 @@ export class SampleShipmentService {
         },
         origin,
       });
-      if (order === null) {
-        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: "Biteship refused the order." });
+      if (!booked.ok) {
+        // Founders only: Biteship's own reason (balance, address, courier) is what they need to fix it.
+        results.push({ requestId, boxLabel, ok: false, waybillId: null, error: `Biteship refused the order: ${booked.reason}` });
         continue;
       }
+      const { order } = booked;
 
       try {
         await db.insert(sampleShipments).values({

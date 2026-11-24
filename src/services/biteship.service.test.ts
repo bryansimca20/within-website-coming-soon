@@ -220,22 +220,45 @@ describe("phaseForBiteshipStatus", () => {
 });
 
 describe("BiteshipService.createOrder failures", () => {
-  test("returns null instead of throwing when the network call fails", async () => {
+  const ORDER_INPUT = {
+    referenceId: "B01-001-1",
+    courierCompany: "jne",
+    courierType: "reg",
+    deliveryType: "now" as const,
+    deliveryDate: null,
+    deliveryTime: null,
+    destination: { name: "A", phone: "+62812", email: "a@b.co", address: "x", note: null, areaId: "a", postalCode: "12250" },
+    origin: { contactName: "W", contactPhone: "+62811", address: "y", areaId: "o", postalCode: "15345", note: null },
+  };
+
+  test("a failed network call is a refusal with a plain reason, not a throw", async () => {
     process.env.BITESHIP_API_KEY = "biteship_test.x";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
 
-    await expect(
-      BiteshipService.createOrder({
-        referenceId: "B01-001-1",
-        courierCompany: "jne",
-        courierType: "reg",
-        deliveryType: "now",
-        deliveryDate: null,
-        deliveryTime: null,
-        destination: { name: "A", phone: "+62812", email: "a@b.co", address: "x", note: null, areaId: "a", postalCode: "12250" },
-        origin: { contactName: "W", contactPhone: "+62811", address: "y", areaId: "o", postalCode: "15345", note: null },
-      })
-    ).resolves.toBeNull();
+    await expect(BiteshipService.createOrder(ORDER_INPUT)).resolves.toEqual({
+      ok: false,
+      reason: "Biteship didn't answer. Try again in a minute.",
+    });
+
+    fetchSpy.mockRestore();
+  });
+
+  test("a refusal carries Biteship's own reason and code", async () => {
+    process.env.BITESHIP_API_KEY = "biteship_test.x";
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ success: false, error: "Saldo tidak mencukupi", code: 40002034 }), { status: 400 }));
+
+    await expect(BiteshipService.createOrder(ORDER_INPUT)).resolves.toEqual({ ok: false, reason: "Saldo tidak mencukupi (code 40002034)" });
+
+    fetchSpy.mockRestore();
+  });
+
+  test("a refusal without a message still says what happened", async () => {
+    process.env.BITESHIP_API_KEY = "biteship_test.x";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("<html>bad gateway</html>", { status: 502 }));
+
+    await expect(BiteshipService.createOrder(ORDER_INPUT)).resolves.toEqual({ ok: false, reason: "Biteship answered 502 without a reason." });
 
     fetchSpy.mockRestore();
   });
