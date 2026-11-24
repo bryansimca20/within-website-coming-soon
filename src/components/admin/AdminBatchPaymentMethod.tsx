@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { setBatchPaymentMethodAction } from "@/app/actions/admin-batch.action";
@@ -41,6 +42,7 @@ export function AdminBatchPaymentMethod({ batchId, label, method }: AdminBatchPa
   const [pending, setPending] = useState<SamplePaymentMethod | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
+  const router = useRouter();
   const copy = confirmCopy(pending ?? method, label);
 
   function pick(value: string | null) {
@@ -56,6 +58,8 @@ export function AdminBatchPaymentMethod({ batchId, label, method }: AdminBatchPa
       const result = await setBatchPaymentMethodAction(batchId, pending);
       if (result.ok) {
         setPending(null);
+        // revalidatePath only refreshes /admin itself at once; the batch page sits below it, so re-render it here.
+        router.refresh();
       } else {
         setError(result.message);
       }

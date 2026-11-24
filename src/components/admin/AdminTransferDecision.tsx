@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { confirmTransferAction, rejectTransferAction } from "@/app/actions/admin-sample.action";
@@ -26,6 +27,7 @@ export function AdminTransferDecision({ requestId, code, amount, canConfirm, can
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [isSaving, startTransition] = useTransition();
+  const router = useRouter();
 
   function show(dialog: "confirm" | "reject") {
     setError(null);
@@ -38,6 +40,8 @@ export function AdminTransferDecision({ requestId, code, amount, canConfirm, can
       if (result.ok) {
         setOpen(null);
         setDone(result.message);
+        // revalidatePath only refreshes /admin itself at once; this page sits below it, so re-render it here.
+        router.refresh();
       } else {
         setError(result.message);
       }
