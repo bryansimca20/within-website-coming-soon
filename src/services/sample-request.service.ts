@@ -298,6 +298,13 @@ export class SampleRequestService {
     return request ?? null;
   }
 
+  /** Whether a claim for this email would be refused: it owns a box, or reported a transfer, in any batch. */
+  static async hasClaim(db: SampleDatabase, email: string, options: { isTest?: boolean } = {}): Promise<boolean> {
+    const owned = await SampleRequestService.findActiveByEmail(db, email, options);
+
+    return owned !== null || (await SampleRequestService.findAwaitingByEmail(db, email, options)) !== null;
+  }
+
   /** The newest reported bank transfer for an email, in any batch, among rows with the same test flag. */
   static async findAwaitingByEmail(db: SampleDatabase, email: string, options: { isTest?: boolean } = {}): Promise<SampleRequest | null> {
     const [request] = await db

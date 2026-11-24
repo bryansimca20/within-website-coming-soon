@@ -31,7 +31,7 @@ export function SampleStepContact({ values, errors, onChange, emailHint }: ISamp
         <SampleCheckbox name="consent" checked={values.consent === "on"} onChange={(checked) => onChange({ consent: checked ? "on" : "" })} error={errors.consent}>
           {delivery.consent}
         </SampleCheckbox>
-        <SampleCheckbox name="willShare" checked={values.willShare === "on"} onChange={(checked) => onChange({ willShare: checked ? "on" : "" })}
+        <SampleCheckbox name="willShare" checked={values.willShare === "on"} onChange={(checked) => onChange({ willShare: checked ? "on" : "" })} error={errors.willShare}
           description={delivery.willShareNote}>
           {delivery.willShare}
         </SampleCheckbox>

@@ -17,6 +17,7 @@ const VALID_SEED: ISampleRequestInput = {
   whatsapp: "0812 3456 7890",
   instagramHandle: "fanny.runs",
   consent: "on",
+  willShare: "on",
   ref: "event",
 };
 

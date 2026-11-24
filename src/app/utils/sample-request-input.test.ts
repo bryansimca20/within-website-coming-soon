@@ -98,14 +98,20 @@ describe("parseSampleRequestInput", () => {
     expect(parseWith({ hopes: "other", hopesOther: "Sleep better" }).ok).toBe(true);
   });
 
-  test("the launch email is optional and recorded as a yes or no", () => {
-    const declined = parseWith({ consent: "" });
-    expect(declined.ok).toBe(true);
-    if (declined.ok) expect(declined.value.wantsLaunchEmail).toBe(false);
+  test("the launch email and the feedback promise are both required", () => {
+    expect(parseWith({ consent: "" })).toMatchObject({ ok: false, field: "consent", message: SAMPLE_FIELD_ERROR.consent });
+    expect(parseWith({ willShare: "" })).toMatchObject({ ok: false, field: "willShare", message: SAMPLE_FIELD_ERROR.willShare });
+    expect(SAMPLE_FIELD_ERROR.consent).not.toBe("");
+    expect(SAMPLE_FIELD_ERROR.willShare).not.toBe("");
 
-    const accepted = parseWith({ consent: "on" });
+    const accepted = parseWith({ consent: "on", willShare: "on" });
     expect(accepted.ok).toBe(true);
-    if (accepted.ok) expect(accepted.value.wantsLaunchEmail).toBe(true);
+    if (accepted.ok) expect(accepted.value).toMatchObject({ wantsLaunchEmail: true, willShare: true });
+  });
+
+  test("step 1 stops on an unticked box", () => {
+    const errors = validateSampleStep(1, { ...VALID_INPUT, consent: "", willShare: "" });
+    expect(Object.keys(errors).sort()).toEqual(["consent", "willShare"]);
   });
 
   test("rejects a shipping fee that is not a positive integer", () => {
@@ -167,11 +173,13 @@ describe("validateSampleStep", () => {
     expect(new Set(owned).size).toBe(owned.length);
   });
 
-  test("step 1 asks for contact only: no phone, and the launch email is optional", () => {
+  test("step 1 asks for contact and both boxes, no phone", () => {
     expect(Object.keys(validateSampleStep(1, EMPTY_SAMPLE_REQUEST_INPUT)).sort()).toEqual([
+      "consent",
       "email",
       "fullName",
       "instagramHandle",
+      "willShare",
     ]);
   });
 

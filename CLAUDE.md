@@ -149,7 +149,7 @@ Rules:
 - Every write must be safe to repeat, since webhooks arrive twice or out of order. Store the event first, never move a paid request backwards, and guard once-only emails with a column.
 - Capacity changes happen in one transaction with the batch row locked.
 - A third-party failure must not strand the customer or a slot. Payment, shipping and email wrappers log and return `null` or `false` rather than throw.
-- Marketing consent is explicit and separate from order emails.
+- Marketing consent is explicit and never assumed. The one exception is `/sample`: the launch-email box is required, so every sampler opts in to launch emails as part of the request (founder decision, 2026-11-24).
 
 **Forms**
 - Validate per field on the client with the same validator the server runs. Reuse the honeypot helper on public forms.

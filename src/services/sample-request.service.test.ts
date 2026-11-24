@@ -164,6 +164,47 @@ describe("SampleRequestService lookups", () => {
   });
 });
 
+describe("SampleRequestService.hasClaim", () => {
+  test("false for an unknown email, a live unpaid hold and an expired one", async () => {
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(false);
+
+    const hold = await claimed("a@example.com");
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(false);
+
+    await SampleRequestService.setStatus(db, hold.id, "expired");
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(false);
+  });
+
+  test("true once paid, in any case of the email", async () => {
+    const request = await claimed("a@example.com");
+    await SampleRequestService.markPaid(db, request.id, NOW);
+
+    expect(await SampleRequestService.hasClaim(db, "A@Example.com")).toBe(true);
+  });
+
+  test("true for a reported bank transfer awaiting confirmation", async () => {
+    const request = await claimed("a@example.com");
+    await db.update(sampleRequests).set({ status: "awaiting_confirmation", transferReportedAt: NOW }).where(eq(sampleRequests.id, request.id));
+
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(true);
+  });
+
+  test("true for an in-person seeded box", async () => {
+    await SampleRequestService.seed(db, seedValues({ email: "a@example.com" }), NOW);
+
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(true);
+  });
+
+  test("test orders and real orders never block each other", async () => {
+    const founderOrder = await SampleRequestService.claim(db, "b01", sampleValues({ email: "a@example.com" }), NOW, { isTest: true });
+    if (founderOrder.kind !== "claimed") throw new Error(founderOrder.kind);
+    await SampleRequestService.markPaid(db, founderOrder.request.id, NOW);
+
+    expect(await SampleRequestService.hasClaim(db, "a@example.com")).toBe(false);
+    expect(await SampleRequestService.hasClaim(db, "a@example.com", { isTest: true })).toBe(true);
+  });
+});
+
 describe("SampleRequestService labels and time", () => {
   test("formats the box label and word", () => {
     expect(SampleRequestService.boxLabel("b01", 42)).toBe("B01-042");

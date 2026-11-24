@@ -5,7 +5,8 @@ Samples go out in numbered batches (Batch 01 was 100 boxes of three sachets, fre
 ## Routes and flow
 
 ```
-/sample (dynamic)                       SampleRequestForm, 3 steps, client-held values
+/sample (dynamic)                       SampleRequestForm, 5 steps, client-held values
+  ├─ checkSampleEmailAction            step 1's Continue: refuses an email that already owns a box (fails open)
   ├─ GET  /api/sample/areas?q=          Biteship area search (rate-limited proxy)
   ├─ POST /api/sample/rates             live courier quotes, cheapest 4
   └─ requestSampleAction                BotID + honeypot + zod, then:
@@ -69,7 +70,7 @@ Each batch has a `payment_method` (`midtrans`, the default, or `bank_transfer`),
 
 - Closed answer sets are stored as option keys from `src/app/utils/sample-options.ts`; labels live in `src/components/sample/utils/sample-copy.ts`; email copy in `src/services/sample-email-copy.ts`.
 - `/sample*` runs the WITHIN brand system from `/` (and scrolls). `/admin` runs Transparency Lab tokens. Both are `noindex` and out of the sitemap.
-- The launch-email box on step 1 is optional and unticked ("Email me when WITHIN launches."). Ticking it is the only marketing consent a sampler gives: it sets `consented_at` and subscribes them in Shopify. Order emails (payment instructions for bank-transfer requests, paid, shipped, delivered, reminder) go to every sampler regardless. The payment-instructions email never repeats the typed name, since it goes out before anyone has paid.
+- Step 1 has two required boxes, both unticked: "Email me when WITHIN launches." and "I promise to share my feedback after trying it." (founder decision, 2026-11-24; the in-person seeding form shares step 1, so it requires both too). The launch-email box is the only marketing consent a sampler gives: it sets `consented_at` and subscribes them in Shopify. Order emails (payment instructions for bank-transfer requests, paid, shipped, delivered, reminder) go to every sampler regardless. The payment-instructions email never repeats the typed name, since it goes out before anyone has paid.
 - `/sample` and `/sample/feedback` must stay listed in `initBotId({ protect })`, as must `/api/sample/areas` and `/api/sample/rates`, because Biteship bills every search and quote.
 
 ## Batches (`SampleBatchService`)
@@ -78,7 +79,7 @@ Each batch has a `payment_method` (`midtrans`, the default, or `bank_transfer`),
 - Each batch has a phase. At most one is `open`, enforced in `setPhase` ("Close Batch 01 first.") and by the partial unique index `sample_batches_one_open`. A new batch starts `upcoming`, and so does the seeded Batch 01 on a fresh database (migration 0010), so deploying never opens the form.
 - `closed` is final: `setPhase` refuses to move a closed batch anywhere else, and `setCapacity` refuses a closed batch. `remove` deletes only a batch with no requests at all (expired included) that is not open; anything with requests is closed instead. New batch is refused while one is open.
 - `/sample` serves the open batch (its form, or its claimed notice once full); with none open, the newest `upcoming` batch's coming-soon page; otherwise the newest batch's claimed notice. Every visitor line that names the batch or its size comes from `batchCopy()` in `sample-copy.ts`; never hard-code "Batch 01" or "100".
-- One email, one sample: an email with a paid, shipped or delivered request in any batch, or an in-person one, is refused (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid hold in any batch is expired by a new claim. Test and real requests are counted apart (see Test orders).
+- One email, one sample: step 1's Continue already stops an email that owns a box or reported a transfer (`SampleRequestService.hasClaim`, an inline error on the email field, no email resent, so a typed stranger's address never triggers mail). It fails open on a bot verdict, the rate limit or an error, and the claim is the real guard. At the claim, an email with a paid, shipped or delivered request in any batch, or an in-person one, is refused (`already-requested`, and the paid email for that request is resent naming its own batch). A live unpaid hold in any batch is expired by a new claim. Test and real requests are counted apart (see Test orders).
 
 ## Test orders
 
