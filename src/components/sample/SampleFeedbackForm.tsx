@@ -185,7 +185,6 @@ export function SampleFeedbackForm({ code, firstName, initialRating }: SampleFee
             {copy.skip}
           </button>
         )}
-        {step === FeedbackStep.Review && <p className="m-0 mt-1 text-center text-xs leading-[17px] text-pretty text-brand-muted">{copy.shareNote}</p>}
       </div>
     </form>
   );

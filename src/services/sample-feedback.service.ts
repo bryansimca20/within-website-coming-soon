@@ -3,7 +3,7 @@ import "server-only";
 import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
 import { FeedbackEligibility, feedbackEligibility } from "@/app/utils/feedback-eligibility";
-import type { ISampleFeedbackExtras } from "@/app/utils/sample-feedback-input";
+import type { ISampleFeedbackExtras, ShareChoice } from "@/app/utils/sample-feedback-input";
 import type { SampleDatabase } from "@/db/database";
 import { sampleFeedback, type SampleFeedbackRow, type SampleRequest, sampleRequests } from "@/db/schema";
 
@@ -84,15 +84,15 @@ export class SampleFeedbackService {
     await db.update(sampleRequests).set({ feedbackReminderSentAt: sentAt }).where(eq(sampleRequests.id, requestId));
   }
 
-  /** One row per request: the first screen's rating and review. A repeat replaces them and keeps the rest. */
+  /** One row per request: the first screen's rating, review and share choice. A repeat replaces them and keeps the rest. */
   static async saveReview(
     db: SampleDatabase,
     requestId: string | null,
-    review: { rating: number; review: string },
+    review: { rating: number; review: string; shareConsent: ShareChoice },
     email: string,
     now: Date
   ): Promise<SampleFeedbackRow> {
-    const answers = { email: email.toLowerCase(), rating: review.rating, review: review.review, updatedAt: now };
+    const answers = { email: email.toLowerCase(), ...review, updatedAt: now };
 
     if (requestId !== null) {
       const existing = await SampleFeedbackService.forRequest(db, requestId);
@@ -117,7 +117,7 @@ export class SampleFeedbackService {
   static async addToReview(
     db: SampleDatabase,
     feedbackId: string,
-    patch: ISampleFeedbackExtras & { rating?: number; review?: string },
+    patch: ISampleFeedbackExtras & { rating?: number; review?: string; shareConsent?: ShareChoice },
     now: Date
   ): Promise<SampleFeedbackRow | null> {
     const [updated] = await db

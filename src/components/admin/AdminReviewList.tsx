@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { OPTION_LABEL } from "@/components/sample/utils/sample-copy";
 import { formatJakarta } from "@/components/sample/utils/jakarta-date";
+import type { ReviewShareConsent } from "@/db/schema";
 import type { IReviewRow } from "@/services/sample-review.service";
 
 import { AdminStars } from "./AdminStars";
@@ -11,6 +12,8 @@ interface AdminReviewListProps {
   /** Shown when a filter leaves nothing, instead of the no-reviews line. */
   isFiltered: boolean;
 }
+
+const SHARE_LABEL: Record<ReviewShareConsent, string> = { yes: "Can share", no: "Private", notice: "Notice only" };
 
 /** Every review in the current view, newest first: stars, headline, words, how they felt, and whose box it was. */
 export function AdminReviewList({ reviews, isFiltered }: AdminReviewListProps) {
@@ -47,6 +50,7 @@ export function AdminReviewList({ reviews, isFiltered }: AdminReviewListProps) {
               </Link>
             )}
             <span className="tabular-nums"> · {formatJakarta(review.createdAt)}</span>
+            {review.shareConsent !== null && <span> · {SHARE_LABEL[review.shareConsent]}</span>}
           </p>
         </li>
       ))}

@@ -4,7 +4,7 @@ import { desc, eq, isNull, or } from "drizzle-orm";
 
 import { FEEDBACK_FELT, type FeedbackFelt, SCORE_MAX, SCORE_MIN } from "@/app/utils/sample-options";
 import type { SampleDatabase } from "@/db/database";
-import { sampleFeedback, sampleRequests, type SampleRequestSource } from "@/db/schema";
+import { type ReviewShareConsent, sampleFeedback, sampleRequests, type SampleRequestSource } from "@/db/schema";
 
 import { SampleRequestService } from "./sample-request.service";
 
@@ -23,6 +23,8 @@ export interface IReviewRow {
   taste: number | null;
   effectiveness: number | null;
   felt: FeedbackFelt[];
+  /** Null on old six-question check-ins, which were never asked. */
+  shareConsent: ReviewShareConsent | null;
   createdAt: Date;
 }
 
@@ -93,6 +95,7 @@ export class SampleReviewService {
       taste: feedback.tasteRating,
       effectiveness: feedback.effectiveness,
       felt: (feedback.felt ?? []).filter((key): key is FeedbackFelt => (FEEDBACK_FELT as readonly string[]).includes(key)),
+      shareConsent: feedback.shareConsent,
       createdAt: feedback.createdAt,
     }));
   }

@@ -8,6 +8,8 @@ interface SampleChoiceGroupProps<T extends string> {
   value: string;
   onChange: (value: T) => void;
   error?: string;
+  /** A note under the choices that screen readers announce with the question. */
+  description?: string;
   /** Lays the chips out as one row of equal cells, for the 1 to 5 taste scale. */
   isScale?: boolean;
   /** Keeps the legend for screen readers only, when a heading above already asks the question. */
@@ -24,14 +26,17 @@ export function SampleChoiceGroup<T extends string>({
   value,
   onChange,
   error,
+  description,
   isScale = false,
   isLegendHidden = false,
   isStacked = false,
 }: SampleChoiceGroupProps<T>) {
   const errorId = `${name}-error`;
+  const descriptionId = `${name}-description`;
+  const describedBy = [description === undefined ? null : descriptionId, error === undefined ? null : errorId].filter((id) => id !== null).join(" ");
 
   return (
-    <fieldset className="m-0 flex min-w-0 flex-col gap-2.5 border-0 p-0" aria-describedby={error === undefined ? undefined : errorId}>
+    <fieldset className="m-0 flex min-w-0 flex-col gap-2.5 border-0 p-0" aria-describedby={describedBy === "" ? undefined : describedBy}>
       <legend className={cn("mb-2.5 p-0 text-[15px] leading-[22px] font-semibold", isLegendHidden && "sr-only")}>{legend}</legend>
       <div className={cn("flex flex-wrap gap-2", isScale && "grid grid-cols-5", isStacked && "flex-col flex-nowrap")}>
         {options.map((option) => {
@@ -61,6 +66,7 @@ export function SampleChoiceGroup<T extends string>({
           {error}
         </p>
       )}
+      {description !== undefined && <p id={descriptionId} className="m-0 text-[13px] leading-[18px] text-pretty text-brand-muted">{description}</p>}
     </fieldset>
   );
 }

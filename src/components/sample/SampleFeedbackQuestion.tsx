@@ -19,6 +19,10 @@ import { choiceOptions, OPTION_LABEL, SAMPLE_COPY } from "./utils/sample-copy";
 
 const { feedback: copy } = SAMPLE_COPY;
 const SCORE_OPTIONS = ["1", "2", "3", "4", "5"].map((value) => ({ value, label: value }));
+const SHARE_OPTIONS = [
+  { value: "yes", label: copy.shareYes },
+  { value: "no", label: copy.shareNo },
+] as const;
 
 interface SampleFeedbackQuestionProps {
   step: FeedbackStep;
@@ -60,6 +64,8 @@ export function SampleFeedbackQuestion({ step, values, onChange, firstName, erro
         <SampleTextArea id="review" name="review" label={copy.reviewLabel} value={values.review} allowsLineBreaks
           onValueChange={(review) => onChange({ review })} error={errorFor("review")}
           textAreaProps={{ maxLength: REVIEW_MAX_LENGTH, placeholder: copy.reviewPlaceholder, rows: 4 }} />
+        <SampleChoiceGroup name="shareConsent" legend={copy.shareQuestion} options={SHARE_OPTIONS} isStacked description={copy.shareNote}
+          value={values.shareConsent} onChange={(shareConsent) => onChange({ shareConsent })} error={errorFor("shareConsent")} />
       </div>
     );
   }

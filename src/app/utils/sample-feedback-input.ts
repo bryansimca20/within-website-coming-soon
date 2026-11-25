@@ -28,9 +28,15 @@ export interface ISampleFeedbackInput {
   /** Comma-joined option keys. */
   felt: string;
   feltOther: string;
+  /** "yes" or "no" to publishing the review; empty until they choose. */
+  shareConsent: string;
 }
 
 export type SampleFeedbackField = keyof ISampleFeedbackInput;
+
+/** The two answers to "Can we share your review?". The database also holds `notice` for reviews from before the question. */
+export const SHARE_CHOICES = ["yes", "no"] as const;
+export type ShareChoice = (typeof SHARE_CHOICES)[number];
 
 /** A validated first screen. `code` is the personal link's token; `email` is the typed fallback. */
 export interface ISampleReviewValues {
@@ -39,6 +45,7 @@ export interface ISampleReviewValues {
   feedbackId: string | null;
   rating: number;
   review: string;
+  shareConsent: ShareChoice;
 }
 
 /** What one later screen adds to the saved review. */
@@ -63,6 +70,7 @@ export const EMPTY_SAMPLE_FEEDBACK_INPUT: ISampleFeedbackInput = {
   effectiveness: "",
   felt: "",
   feltOther: "",
+  shareConsent: "",
 };
 
 export const REVIEW_MAX_LENGTH = 500;
@@ -80,11 +88,12 @@ export const FEEDBACK_FIELD_ERROR: Record<SampleFeedbackField, string> = {
   effectiveness: "Rate how effective it was from 1 to 5.",
   felt: "Pick how you felt.",
   feltOther: "Tell us how you felt.",
+  shareConsent: "Choose whether we can share it.",
 };
 
 /** The fields each screen owns, in the order their errors should surface. */
 const STEP_FIELDS: Record<FeedbackStep, SampleFeedbackField[]> = {
-  [FeedbackStep.Review]: ["rating", "review"],
+  [FeedbackStep.Review]: ["rating", "review", "shareConsent"],
   [FeedbackStep.Headline]: ["headline"],
   [FeedbackStep.Scores]: ["tasteRating", "effectiveness"],
   [FeedbackStep.Felt]: ["felt", "feltOther"],
@@ -98,6 +107,7 @@ const score = z.string().trim().regex(/^\d$/).transform(Number).pipe(z.number().
 const fieldSchema = {
   rating: score,
   review: z.string().trim().min(1).max(REVIEW_MAX_LENGTH),
+  shareConsent: z.enum(SHARE_CHOICES),
   headline: z
     .string()
     .trim()
@@ -168,7 +178,14 @@ export function parseReviewInput(input: ISampleFeedbackInput): { ok: true; value
 
   return {
     ok: true,
-    value: { code, email, feedbackId, rating: Number(input.rating), review: input.review.trim() },
+    value: {
+      code,
+      email,
+      feedbackId,
+      rating: Number(input.rating),
+      review: input.review.trim(),
+      shareConsent: fieldSchema.shareConsent.parse(input.shareConsent),
+    },
   };
 }
 
