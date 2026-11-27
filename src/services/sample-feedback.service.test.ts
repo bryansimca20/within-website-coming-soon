@@ -24,7 +24,7 @@ afterEach(async () => {
   await close();
 });
 
-const REVIEW = { rating: 4, review: "Salty in a good way." };
+const REVIEW = { rating: 4, review: "Salty in a good way.", shareConsent: "yes" as const };
 
 async function paidRequest(email: string) {
   const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW);
@@ -64,15 +64,24 @@ describe("SampleFeedbackService.saveReview", () => {
   test("a second review for the same request replaces the first and keeps what was added since", async () => {
     const request = await paidRequest("a@example.com");
 
-    const first = await SampleFeedbackService.saveReview(db, request.id, { rating: 3, review: "Fine." }, request.email, NOW);
+    const first = await SampleFeedbackService.saveReview(db, request.id, { rating: 3, review: "Fine.", shareConsent: "yes" as const }, request.email, NOW);
     await SampleFeedbackService.addToReview(db, first.id, { tasteRating: 5 }, minutesAfter(1));
-    const second = await SampleFeedbackService.saveReview(db, request.id, { rating: 5, review: "Better." }, request.email, minutesAfter(10));
+    const second = await SampleFeedbackService.saveReview(db, request.id, { rating: 5, review: "Better.", shareConsent: "yes" as const }, request.email, minutesAfter(10));
 
     expect(second.id).toBe(first.id);
     expect(second).toMatchObject({ rating: 5, review: "Better.", tasteRating: 5 });
     expect(second.createdAt).toEqual(NOW);
     expect(second.updatedAt).toEqual(minutesAfter(10));
     expect(await db.select().from(sampleFeedback)).toHaveLength(1);
+  });
+
+  test("keeps the share choice, and a resave changes it", async () => {
+    const request = await paidRequest("a@example.com");
+
+    const first = await SampleFeedbackService.saveReview(db, request.id, { ...REVIEW, shareConsent: "no" }, request.email, NOW);
+    expect(first.shareConsent).toBe("no");
+    const second = await SampleFeedbackService.saveReview(db, request.id, { ...REVIEW, shareConsent: "yes" }, request.email, minutesAfter(5));
+    expect(second.shareConsent).toBe("yes");
   });
 
   test("an unmatched review is stored with its email and no request", async () => {

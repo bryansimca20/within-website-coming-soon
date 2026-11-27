@@ -26,7 +26,7 @@ const EMAIL_MESSAGE: Record<Exclude<FeedbackEligibility, FeedbackEligibility.Ok>
 const DECOY_FEEDBACK_ID = "00000000-0000-4000-8000-000000000000";
 
 /**
- * Saves the first screen: rating and review. Coming back to it edits the saved row by its id. Otherwise
+ * Saves the first screen: rating, review and whether it may be shared. Coming back to it edits the saved row by its id. Otherwise
  * the personal link's code identifies the sampler, or (the card's QR) the email must belong to a shipped
  * or delivered order with no review yet.
  */
@@ -49,12 +49,12 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
   if (!parsed.ok) {
     return { outcome: FeedbackOutcome.Error, message: parsed.message, field: parsed.field };
   }
-  const { code, email, feedbackId, rating, review } = parsed.value;
+  const { code, email, feedbackId, rating, review, shareConsent } = parsed.value;
 
   try {
     const now = new Date();
     if (feedbackId !== null) {
-      const edited = await SampleFeedbackService.addToReview(db, feedbackId, { rating, review }, now);
+      const edited = await SampleFeedbackService.addToReview(db, feedbackId, { rating, review, shareConsent }, now);
       if (edited !== null) return { outcome: FeedbackOutcome.Success, feedbackId: edited.id };
     }
 
@@ -72,7 +72,7 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
     if (request === null) {
       return { outcome: FeedbackOutcome.Error, message: SAMPLE_COPY.feedback.emailNotFound, field: "email" };
     }
-    const saved = await SampleFeedbackService.saveReview(db, request.id, { rating, review }, request.email, now);
+    const saved = await SampleFeedbackService.saveReview(db, request.id, { rating, review, shareConsent }, request.email, now);
 
     return { outcome: FeedbackOutcome.Success, feedbackId: saved.id };
   } catch (error) {

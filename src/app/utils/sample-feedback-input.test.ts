@@ -16,13 +16,19 @@ const CODE = "AbCdEfGhIjKlMnOpQrStUvWx";
 const ID = "3f2b8c1e-9a4d-4e5f-8b6c-7d8e9f0a1b2c";
 
 function input(patch: Partial<ISampleFeedbackInput> = {}): ISampleFeedbackInput {
-  return { ...EMPTY_SAMPLE_FEEDBACK_INPUT, code: CODE, rating: "4", review: "Salty in a good way.", ...patch };
+  return { ...EMPTY_SAMPLE_FEEDBACK_INPUT, code: CODE, rating: "4", review: "Salty in a good way.", shareConsent: "yes", ...patch };
 }
 
 describe("parseReviewInput", () => {
   test("accepts a rating and a review from the personal link", () => {
     const parsed = parseReviewInput(input());
-    expect(parsed).toEqual({ ok: true, value: { code: CODE, email: null, feedbackId: null, rating: 4, review: "Salty in a good way." } });
+    expect(parsed).toEqual({ ok: true, value: { code: CODE, email: null, feedbackId: null, rating: 4, review: "Salty in a good way.", shareConsent: "yes" } });
+  });
+
+  test("needs a yes or no on sharing, with nothing assumed", () => {
+    expect(parseReviewInput(input({ shareConsent: "" }))).toMatchObject({ ok: false, field: "shareConsent" });
+    expect(parseReviewInput(input({ shareConsent: "notice" }))).toMatchObject({ ok: false, field: "shareConsent" });
+    expect(parseReviewInput(input({ shareConsent: "no" }))).toMatchObject({ ok: true, value: { shareConsent: "no" } });
   });
 
   test("needs a star and some words", () => {

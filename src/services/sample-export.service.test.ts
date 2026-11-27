@@ -116,7 +116,7 @@ describe("buildRegistrationsCsv formula injection", () => {
 });
 
 describe("per-batch exports", () => {
-  const REVIEW = { rating: 4, review: "=1+1" };
+  const REVIEW = { rating: 4, review: "=1+1", shareConsent: "yes" as const };
 
   async function paidWithFeedback(batchId: string, email: string) {
     const claim = await SampleRequestService.claim(db, batchId, sampleValues({ email }), NOW);
@@ -175,11 +175,11 @@ describe("test orders in exports", () => {
     const real = await SampleRequestService.claim(db, "b01", sampleValues({ email: "real@example.com" }), NOW);
     if (real.kind !== "claimed") throw new Error(real.kind);
     await SampleRequestService.markPaid(db, real.request.id, NOW);
-    await SampleFeedbackService.saveReview(db, real.request.id, { rating: 5, review: "Good" }, "real@example.com", NOW);
+    await SampleFeedbackService.saveReview(db, real.request.id, { rating: 5, review: "Good", shareConsent: "yes" as const }, "real@example.com", NOW);
     const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     await SampleRequestService.markPaid(db, claim.request.id, NOW);
-    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine" }, "test@example.com", NOW);
+    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine", shareConsent: "yes" as const }, "test@example.com", NOW);
 
     const exported = await SampleExportService.loadBatch(db, "b01");
 
@@ -192,7 +192,7 @@ describe("seeded exports", () => {
   test("a seeded row with feedback exports with empty box, address and courier cells", async () => {
     const seeded = await SampleRequestService.seed(db, seedValues(), NOW);
     if (seeded.kind !== "seeded") throw new Error(seeded.kind);
-    await SampleFeedbackService.saveReview(db, seeded.request.id, { rating: 5, review: "Good" }, "fanny@example.com", NOW);
+    await SampleFeedbackService.saveReview(db, seeded.request.id, { rating: 5, review: "Good", shareConsent: "yes" as const }, "fanny@example.com", NOW);
 
     const exported = await SampleExportService.loadSeeded(db);
     const registrations = buildRegistrationsCsv(exported.registrations, "In person").slice(1).split("\r\n");

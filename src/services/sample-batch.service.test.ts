@@ -216,7 +216,7 @@ describe("SampleBatchService.list with test orders", () => {
     const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW, { isTest: true });
     if (claim.kind !== "claimed") throw new Error(claim.kind);
     await SampleRequestService.markPaid(db, claim.request.id, NOW);
-    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine" }, "test@example.com", NOW);
+    await SampleFeedbackService.saveReview(db, claim.request.id, { rating: 4, review: "Fine", shareConsent: "yes" as const }, "test@example.com", NOW);
 
     const [summary] = await SampleBatchService.list(db, NOW);
 

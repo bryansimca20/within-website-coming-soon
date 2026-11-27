@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { AdminJudgeMeExport } from "@/components/admin/AdminJudgeMeExport";
 import { AdminReviewList } from "@/components/admin/AdminReviewList";
 import { AdminReviewSummary } from "@/components/admin/AdminReviewSummary";
 import { db } from "@/db/client";
 import { requireAdmin } from "@/lib/admin-session";
+import { JudgeMeExportService } from "@/services/judgeme-export.service";
 import { SampleBatchService } from "@/services/sample-batch.service";
 import { SampleReviewService, summarizeReviews } from "@/services/sample-review.service";
 
@@ -25,7 +27,12 @@ function reviewsHref(batch: string | null, stars: number | null): string {
 /** The review score across every batch or one: average, star split, taste, effect, how they felt, then each review. */
 export default async function AdminReviewsPage({ searchParams }: { searchParams: Promise<{ batch?: string; stars?: string }> }) {
   await requireAdmin();
-  const [query, batches, all] = await Promise.all([searchParams, SampleBatchService.list(db, new Date()), SampleReviewService.list(db)]);
+  const [query, batches, all, shareable] = await Promise.all([
+    searchParams,
+    SampleBatchService.list(db, new Date()),
+    SampleReviewService.list(db),
+    JudgeMeExportService.load(db),
+  ]);
   const batch = query.batch === SEEDED || batches.some((summary) => summary.batch.id === query.batch) ? (query.batch ?? null) : null;
   const starsValue = Number(query.stars);
   const stars = Number.isInteger(starsValue) && starsValue >= 1 && starsValue <= 5 ? starsValue : null;
@@ -66,6 +73,8 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
         </div>
         <AdminReviewList reviews={visible} isFiltered={stars !== null || batch !== null} />
       </section>
+
+      <AdminJudgeMeExport shareable={shareable.length} />
     </main>
   );
 }

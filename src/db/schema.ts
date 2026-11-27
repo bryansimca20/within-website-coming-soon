@@ -46,6 +46,9 @@ export const samplePaymentMethodEnum = pgEnum("sample_payment_method", ["midtran
 /** How a request came in: the public form (shipped) or a founder seeding a sample by hand (in_person). */
 export const sampleRequestSourceEnum = pgEnum("sample_request_source", ["shipped", "in_person"]);
 
+/** Whether a review may be published: the sampler's choice, or `notice` for reviews written under the old share note. */
+export const reviewShareConsentEnum = pgEnum("review_share_consent", ["yes", "no", "notice"]);
+
 /** Who sent a stored webhook body. */
 export const webhookProviderEnum = pgEnum("webhook_provider", ["midtrans", "biteship"]);
 
@@ -226,6 +229,8 @@ export const sampleFeedback = pgTable(
     sessionLength: text("session_length").array(),
     wouldReachAgain: text("would_reach_again"),
     comment: text("comment"),
+    // Null only on old six-question rows; the migration marked earlier reviews `notice`.
+    shareConsent: reviewShareConsentEnum("share_consent"),
     createdAt: timestamptz("created_at").notNull().defaultNow(),
     updatedAt: timestamptz("updated_at").notNull().defaultNow(),
   },
@@ -253,5 +258,6 @@ export type SampleWebhookEvent = typeof sampleWebhookEvents.$inferSelect;
 export type SampleRequestStatus = (typeof sampleRequestStatusEnum.enumValues)[number];
 export type SamplePaymentStatus = (typeof samplePaymentStatusEnum.enumValues)[number];
 export type SampleRequestSource = (typeof sampleRequestSourceEnum.enumValues)[number];
+export type ReviewShareConsent = (typeof reviewShareConsentEnum.enumValues)[number];
 export type SampleBatchPhase = (typeof sampleBatchPhaseEnum.enumValues)[number];
 export type SamplePaymentMethod = (typeof samplePaymentMethodEnum.enumValues)[number];
