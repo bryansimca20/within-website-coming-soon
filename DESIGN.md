@@ -259,6 +259,8 @@ Quick, precise, no bounce. Library: `motion/react`, inside `MotionProvider` (`re
 - Step changes: 12px slide in the direction of travel, enter 240ms, exit 140ms.
 - Button press: scale 0.97, 150ms.
 - The sachet float on `/` is the one sanctioned loop. Nothing else loops, loading states included.
+- The orbit ring on `/` fills clockwise once on load (1200ms, `ease-brand`), the one entrance allowed to run longer: big things move slower. The tiles land as the fill passes them.
+- Hover on `/` is the ink stamp: ink wipes in from the left (orbit tiles), or draws a rule along the bottom edge (the orange button), previewing the full stamp that joining plays.
 - Under reduced motion: no movement, fades stay.
 
 ## Do's and don'ts

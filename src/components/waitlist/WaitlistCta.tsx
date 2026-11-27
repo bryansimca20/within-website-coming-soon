@@ -7,6 +7,8 @@ import { WaitlistArrowGlyph, WaitlistCheckGlyph } from "./svg/WaitlistGlyphs";
 import { WAITLIST_COPY } from "./utils/waitlist-copy";
 
 interface WaitlistCtaProps {
+  /** The button's id, the skip link's target. */
+  id: string;
   /** True once the visitor has signed up; ink stamps over the orange and the arrow becomes a check. */
   isJoined: boolean;
   /** Opens the waitlist sheet, or the confirmation once joined; receives the button so focus can return to it. */
@@ -19,7 +21,7 @@ interface WaitlistCtaProps {
  * layer wipes in from the left carrying the new label, and a check draws itself as the wipe lands.
  * Leaving the joined state (editing details) reverses in a plain 150ms.
  */
-export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
+export function WaitlistCta({ id, isJoined, onOpen, className }: WaitlistCtaProps) {
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     onOpen(event.currentTarget);
   }
@@ -43,6 +45,7 @@ export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
         </div>
       </div>
       <button
+        id={id}
         type="button"
         aria-haspopup="dialog"
         aria-label={isJoined ? WAITLIST_COPY.ctaJoined : WAITLIST_COPY.cta}
@@ -50,22 +53,32 @@ export function WaitlistCta({ isJoined, onOpen, className }: WaitlistCtaProps) {
         onClick={handleClick}
         className="group relative block h-14 w-full cursor-pointer overflow-hidden bg-flavor-orange text-base font-semibold text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink transition-transform duration-150 ease-brand active:scale-[0.97] motion-reduce:transition-none desk:h-16 desk:text-lg"
       >
-        {/* Orange layer: the resting button. Its label crossfades so the ink wipe reveals the same words. */}
-        <span aria-hidden className="absolute inset-0 flex items-center justify-center gap-3 px-5 desk:px-6">
+        {/* Orange layer: the resting button. Its label crossfades so the ink wipe reveals the same words.
+            Visibility trails each fade so text that is faded or wiped away is gone for assistive tech too. */}
+        <span
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center gap-3 px-5 transition-[visibility] duration-[480ms] group-data-joined:invisible motion-reduce:transition-none desk:px-6"
+        >
           <span className="grid">
             <span className="col-start-1 row-start-1 whitespace-nowrap transition-[opacity,filter] duration-[180ms] ease-brand group-data-joined:opacity-0 group-data-joined:blur-[2px]">
               {WAITLIST_COPY.cta}
             </span>
-            <span className="col-start-1 row-start-1 whitespace-nowrap opacity-0 blur-[2px] transition-[opacity,filter] duration-[180ms] ease-brand group-data-joined:opacity-100 group-data-joined:blur-none">
+            {/* Joined: inherits the layer's visibility, so it goes once the ink wipe has covered it. */}
+            <span className="invisible col-start-1 row-start-1 whitespace-nowrap opacity-0 blur-[2px] transition-[opacity,filter,visibility] duration-[180ms] ease-brand group-data-joined:opacity-100 group-data-joined:blur-none group-data-joined:[visibility:inherit]">
               {WAITLIST_COPY.ctaJoined}
             </span>
           </span>
           <WaitlistArrowGlyph className="transition-[opacity,translate] duration-[160ms] ease-brand group-hover:translate-x-1 group-data-joined:translate-x-1 group-data-joined:opacity-0 motion-reduce:transition-none" />
         </span>
+        {/* Hover: an ink rule draws along the bottom edge, the first stroke of the stamp that joining completes. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brand-ink transition-transform duration-200 ease-brand group-hover:scale-x-100 motion-reduce:transition-none"
+        />
         {/* Ink layer: clipped to nothing until joined, then wiped open left to right. */}
         <span
           aria-hidden
-          className="absolute inset-0 flex items-center justify-center gap-3 bg-brand-ink px-5 text-brand-mist transition-[clip-path] duration-150 ease-brand [clip-path:inset(0_100%_0_0)] group-data-joined:duration-[480ms] group-data-joined:[clip-path:inset(0_0_0_0)] motion-reduce:transition-none desk:px-6"
+          className="invisible absolute inset-0 flex items-center justify-center gap-3 bg-brand-ink px-5 text-brand-mist transition-[clip-path,visibility] duration-150 ease-brand [clip-path:inset(0_100%_0_0)] group-data-joined:visible group-data-joined:duration-[480ms] group-data-joined:[clip-path:inset(0_0_0_0)] motion-reduce:transition-none desk:px-6"
         >
           <span className="whitespace-nowrap">{WAITLIST_COPY.ctaJoined}</span>
           <WaitlistCheckGlyph pathClassName="transition-[stroke-dashoffset] duration-[260ms] delay-[260ms] ease-brand [stroke-dasharray:1] [stroke-dashoffset:1] group-data-joined:[stroke-dashoffset:0] motion-reduce:transition-none" />

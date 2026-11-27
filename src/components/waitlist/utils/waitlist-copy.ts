@@ -34,6 +34,7 @@ export interface IWaitlistFactRow {
 export const WAITLIST_COPY = {
   logoAlt: "WITHIN",
   instagramLabel: "WITHIN on Instagram, @withinrecovery",
+  skipToCta: "Skip to the waitlist button",
   headline: "Take back what you lose in the heat.",
   subHeadline:
     "Electrolytes for training, recovery, and everything that comes after. Dosed to the milligram. Made in Indonesia. Built for the heat.",
