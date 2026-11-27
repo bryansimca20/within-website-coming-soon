@@ -13,8 +13,11 @@ interface AdminRowActionsProps {
   shipmentId: string | null;
   /** In-person rows have no payment or shipment, so only the seeded email and the reminder apply. */
   isInPerson: boolean;
+  /** A bank-transfer request can also get its payment instructions again. */
+  isBankTransfer: boolean;
 }
 
+const RESEND_PAYMENT_INSTRUCTIONS = { kind: SampleEmailKind.PaymentInstructions, label: "Resend payment instructions" };
 const RESEND: Array<{ kind: SampleEmailKind; label: string }> = [
   { kind: SampleEmailKind.Paid, label: "Resend paid" },
   { kind: SampleEmailKind.Shipped, label: "Resend shipped" },
@@ -27,9 +30,10 @@ const RESEND_IN_PERSON = [
 ];
 
 /** Email resends and the Biteship refresh, each reporting its own result. */
-export function AdminRowActions({ requestId, shipmentId, isInPerson }: AdminRowActionsProps) {
+export function AdminRowActions({ requestId, shipmentId, isInPerson, isBankTransfer }: AdminRowActionsProps) {
   const [result, setResult] = useState<AdminActionResult | null>(null);
   const [isPending, startTransition] = useTransition();
+  const resends = isInPerson ? RESEND_IN_PERSON : isBankTransfer ? [RESEND_PAYMENT_INSTRUCTIONS, ...RESEND] : RESEND;
 
   function run(task: () => Promise<AdminActionResult>) {
     startTransition(async () => setResult(await task()));
@@ -41,7 +45,7 @@ export function AdminRowActions({ requestId, shipmentId, isInPerson }: AdminRowA
         {shipmentId !== null && (
           <Button size="sm" variant="secondary" disabled={isPending} onClick={() => run(() => refreshShipmentAction(shipmentId))}>Refresh from Biteship</Button>
         )}
-        {(isInPerson ? RESEND_IN_PERSON : RESEND).map((item) => (
+        {resends.map((item) => (
           <Button key={item.kind} size="sm" variant="ghost" disabled={isPending} onClick={() => run(() => resendSampleEmailAction(requestId, item.kind))}>{item.label}</Button>
         ))}
       </div>

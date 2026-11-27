@@ -46,6 +46,14 @@ describe("buildStatusSteps", () => {
     expect(steps[2].detail).toBe("JNE Reguler, waybill JNE123");
   });
 
+  test("a bank-transfer request's paid step reads Payment confirmed", () => {
+    const bankTransfer = buildStatusSteps(request({ status: "paid", paidAt: PAID, paymentCode: "K7P2QX" }), null);
+    const midtrans = buildStatusSteps(request({ status: "paid", paidAt: PAID, paymentCode: null }), null);
+
+    expect(bankTransfer[1]).toMatchObject({ key: "paid", label: "Payment confirmed", at: PAID });
+    expect(midtrans[1]).toMatchObject({ key: "paid", label: "Paid", at: PAID });
+  });
+
   test("a delivered request fills all four", () => {
     const steps = buildStatusSteps(
       request({ status: "delivered", paidAt: PAID, shippedAt: SHIPPED, deliveredAt: DELIVERED }),

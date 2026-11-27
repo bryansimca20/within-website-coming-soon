@@ -11,7 +11,10 @@ export interface IStatusStep {
   detail: string | null;
 }
 
-/** Requested, paid, shipped, delivered: each dated once reached; the shipped step carries the courier. */
+/**
+ * Requested, paid, shipped, delivered: each dated once reached; the shipped step carries the courier. A bank
+ * transfer's paid step reads as confirmed, since a founder confirmed it rather than a payment provider.
+ */
 export function buildStatusSteps(request: SampleRequest, shipment: SampleShipment | null): IStatusStep[] {
   const labels = SAMPLE_COPY.status.steps;
   let shippedDetail: string | null = null;
@@ -28,7 +31,7 @@ export function buildStatusSteps(request: SampleRequest, shipment: SampleShipmen
 
   return [
     { key: "requested", label: labels.requested, at: request.createdAt, detail: null },
-    { key: "paid", label: labels.paid, at: request.paidAt, detail: null },
+    { key: "paid", label: request.paymentCode ? labels.confirmed : labels.paid, at: request.paidAt, detail: null },
     { key: "shipped", label: labels.shipped, at: request.shippedAt, detail: shippedDetail },
     { key: "delivered", label: labels.delivered, at: request.deliveredAt, detail: null },
   ];

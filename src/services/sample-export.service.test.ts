@@ -1,7 +1,8 @@
+import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
-import { sampleFeedback } from "@/db/schema";
+import { sampleBatches, sampleFeedback } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
@@ -29,6 +30,22 @@ describe("buildRegistrationsCsv", () => {
 
     expect(csv.startsWith("﻿")).toBe(true);
     expect(csv.slice(1).split("\r\n")[0]).toBe(REGISTRATION_CSV_COLUMNS.join(","));
+  });
+
+  test("a bank-transfer row carries its code and report time right after the status", async () => {
+    await db.update(sampleBatches).set({ paymentMethod: "bank_transfer" }).where(eq(sampleBatches.id, "b01"));
+    const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW);
+    if (claim.kind !== "claimed") throw new Error(claim.kind);
+    const reported = { ...claim.request, status: "awaiting_confirmation" as const, transferReportedAt: NOW };
+
+    const [header, row] = buildRegistrationsCsv([{ request: reported, shipment: null, feedback: null }], "Batch 01").slice(1).split("\r\n");
+    const columns = header.split(",");
+    const cells = row.split(",");
+    const at = columns.indexOf("status");
+
+    expect(columns.slice(at, at + 3)).toEqual(["status", "payment_code", "transfer_reported_at"]);
+    expect(cells[at + 1]).toBe(claim.request.paymentCode);
+    expect(cells[at + 2]).toBe(NOW.toISOString());
   });
 
   test("quotes and doubles a comment with commas and quotes, and derives source and intent", async () => {

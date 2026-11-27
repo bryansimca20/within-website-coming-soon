@@ -1,9 +1,11 @@
+import { CONFIRM_WITHIN_HOURS, type IBankTransferDetails } from "@/app/utils/bank-transfer";
 import { SITE_URL } from "@/lib/site";
 
 import { SAMPLE_EMAIL_COPY } from "./sample-email-copy";
 
 /** The moments a sampler hears from WITHIN. */
 export enum SampleEmailKind {
+  PaymentInstructions = "payment-instructions",
   Paid = "paid",
   Shipped = "shipped",
   Delivered = "delivered",
@@ -23,6 +25,18 @@ export interface ISampleEmailContext {
     eta: string | null;
     waybillId: string | null;
     trackingLink: string | null;
+  } | null;
+  /**
+   * Set for a bank-transfer request: its code, the amount as shown ("Rp 17.500"), the hold's end in Jakarta time, and
+   * whether the sampler already tapped I've transferred.
+   */
+  transfer: {
+    code: string;
+    amount: string;
+    deadline: string;
+    isReported: boolean;
+    /** This deployment's account, from env. */
+    bank: IBankTransferDetails;
   } | null;
 }
 
@@ -51,13 +65,21 @@ interface IStarRow {
   note: string;
 }
 
-/** One email in the shared "note" layout: label, headline, paragraphs, then an optional waybill box, star row or button. */
+/** One row of a details box: a small label over its value, in the mono face when it is typed into a bank app. */
+interface IDetailRow {
+  label: string;
+  value: string;
+  isMono: boolean;
+}
+
+/** One email in the shared "note" layout: label, headline, paragraphs, then an optional waybill box, details box, star row or button. */
 interface INoteEmail {
   subject: string;
   preheader: string;
   headline: string;
   paragraphs: string[];
   waybill?: { label: string; value: string | null; pending: string };
+  details?: IDetailRow[];
   stars?: IStarRow;
   button?: { label: string; href: string; isPrimary: boolean };
 }
@@ -89,6 +111,20 @@ function renderHtml(email: INoteEmail, batchLabel: string | null): string {
           ? `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:${INK};">${escapeHtml(email.waybill.pending)}</div>`
           : `<div style="font-family:${MONO};font-size:18px;line-height:24px;font-weight:500;color:${INK};letter-spacing:0.02em;">${escapeHtml(email.waybill.value)}</div>`) +
         `</td></tr></table>`;
+  const details =
+    email.details === undefined
+      ? ""
+      : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:${MIST};"><tr><td style="padding:14px 16px;">` +
+        email.details
+          .map(
+            (row, index) =>
+              `<div style="font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};padding:${index === 0 ? 0 : 12}px 0 4px;">${escapeHtml(row.label)}</div>` +
+              (row.isMono
+                ? `<div style="font-family:${MONO};font-size:18px;line-height:24px;font-weight:500;color:${INK};letter-spacing:0.02em;">${escapeHtml(row.value)}</div>`
+                : `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:${INK};">${escapeHtml(row.value)}</div>`)
+          )
+          .join("") +
+        `</td></tr></table>`;
   const { button } = email;
   const buttonHtml =
     button === undefined
@@ -106,7 +142,7 @@ function renderHtml(email: INoteEmail, batchLabel: string | null): string {
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-top:6px solid ${INK};"><tr><td style="padding:32px 28px 28px;">` +
     `<p style="margin:0 0 10px;font-family:${FONT};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml((batchLabel === null ? "SAMPLE" : `SAMPLE ${batchLabel}`).toUpperCase())}</p>` +
     `<h1 style="margin:0 0 20px;font-family:${FONT};font-size:30px;line-height:36px;font-weight:400;letter-spacing:-0.02em;color:${INK};">${escapeHtml(email.headline)}</h1>` +
-    paragraphs + waybill + (email.stars === undefined ? "" : renderStars(email.stars)) + buttonHtml +
+    paragraphs + waybill + details + (email.stars === undefined ? "" : renderStars(email.stars)) + buttonHtml +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid ${LINE};"><tr>` +
     `<td style="padding-top:12px;"><img src="${logo}" alt="WITHIN" height="13" style="height:13px;width:auto;display:block;border:0;"></td>` +
     `<td align="right" style="padding-top:12px;font-family:${FONT};font-size:12px;font-weight:700;letter-spacing:0.06em;color:${MUTED};">${escapeHtml(SAMPLE_EMAIL_COPY.place)}</td></tr></table>` +
@@ -148,8 +184,47 @@ function renderText(email: INoteEmail): string {
           stars.note,
         ];
   const button = email.button === undefined ? [] : [`${email.button.label}: ${email.button.href}`];
+  const details = email.details === undefined ? [] : [email.details.map((row) => `${row.label}: ${row.value}`).join("\n")];
 
-  return [email.headline, ...email.paragraphs, ...waybill, ...starLines, ...button, `WITHIN, ${SAMPLE_EMAIL_COPY.place}`, SAMPLE_EMAIL_COPY.footer].join("\n\n");
+  return [email.headline, ...email.paragraphs, ...waybill, ...details, ...starLines, ...button, `WITHIN, ${SAMPLE_EMAIL_COPY.place}`, SAMPLE_EMAIL_COPY.footer].join("\n\n");
+}
+
+/**
+ * How to pay a bank-transfer request: the amount, deadline and code, the account in a box, then the payment page. A
+ * transfer already reported gets a short "we're checking" note instead. Never uses the typed name (see the copy).
+ */
+function paymentInstructionsEmail(context: ISampleEmailContext): INoteEmail {
+  const copy = SAMPLE_EMAIL_COPY.paymentInstructions;
+  const { transfer } = context;
+  const button = { label: copy.button, href: context.statusUrl, isPrimary: true };
+  if (transfer === null) {
+    return { subject: copy.subject, preheader: copy.preheaderPlain, headline: copy.headline, paragraphs: [copy.withoutTransfer], button };
+  }
+  const values = { amount: transfer.amount, code: transfer.code, deadline: transfer.deadline, hours: String(CONFIRM_WITHIN_HOURS) };
+  if (transfer.isReported) {
+    return {
+      subject: copy.reportedSubject,
+      preheader: fill(copy.reportedPreheader, values),
+      headline: copy.reportedHeadline,
+      paragraphs: copy.reportedParagraphs.map((text) => fill(text, values)),
+      button,
+    };
+  }
+
+  return {
+    subject: fill(copy.subject, values),
+    preheader: fill(copy.preheader, values),
+    headline: fill(copy.headline, values),
+    paragraphs: copy.paragraphs.map((text) => fill(text, values)),
+    details: [
+      { label: copy.bankLabel, value: transfer.bank.bankName, isMono: false },
+      { label: copy.holderLabel, value: transfer.bank.accountHolder, isMono: false },
+      { label: copy.numberLabel, value: transfer.bank.accountNumber, isMono: true },
+      { label: copy.amountLabel, value: transfer.amount, isMono: false },
+      { label: copy.codeLabel, value: transfer.code, isMono: true },
+    ],
+    button,
+  };
 }
 
 /** The check-in reminder: tap a star, land on the review with it filled in. */
@@ -195,6 +270,9 @@ function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmai
   if (kind === SampleEmailKind.FeedbackReminder) {
     return reminderEmail(context, name);
   }
+  if (kind === SampleEmailKind.PaymentInstructions) {
+    return paymentInstructionsEmail(context);
+  }
 
   const copy = { [SampleEmailKind.Paid]: SAMPLE_EMAIL_COPY.paid, [SampleEmailKind.Delivered]: SAMPLE_EMAIL_COPY.delivered, [SampleEmailKind.Seeded]: SAMPLE_EMAIL_COPY.seeded }[kind];
   const href = kind === SampleEmailKind.Paid ? context.statusUrl : context.feedbackUrl;
@@ -208,7 +286,7 @@ function noteFor(kind: SampleEmailKind, context: ISampleEmailContext): INoteEmai
   };
 }
 
-/** Renders one of the five emails for a sampler. Pure: no sending, no database. */
+/** Renders one of the six emails for a sampler. Pure: no sending, no database. */
 export function renderSampleEmail(kind: SampleEmailKind, context: ISampleEmailContext): IRenderedEmail {
   const email = noteFor(kind, context);
 

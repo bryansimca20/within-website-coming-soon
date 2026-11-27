@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, type JSX, useCallback, useEffect, useState, useTransition } from "react";
 
 import { ATTRIBUTION_FIELDS, type IAttribution, mergeAttribution, readAttributionFromSearch } from "@/app/utils/attribution";
+import { checkSampleEmailAction } from "@/app/actions/check-sample-email.action";
 import { requestSampleAction } from "@/app/actions/request-sample.action";
 import { HONEYPOT_TIMESTAMP_FIELD, HONEYPOT_TRAP_FIELD } from "@/app/utils/honeypot";
 import {
@@ -15,8 +16,6 @@ import {
   validateSampleStep,
 } from "@/app/utils/sample-request-input";
 import { GENERIC_ERROR_MESSAGE, SampleRequestOutcome } from "@/app/utils/sample-state";
-import { WaitlistArrowGlyph } from "@/components/waitlist/svg/WaitlistGlyphs";
-import { cn } from "@/lib/utils";
 import type { ISampleBatchShown } from "@/services/sample-request.service";
 
 import { SampleIntro } from "./SampleIntro";
@@ -27,6 +26,7 @@ import { SampleStepSessions } from "./SampleStepSessions";
 import { SampleStepShipping } from "./SampleStepShipping";
 import { SampleStepTraining } from "./SampleStepTraining";
 import { SampleStepWithin } from "./SampleStepWithin";
+import { SampleSubmitButton } from "./SampleSubmitButton";
 import { readStoredAttribution, storeAttribution } from "./utils/attribution-storage";
 import { SampleEvent, trackSampleEvent } from "./utils/sample-analytics";
 import { formatPayButton, SAMPLE_COPY } from "./utils/sample-copy";
@@ -93,7 +93,6 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
       document.getElementsByName(firstField)[0]?.scrollIntoView({ block: "center" });
       return false;
     }
-    trackSampleEvent(SampleEvent.StepCompleted, { step: String(step) });
     return true;
   }
 
@@ -104,8 +103,11 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
     startTransition(async () => {
       try {
         const result = await requestSampleAction(formData);
+        const isHeld = result.outcome === SampleRequestOutcome.Pay || result.outcome === SampleRequestOutcome.Transfer;
+        if (isHeld) trackSampleEvent(SampleEvent.SubmitSucceeded, { ref: attribution.ref ?? "", courier: values.courierCompany });
+        // A bank-transfer box is paid on the status page, which shows the account and the code.
+        if (result.outcome === SampleRequestOutcome.Transfer) return router.push(result.statusUrl);
         if (result.outcome === SampleRequestOutcome.Pay) {
-          trackSampleEvent(SampleEvent.SubmitSucceeded, { ref: attribution.ref ?? "", courier: values.courierCompany });
           trackSampleEvent(SampleEvent.PaymentOpened);
           if (!openSnap(result.snapToken, () => router.push(result.statusUrl))) router.push(result.statusUrl);
           return;
@@ -124,9 +126,23 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
     });
   }
 
+  /** Stops an email that already owns a box here, not at payment. Fails open: the claim refuses it anyway. */
+  function continuePastContact() {
+    startTransition(async () => {
+      if (!(await checkSampleEmailAction(values.email).catch(() => false))) {
+        trackSampleEvent(SampleEvent.StepCompleted, { step: "1" });
+        return goForward(2);
+      }
+      setErrors({ email: SAMPLE_COPY.delivery.emailTaken });
+      document.getElementById("email")?.focus();
+    });
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (screen === 0 || !validateStep(screen)) return;
+    if (screen === 1) return continuePastContact();
+    trackSampleEvent(SampleEvent.StepCompleted, { step: String(screen) });
     if (screen < 5) return goForward((screen + 1) as SampleStep);
     const formData = new FormData(event.currentTarget);
     for (const [key, value] of Object.entries(values)) formData.set(key, value);
@@ -152,14 +168,14 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
   const fee = Number(values.shippingFee);
   const isLast = screen === 5;
   const StepScreen = STEP_SCREENS[screen];
-  const buttonLabel = !isLast ? SAMPLE_COPY.continue : isPending ? SAMPLE_COPY.opening : fee > 0 ? formatPayButton(fee) : SAMPLE_COPY.payShipping;
+  const buttonLabel = screen === 1 && isPending ? SAMPLE_COPY.checking : !isLast ? SAMPLE_COPY.continue : isPending ? SAMPLE_COPY.opening : fee > 0 ? formatPayButton(fee) : SAMPLE_COPY.payShipping;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="mx-auto flex w-full max-w-[560px] flex-col gap-8">
       <SampleStepIndicator step={screen} labels={SAMPLE_COPY.steps} counter={SAMPLE_COPY.stepCounter} onBack={goBack} />
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <motion.div key={screen} custom={direction} variants={SAMPLE_STEP_SLIDE} initial="enter" animate="center" exit="exit" className={SAMPLE_ALERT_FADE}>
-          <StepScreen values={values} errors={errors} onChange={change} />
+          <StepScreen values={values} errors={errors} onChange={change} phoneHint={batch.paymentMethod === "bank_transfer" ? SAMPLE_COPY.delivery.whatsappHintBankTransfer : undefined} />
         </motion.div>
       </AnimatePresence>
 
@@ -170,27 +186,7 @@ export function SampleRequestForm({ batch }: SampleRequestFormProps) {
 
       {serverError !== null && <p role="alert" className="m-0 text-[13px] leading-[18px] font-semibold text-brand-error">{serverError}</p>}
 
-      <button
-        type="submit"
-        disabled={isPending || (isLast && !(fee > 0))}
-        className={cn(
-          "flex h-14 w-full cursor-pointer items-center justify-between px-5 text-base font-semibold transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] disabled:cursor-default disabled:opacity-60 motion-reduce:transition-none",
-          isLast ? "bg-flavor-orange text-brand-ink" : "bg-brand-ink text-brand-mist"
-        )}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={buttonLabel}
-            initial={{ opacity: 0, filter: "blur(2px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(2px)" }}
-            transition={{ duration: 0.1 }}
-          >
-            {buttonLabel}
-          </motion.span>
-        </AnimatePresence>
-        <WaitlistArrowGlyph />
-      </button>
+      <SampleSubmitButton label={buttonLabel} disabled={isPending || (isLast && !(fee > 0))} isLast={isLast} />
     </form>
   );
 }

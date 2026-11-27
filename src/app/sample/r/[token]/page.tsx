@@ -38,7 +38,7 @@ export default async function SampleStatusRoute({ params }: { params: Promise<{ 
       payment={payment}
       shipment={shipment}
       feedback={feedback}
-      snapScriptUrl={MidtransService.snapScriptUrl(MidtransService.environment())}
+      snapScriptUrl={request.paymentCode === null ? MidtransService.snapScriptUrl(MidtransService.environment()) : null}
     />
   );
 }

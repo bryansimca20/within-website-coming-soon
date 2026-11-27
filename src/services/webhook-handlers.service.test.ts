@@ -117,7 +117,7 @@ describe("WebhookHandlers.handleBiteship", () => {
 
   async function shipped() {
     await SampleRequestService.markPaid(db, request.id, NOW);
-    vi.spyOn(BiteshipService, "createOrder").mockResolvedValue(order("confirmed"));
+    vi.spyOn(BiteshipService, "createOrder").mockResolvedValue({ ok: true, order: order("confirmed") });
     await SampleShipmentService.bookRun(db, { requestIds: [request.id], deliveryType: "now", deliveryDate: null, deliveryTime: null }, NOW);
   }
 

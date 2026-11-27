@@ -24,6 +24,13 @@ describe("normalizeIndonesianPhone", () => {
     expect(normalizeIndonesianPhone("081234567890123")).toBeNull();
   });
 
+  test.each([["+81 90 1234 5678"], ["+82 10 1234 5678"], ["+852 9123 4567"], ["+65 9123 4567"]])(
+    "rejects the foreign number %s instead of reading it as Indonesian",
+    (raw) => {
+      expect(normalizeIndonesianPhone(raw)).toBeNull();
+    }
+  );
+
   test("rejects empty input", () => {
     expect(normalizeIndonesianPhone("   ")).toBeNull();
   });

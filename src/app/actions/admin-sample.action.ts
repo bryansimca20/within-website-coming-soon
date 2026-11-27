@@ -10,12 +10,15 @@ import { sampleRequests } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin-session";
 import { BiteshipService } from "@/services/biteship.service";
 import { SampleAdminDataService } from "@/services/sample-admin-data.service";
-import { dispatchShipmentEmail } from "@/services/sample-email-dispatch.service";
+import { dispatchPaidEmail, dispatchShipmentEmail } from "@/services/sample-email-dispatch.service";
 import { SampleNotifier } from "@/services/sample-notifier.service";
 import { SamplePaymentService } from "@/services/sample-payment.service";
 import { SampleEmailKind } from "@/services/sample-email-templates";
 import { SampleRequestService } from "@/services/sample-request.service";
 import { SampleShipmentService } from "@/services/sample-shipment.service";
+import { SampleTransferService } from "@/services/sample-transfer.service";
+
+const REJECT_NOTE_MAX = 500;
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^\d{2}:\d{2}$/;
@@ -79,12 +82,20 @@ export async function refreshShipmentAction(shipmentId: string): Promise<AdminAc
   return { ok: true, message: `Status: ${order.status}.` };
 }
 
-/** Sends one of the four emails again. */
+/** Sends one of the sampler emails again. Payment instructions go only to an unpaid bank-transfer request. */
 export async function resendSampleEmailAction(requestId: string, kind: SampleEmailKind): Promise<AdminActionResult> {
   await requireAdmin();
   const request = await SampleRequestService.findById(db, requestId);
   if (request === null) {
     return { ok: false, message: "Request not found." };
+  }
+  if (kind === SampleEmailKind.PaymentInstructions) {
+    if (request.paymentCode === null) {
+      return { ok: false, message: "This request isn't paid by bank transfer." };
+    }
+    if (request.status !== "pending_payment" && request.status !== "awaiting_confirmation") {
+      return { ok: false, message: "This request is no longer waiting for payment." };
+    }
   }
   const batch = await SampleRequestService.findBatch(db, request.batchId);
   if (request.batchId !== null && batch === null) {
@@ -97,6 +108,34 @@ export async function resendSampleEmailAction(requestId: string, kind: SampleEma
   const sent = await SampleNotifier.sendKind(kind, request, batch, shipment);
 
   return sent ? { ok: true, message: "Sent." } : { ok: false, message: "Resend refused it. Check the logs." };
+}
+
+/** A founder saw the bank transfer arrive: pays the box, then sends the paid email once. */
+export async function confirmTransferAction(requestId: string): Promise<AdminActionResult> {
+  await requireAdmin();
+  const now = new Date();
+  const result = await SampleTransferService.confirm(db, requestId, now);
+  if (result.kind === "paid") {
+    const batch = await SampleRequestService.findBatch(db, result.request.batchId);
+    if (batch !== null) {
+      await dispatchPaidEmail(db, result.request, batch, now);
+    }
+  }
+  revalidate();
+
+  if (result.kind === "paid") return { ok: true, message: "Confirmed. The paid email is on its way." };
+  if (result.kind === "repeat") return { ok: true, message: "Already confirmed." };
+  if (result.kind === "refund") return { ok: false, message: "Not confirmed: this needs a refund. See the note." };
+  return { ok: false, message: result.message };
+}
+
+/** A founder found no bank transfer: the box goes back to the batch, and the request keeps the reason and the note. */
+export async function rejectTransferAction(requestId: string, note: string): Promise<AdminActionResult> {
+  await requireAdmin();
+  const result = await SampleTransferService.reject(db, requestId, typeof note === "string" ? note.trim().slice(0, REJECT_NOTE_MAX) : "");
+  revalidate();
+
+  return result.ok ? { ok: true, message: "Rejected. The box is back in the batch." } : { ok: false, message: result.message };
 }
 
 /** Marks a request cancelled with a note and stops its open payment. Refunds happen in the Midtrans dashboard. */

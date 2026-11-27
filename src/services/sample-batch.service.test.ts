@@ -2,10 +2,10 @@ import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
-import { sampleBatches } from "@/db/schema";
+import { sampleBatches, sampleRequests } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
-import { NOW, sampleValues } from "../../test/sample-fixtures";
+import { minutesAfter, NOW, sampleValues } from "../../test/sample-fixtures";
 import { SampleBatchService } from "./sample-batch.service";
 import { SampleFeedbackService } from "./sample-feedback.service";
 import { SampleRequestService } from "./sample-request.service";
@@ -221,5 +221,104 @@ describe("SampleBatchService.list with test orders", () => {
     const [summary] = await SampleBatchService.list(db, NOW);
 
     expect(summary).toMatchObject({ requests: 1, claimed: 1, paid: 1, shipped: 0, delivered: 0, feedback: 0 });
+  });
+});
+
+describe("SampleBatchService.list with bank transfers", () => {
+  test("list counts transfers waiting for confirmation", async () => {
+    const claim = await SampleRequestService.claim(db, "b01", sampleValues(), NOW);
+    if (claim.kind !== "claimed") throw new Error(claim.kind);
+    await SampleRequestService.setStatus(db, claim.request.id, "awaiting_confirmation");
+
+    const [summary] = await SampleBatchService.list(db, NOW);
+
+    expect(summary).toMatchObject({ toConfirm: 1, claimed: 1, paid: 0 });
+  });
+});
+
+describe("SampleBatchService.setPaymentMethod", () => {
+  const READY = { bankName: "CIMB Niaga", accountHolder: "DAYA RAGA INDONESIA", accountNumber: "800207642000", whatsappNumber: "081234567890" };
+
+  async function claimFor(email: string, options: { isTest?: boolean } = {}) {
+    const result = await SampleRequestService.claim(db, "b01", sampleValues({ email }), NOW, options);
+    if (result.kind !== "claimed") throw new Error(`expected claimed, got ${result.kind}`);
+    return result.request;
+  }
+
+  async function methodOf(batchId: string) {
+    return (await SampleBatchService.findById(db, batchId))?.paymentMethod;
+  }
+
+  test("switches an empty batch to bank transfer", async () => {
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).toEqual({ ok: true });
+    expect(await methodOf("b01")).toBe("bank_transfer");
+  });
+
+  test("refuses bank transfer while the WhatsApp number is missing", async () => {
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, { ...READY, whatsappNumber: "" })).toEqual({
+      ok: false,
+      message: "Bank details or the WhatsApp number for proofs are missing.",
+    });
+    expect(await methodOf("b01")).toBe("midtrans");
+  });
+
+  test("refuses while a hold is live", async () => {
+    await claimFor("live@example.com");
+
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).toEqual({
+      ok: false,
+      message: "Batch 01 has unpaid requests. Switch once they are paid, confirmed or lapsed.",
+    });
+    expect(await methodOf("b01")).toBe("midtrans");
+  });
+
+  test("refuses while a test order's hold is live", async () => {
+    await claimFor("founder@example.com", { isTest: true });
+
+    expect((await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).ok).toBe(false);
+  });
+
+  test("refuses while a transfer awaits confirmation, however old its hold", async () => {
+    const request = await claimFor("waiting@example.com");
+    await SampleRequestService.setStatus(db, request.id, "awaiting_confirmation");
+    await db.update(sampleRequests).set({ expiresAt: minutesAfter(-1) }).where(eq(sampleRequests.id, request.id));
+
+    expect((await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).ok).toBe(false);
+    expect((await SampleRequestService.findById(db, request.id))?.status).toBe("awaiting_confirmation");
+  });
+
+  test("allows a switch once the only hold has lapsed", async () => {
+    const request = await claimFor("lapsed@example.com");
+    await db.update(sampleRequests).set({ expiresAt: minutesAfter(-1) }).where(eq(sampleRequests.id, request.id));
+
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).toEqual({ ok: true });
+    expect((await SampleRequestService.findById(db, request.id))?.status).toBe("expired");
+  });
+
+  test("allows a switch with paid, cancelled and expired rows", async () => {
+    const paid = await claimFor("paid@example.com");
+    const cancelled = await claimFor("cancelled@example.com");
+    const expired = await claimFor("expired@example.com");
+    await SampleRequestService.markPaid(db, paid.id, NOW);
+    await SampleRequestService.setStatus(db, cancelled.id, "cancelled");
+    await SampleRequestService.setStatus(db, expired.id, "expired");
+
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).toEqual({ ok: true });
+  });
+
+  test("refuses a closed batch", async () => {
+    await SampleBatchService.setPhase(db, "b01", "closed");
+
+    expect(await SampleBatchService.setPaymentMethod(db, "b01", "bank_transfer", NOW, READY)).toEqual({
+      ok: false,
+      message: "Batch 01 is closed. Closed is final.",
+    });
+  });
+
+  test("reports a batch that doesn't exist", async () => {
+    expect(await SampleBatchService.setPaymentMethod(db, "b77", "bank_transfer", NOW, READY)).toEqual({
+      ok: false,
+      message: "That batch doesn't exist.",
+    });
   });
 });

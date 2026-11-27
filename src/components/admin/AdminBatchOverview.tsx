@@ -10,6 +10,7 @@ import type { IReviewSummary } from "@/services/sample-review.service";
 
 import { AdminStars } from "./AdminStars";
 import { AdminStatusPill } from "./AdminStatusPill";
+import { adminStatusLook } from "./utils/admin-status";
 
 interface AdminBatchOverviewProps {
   summaries: IBatchSummary[];
@@ -31,9 +32,12 @@ function AdminMeter({ share, className }: { share: number; className?: string })
 
 /** The open batch, featured: how full it is and how far its boxes have got. */
 function AdminLiveBatch({ summary }: { summary: IBatchSummary }) {
-  const { batch, claimed, paid, shipped, delivered, feedback } = summary;
+  const { batch, claimed, toConfirm, paid, shipped, delivered, feedback } = summary;
+  // Reported transfers only exist in bank-transfer batches (or ones switched away from it), so Midtrans batches skip the step.
+  const showsToConfirm = batch.paymentMethod === "bank_transfer" || toConfirm > 0;
   const steps = [
-    { label: "Holding", count: claimed - paid },
+    { label: "Holding", count: claimed - paid - toConfirm },
+    ...(showsToConfirm ? [{ label: "To confirm", count: toConfirm }] : []),
     { label: "Paid", count: paid },
     { label: "Shipped", count: shipped },
     { label: "Delivered", count: delivered },
@@ -50,7 +54,7 @@ function AdminLiveBatch({ summary }: { summary: IBatchSummary }) {
         </div>
         <Link href={`/admin/batches/${batch.id}/requests`} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "self-start")}>Open requests</Link>
       </div>
-      <dl className="m-0 grid grid-cols-2 gap-0.5 sm:grid-cols-5">
+      <dl className={cn("m-0 grid grid-cols-2 gap-0.5", showsToConfirm ? "sm:grid-cols-6" : "sm:grid-cols-5")}>
         {steps.map((step) => (
           <div key={step.label} className="flex flex-col gap-2.5 bg-wi-paper-dim px-3.5 py-3 first:rounded-l-[calc(var(--wi-radius-card)-6px)] last:rounded-r-[calc(var(--wi-radius-card)-6px)]">
             <dt className="text-xs text-wi-ink-500">{step.label}</dt>
@@ -80,7 +84,7 @@ export function AdminBatchOverview({ summaries, deliveries, reviews }: AdminBatc
               </TableRow>
             </TableHeader>
             <TableBody>
-              {summaries.map(({ batch, claimed, shipped, delivered, feedback }) => {
+              {summaries.map(({ batch, claimed, toConfirm, shipped, delivered, feedback }) => {
                 const failed = deliveries[batch.id]?.failed ?? 0;
                 const hasShipped = shipped > 0;
                 const rate = delivered === 0 ? null : feedback / delivered;
@@ -88,7 +92,15 @@ export function AdminBatchOverview({ summaries, deliveries, reviews }: AdminBatc
                 return (
                   <TableRow key={batch.id} className="border-wi-line/70">
                     <TableCell className="py-3.5 font-medium">
-                      <Link href={`/admin/batches/${batch.id}/requests`} className="text-wi-black underline-offset-4 hover:underline">{batch.label}</Link>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link href={`/admin/batches/${batch.id}/requests`} className="text-wi-black underline-offset-4 hover:underline">{batch.label}</Link>
+                        {/* Any phase: a closed batch can still hold transfers that never lapse and need a decision. */}
+                        {toConfirm > 0 && (
+                          <Link href={`/admin/batches/${batch.id}/requests`} className={cn("rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", adminStatusLook("awaiting_confirmation").pill)}>
+                            {toConfirm} to confirm
+                          </Link>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell><AdminStatusPill status={batch.phase} /></TableCell>
                     <TableCell className="min-w-40">

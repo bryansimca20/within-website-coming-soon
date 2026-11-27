@@ -13,7 +13,7 @@ const { delivery } = SAMPLE_COPY;
 const noop = () => undefined;
 
 /** Step 5: where the box goes, the courier's phone number, then live courier prices. */
-export function SampleStepShipping({ values, errors, onChange }: ISampleStepProps) {
+export function SampleStepShipping({ values, errors, onChange, phoneHint }: ISampleStepProps) {
   return (
     <div className="flex flex-col gap-4">
       <SampleStepHeading>{SAMPLE_COPY.headings.shipping}</SampleStepHeading>
@@ -25,7 +25,7 @@ export function SampleStepShipping({ values, errors, onChange }: ISampleStepProp
         <WaitlistField id="whatsapp" name="whatsapp" label={delivery.whatsapp} value={values.whatsapp}
           onValueChange={(whatsapp) => onChange({ whatsapp })} onValueBlur={noop} error={errors.whatsapp}
           inputProps={{ type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: delivery.whatsappPlaceholder }} />
-        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{delivery.whatsappHint}</p>
+        <p className="mt-1.5 mb-0 text-[13px] leading-[18px] text-brand-muted">{phoneHint ?? delivery.whatsappHint}</p>
       </div>
       <SampleTextArea id="deliveryNote" name="deliveryNote" label={delivery.deliveryNote} value={values.deliveryNote}
         onValueChange={(deliveryNote) => onChange({ deliveryNote })} error={errors.deliveryNote}

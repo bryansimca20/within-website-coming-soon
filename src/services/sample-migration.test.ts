@@ -109,6 +109,51 @@ describe("batch 01 starts upcoming migration", () => {
   });
 });
 
+describe("bank transfer migration", () => {
+  /** A valid shipped b01 request, as raw SQL so it runs against any migration level. */
+  function insertRequestSql(token: string, email: string, box: number): string {
+    return `
+      INSERT INTO sample_requests (batch_id, box_number, access_token, sessions_per_week, session_length,
+        full_name, first_name, email, whatsapp, instagram_handle, address_line, area_id, area_name, province, city,
+        district, postal_code, courier_company, courier_type, courier_service_name, shipping_fee, shipping_eta, expires_at)
+      VALUES ('b01', ${box}, '${token}', 'three_to_four', 'over_90', 'Fanny Lie', 'Fanny', '${email}',
+        '+6281234567890', 'fanny.runs', 'Jl. Sudirman No. 12', 'area', 'Area', 'DKI Jakarta', 'Jakarta Selatan',
+        'Pesanggrahan', '12250', 'jne', 'reg', 'JNE Regular', 10000, '2 to 3 days', now());
+    `;
+  }
+
+  test("existing batches stay on Midtrans and existing requests keep no code", async () => {
+    const pg = new PGlite();
+    const db = drizzle(pg);
+    await migrate(db, { migrationsFolder: firstMigrations(12) });
+    await pg.exec(insertRequestSql("tok-before", "fanny@example.com", 1));
+
+    await migrate(db, { migrationsFolder: "./drizzle" });
+
+    const batches = await pg.query<{ payment_method: string }>("SELECT payment_method FROM sample_batches WHERE id = 'b01'");
+    expect(batches.rows).toEqual([{ payment_method: "midtrans" }]);
+    const requests = await pg.query<{ payment_code: string | null; transfer_reported_at: Date | null }>(
+      "SELECT payment_code, transfer_reported_at FROM sample_requests"
+    );
+    expect(requests.rows).toEqual([{ payment_code: null, transfer_reported_at: null }]);
+    await pg.close();
+  });
+
+  test("a request can be awaiting confirmation and codes are unique", async () => {
+    const { pg } = await makeTestDb();
+    await pg.exec(insertRequestSql("tok-one", "one@example.com", 1) + insertRequestSql("tok-two", "two@example.com", 2));
+
+    await pg.exec(
+      "UPDATE sample_requests SET status = 'awaiting_confirmation', payment_code = 'K7P2QX', transfer_reported_at = now() WHERE access_token = 'tok-one'"
+    );
+    const { rows } = await pg.query<{ status: string }>("SELECT status FROM sample_requests WHERE access_token = 'tok-one'");
+    expect(rows).toEqual([{ status: "awaiting_confirmation" }]);
+
+    await expect(pg.exec("UPDATE sample_requests SET payment_code = 'K7P2QX' WHERE access_token = 'tok-two'")).rejects.toThrow(/unique/i);
+    await pg.close();
+  });
+});
+
 describe("in-person source migration", () => {
   /** Inserts a valid shipped request merged with the overrides. */
   async function insertRequest(db: SampleDatabase, overrides: Partial<NewSampleRequest> = {}) {

@@ -34,6 +34,9 @@ export interface IBiteshipPricing {
 }
 
 /** A Biteship order as this system keeps it, from create or retrieve. */
+/** What booking an order produced: the order, or Biteship's reason for refusing it. */
+export type BiteshipOrderResult = { ok: true; order: IBiteshipOrder } | { ok: false; reason: string };
+
 export interface IBiteshipOrder {
   id: string;
   status: string;
@@ -105,6 +108,10 @@ const REQUEST_TIMEOUT_MS = 8_000;
 const BASE_URL = "https://api.biteship.com";
 
 const DUPLICATE_REFERENCE_CODE = 40002060;
+
+/** Biteship's messages are short; anything longer is cut so the admin row stays readable. */
+const REFUSAL_REASON_MAX = 300;
+const NO_ANSWER_REASON = "Biteship didn't answer. Try again in a minute.";
 
 /** Biteship bills every quote, so one area is quoted at most once per window per instance. */
 const RATES_CACHE_MS = 10 * 60_000;
@@ -376,17 +383,31 @@ export class BiteshipService {
     return BiteshipService.pickCourierOptions(pricing);
   }
 
-  /** Books one order. A reused reference id is treated as the earlier order, re-read from Biteship. */
-  static async createOrder(input: IBiteshipOrderInput): Promise<IBiteshipOrder | null> {
+  /**
+   * Books one order. A reused reference id is treated as the earlier order, re-read from Biteship. A refusal carries
+   * Biteship's own reason for the founder in admin; it never throws.
+   */
+  static async createOrder(input: IBiteshipOrderInput): Promise<BiteshipOrderResult> {
     try {
       return await BiteshipService.requestOrder(input);
     } catch (error) {
       console.error("[biteship] create order threw", error);
-      return null;
+      return { ok: false, reason: NO_ANSWER_REASON };
     }
   }
 
-  private static async requestOrder(input: IBiteshipOrderInput): Promise<IBiteshipOrder | null> {
+  /** Biteship's refusal in words a founder can act on: its message and code, or the status when it sent none. */
+  static refusalReason(status: number, payload: Record<string, unknown> | null): string {
+    const message = typeof payload?.error === "string" ? payload.error.trim() : "";
+    if (message === "") {
+      return `Biteship answered ${status} without a reason.`;
+    }
+    const code = typeof payload?.code === "number" || typeof payload?.code === "string" ? ` (code ${payload.code})` : "";
+
+    return `${message}${code}`.slice(0, REFUSAL_REASON_MAX);
+  }
+
+  private static async requestOrder(input: IBiteshipOrderInput): Promise<BiteshipOrderResult> {
     const response = await fetch(`${BASE_URL}/v1/orders`, {
       method: "POST",
       headers: BiteshipService.headers(),
@@ -400,13 +421,15 @@ export class BiteshipService {
       const details = asRecord(payload?.details);
       const existingId = stringOrNull(details?.order_id);
       if (payload?.code === DUPLICATE_REFERENCE_CODE && existingId !== null) {
-        return BiteshipService.fetchOrder(existingId);
+        const existing = await BiteshipService.fetchOrder(existingId);
+        return existing === null ? { ok: false, reason: NO_ANSWER_REASON } : { ok: true, order: existing };
       }
       console.error("[biteship] create order failed", response.status, payload);
-      return null;
+      return { ok: false, reason: BiteshipService.refusalReason(response.status, payload) };
     }
 
-    return BiteshipService.mapOrder(payload);
+    const order = BiteshipService.mapOrder(payload);
+    return order === null ? { ok: false, reason: "Biteship accepted the order but sent no order id." } : { ok: true, order };
   }
 
   /** The current state of an order, used after every webhook and for admin refreshes. */

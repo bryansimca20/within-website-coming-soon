@@ -41,7 +41,7 @@ beforeEach(async () => {
   const row = await SampleRequestService.markPaid(db, result.request.id, NOW);
   if (row === null) throw new Error("not paid");
   paid = row;
-  createOrder = vi.spyOn(BiteshipService, "createOrder").mockResolvedValue(order());
+  createOrder = vi.spyOn(BiteshipService, "createOrder").mockResolvedValue({ ok: true, order: order() });
 });
 
 afterEach(async () => {
@@ -115,7 +115,7 @@ describe("SampleShipmentService.bookRun", () => {
   });
 
   test("reports a Biteship failure for that row only", async () => {
-    createOrder.mockResolvedValue(null);
+    createOrder.mockResolvedValue({ ok: false, reason: "Saldo tidak mencukupi (code 40002034)" });
 
     const [result] = await SampleShipmentService.bookRun(
       db,
@@ -124,6 +124,7 @@ describe("SampleShipmentService.bookRun", () => {
     );
 
     expect(result.ok).toBe(false);
+    expect(result.error).toBe("Biteship refused the order: Saldo tidak mencukupi (code 40002034)");
     expect(await SampleShipmentService.latestForRequest(db, paid.id)).toBeNull();
   });
 
@@ -150,7 +151,7 @@ describe("SampleShipmentService.bookRun", () => {
     const third = await SampleRequestService.claim(db, "b01", sampleValues({ email: "c@example.com" }), NOW);
     if (third.kind !== "claimed") throw new Error(third.kind);
     await SampleRequestService.markPaid(db, third.request.id, NOW);
-    createOrder.mockResolvedValueOnce(order()).mockResolvedValueOnce(order({ id: "order-3" }));
+    createOrder.mockResolvedValueOnce({ ok: true, order: order() }).mockResolvedValueOnce({ ok: true, order: order({ id: "order-3" }) });
 
     const results = await SampleShipmentService.bookRun(
       db,
@@ -166,7 +167,7 @@ describe("SampleShipmentService.bookRun", () => {
     const failed = await SampleShipmentService.latestForRequest(db, paid.id);
     if (failed === null) throw new Error("no shipment");
     await SampleShipmentService.applyOrderSnapshot(db, failed, order({ status: "courier_not_found" }), minutesAfter(30));
-    createOrder.mockResolvedValue(order({ id: "order-2", waybillId: "JNE456" }));
+    createOrder.mockResolvedValue({ ok: true, order: order({ id: "order-2", waybillId: "JNE456" }) });
 
     await SampleShipmentService.bookRun(
       db,
