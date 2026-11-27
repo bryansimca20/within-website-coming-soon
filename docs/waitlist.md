@@ -6,6 +6,9 @@ One-screen page, statically prerendered, from the waitlist design handoff (comp 
 
 - One viewport with no scroll (`h-dvh overflow-hidden`). Phone and desktop comps switch at `desk:` (900px).
 - The floating sachet is a CSS keyframe (`animate-sachet-float`), off under reduced motion. It is the design's one sanctioned loop.
+- The opening plays once, in CSS only so it starts at first paint rather than after hydration: the dotted ring fills clockwise from the bottom-right tile (an SVG mask whose `stroke-dashoffset` transitions from `@starting-style`), each tile lands as the fill passes it, and the headline, subline and button rise 8px over 300ms in a 50ms stagger (`tw-animate-css` `animate-in`). The sachet only rises, never fades: it is the phone's LCP element, and an opacity fade delays LCP. All of it is off under reduced motion.
+- Hover speaks one language, the ink stamp the joined button uses: a tile floods ink from the left, and the orange button draws an ink rule along its bottom edge. The button's hidden layers carry `visibility` timed to their fades, so its accessible name always matches the words on screen.
+- A skip link ("Skip to the waitlist button") is the first tab stop and lands on the button (`#join`). The header sits outside `<main>`.
 - Icons are the hand-drawn SVGs in `components/waitlist/svg/`.
 - Every string, layout and feature lives in `components/waitlist/utils/waitlist-copy.ts`.
 - Interactions go through `trackWaitlistEvent()` in `waitlist-analytics.ts`.

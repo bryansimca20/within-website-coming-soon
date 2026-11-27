@@ -16,6 +16,8 @@ const biroScript = localFont({
   src: "./fonts/BiroScriptPlus.otf",
   variable: "--font-biro-script",
   display: "swap",
+  // No page sets text in it today; without a preload the browser only fetches it once something does.
+  preload: false,
 });
 
 const TITLE = "WITHIN | Coming soon";

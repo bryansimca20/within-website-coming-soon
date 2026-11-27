@@ -21,6 +21,18 @@ export function WaitlistOrbit({ onOpenFeature, className }: WaitlistOrbitProps) 
       <div className="absolute inset-x-1 inset-y-10 [container-type:size] desk:inset-x-4 desk:inset-y-12">
         <div className="absolute top-1/2 left-1/2 size-[min(100cqw,100cqh)] -translate-x-1/2 -translate-y-1/2 desk:max-h-[540px] desk:max-w-[540px]">
           <svg viewBox="0 0 100 100" aria-hidden className="absolute inset-0 size-full overflow-visible">
+            {/* On first paint the ring fills clockwise like a gauge topping back up, from the bottom-right tile round to it.
+                Pure CSS (@starting-style), so it plays before hydration; browsers without it show the full ring.
+                The mask sits in the dotted circle's own rotated space, so it starts at the same point unrotated. */}
+            <mask id="waitlist-orbit-fill">
+              <circle
+                cx="50"
+                cy="50"
+                r="48"
+                pathLength={1}
+                className="fill-none stroke-white stroke-[10] [stroke-dasharray:1] [stroke-dashoffset:0] transition-[stroke-dashoffset] duration-[1200ms] ease-brand starting:[stroke-dashoffset:1] motion-reduce:transition-none"
+              />
+            </mask>
             {/* Rotated so the one uneven gap, where the dashes meet, hides behind the bottom-right tile. */}
             <circle
               cx="50"
@@ -28,10 +40,11 @@ export function WaitlistOrbit({ onOpenFeature, className }: WaitlistOrbitProps) 
               r="48"
               transform="rotate(45 50 50)"
               vectorEffect="non-scaling-stroke"
+              mask="url(#waitlist-orbit-fill)"
               className="fill-none stroke-brand-ink stroke-4 [stroke-dasharray:0_18] [stroke-linecap:round] desk:stroke-5 desk:[stroke-dasharray:0_24]"
             />
           </svg>
-          <div className="absolute top-1/2 left-1/2 z-1 flex h-[94%] max-h-[400px] -translate-x-1/2 -translate-y-1/2 items-center justify-center desk:h-[76%]">
+          <div className="absolute top-1/2 left-1/2 z-1 flex h-[94%] max-h-[400px] -translate-x-1/2 -translate-y-1/2 animate-in items-center justify-center ease-brand animation-duration-700 slide-in-from-bottom-4 motion-reduce:animate-none desk:h-[76%]">
             <Image
               src="/waitlist/sachet.webp"
               alt={WAITLIST_COPY.sachetAlt}

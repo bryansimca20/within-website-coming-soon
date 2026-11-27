@@ -11,6 +11,9 @@ import { WaitlistSheet } from "./WaitlistSheet";
 import { trackWaitlistEvent, WaitlistEvent } from "./utils/waitlist-analytics";
 import { WAITLIST_COPY, WAITLIST_FEATURES, type WaitlistFeatureId } from "./utils/waitlist-copy";
 
+/** The orange button's id, so the skip link can land on it. */
+const WAITLIST_CTA_ID = "join";
+
 /** The whole coming-soon page: one viewport, no scrolling, whose only job is the waitlist. */
 export function WaitlistPage() {
   const [feature, setFeature] = useState(WAITLIST_FEATURES[0]);
@@ -62,15 +65,23 @@ export function WaitlistPage() {
   }
 
   return (
-    <main className="relative flex h-dvh flex-col overflow-hidden bg-white px-4 pb-4 font-brand text-brand-ink desk:p-0">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-white px-4 pb-4 font-brand text-brand-ink desk:p-0">
+      <a
+        href={`#${WAITLIST_CTA_ID}`}
+        // not-sr-only resets padding to 0, so the padding lives on the focus variant too.
+        className="sr-only bg-brand-ink text-sm leading-5 font-semibold text-brand-mist focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink desk:focus-visible:left-12"
+      >
+        {WAITLIST_COPY.skipToCta}
+      </a>
       <WaitlistHeader />
-      {/* Phone stacks headline, sachet, button. Desktop is two columns, copy centred beside the sachet. */}
-      <div className="flex min-h-0 flex-1 flex-col desk:grid desk:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] desk:grid-rows-[1fr_auto_auto_1fr] desk:gap-x-16 desk:px-12 desk:pt-10 desk:pb-12">
+      {/* Phone stacks headline, sachet, button. Desktop is two columns, copy centred beside the sachet.
+          Entrances are CSS, so they start at first paint rather than after hydration. */}
+      <main className="flex min-h-0 flex-1 flex-col desk:grid desk:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] desk:grid-rows-[1fr_auto_auto_1fr] desk:gap-x-16 desk:px-12 desk:pt-10 desk:pb-12">
         <div className="flex flex-none flex-col gap-2 pt-[18px] pb-1 desk:col-start-1 desk:row-start-2 desk:gap-6 desk:p-0">
-          <h1 className="m-0 text-[32px] leading-9 font-normal tracking-[-0.02em] desk:text-[clamp(40px,min(4.45vw,7.1vh),64px)] desk:leading-none desk:tracking-[-0.03em] [@media(max-height:600px)]:text-[26px] [@media(max-height:600px)]:leading-[30px]">
+          <h1 className="m-0 animate-in text-[32px] leading-9 font-normal tracking-[-0.02em] ease-brand animation-duration-300 fade-in slide-in-from-bottom-2 motion-reduce:animate-none desk:text-[clamp(40px,min(4.45vw,7.1vh),64px)] desk:leading-none desk:tracking-[-0.03em] [@media(max-height:600px)]:text-[26px] [@media(max-height:600px)]:leading-[30px]">
             {WAITLIST_COPY.headline}
           </h1>
-          <p className="m-0 text-sm leading-5 text-pretty desk:text-[17px] desk:leading-7">
+          <p className="m-0 animate-in text-sm leading-5 text-pretty ease-brand fill-mode-backwards animation-duration-300 fade-in slide-in-from-bottom-2 [--tw-animation-delay:50ms] motion-reduce:animate-none desk:text-[17px] desk:leading-7">
             {WAITLIST_COPY.subHeadline}
           </p>
         </div>
@@ -79,11 +90,12 @@ export function WaitlistPage() {
           className="mt-2 desk:col-start-2 desk:row-span-4 desk:row-start-1 desk:mt-0"
         />
         <WaitlistCta
+          id={WAITLIST_CTA_ID}
           isJoined={isJoined}
           onOpen={openFromCta}
-          className="pt-6 desk:col-start-1 desk:row-start-3 desk:max-w-[460px] desk:pt-12"
+          className="animate-in pt-6 ease-brand fill-mode-backwards animation-duration-300 fade-in slide-in-from-bottom-2 [--tw-animation-delay:100ms] motion-reduce:animate-none desk:col-start-1 desk:row-start-3 desk:max-w-[460px] desk:pt-12"
         />
-      </div>
+      </main>
       <WaitlistFeatureDialog
         feature={feature}
         isOpen={isFeatureOpen}
@@ -103,6 +115,6 @@ export function WaitlistPage() {
         onEdit={handleEdit}
         triggerRef={ctaRef}
       />
-    </main>
+    </div>
   );
 }

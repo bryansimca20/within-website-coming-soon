@@ -5,11 +5,13 @@ import { cn } from "@/lib/utils";
 import { WaitlistLabelGlyph, WaitlistPlusGlyph, WaitlistSunGlyph } from "./svg/WaitlistGlyphs";
 import { type IWaitlistFeature, WaitlistFeatureId } from "./utils/waitlist-copy";
 
-/** Where one tile sits on the circle, and which way its label and badge face. */
+/** Where one tile sits on the circle, which way its label and badge face, and when it lands. */
 interface IWaitlistTilePlacement {
   spot: string;
   label: string;
   badge: string;
+  /** Entrance delay: the moment the ring's opening fill sweeps past this tile. */
+  enter: string;
 }
 
 /**
@@ -21,11 +23,13 @@ const TILE_PLACEMENT: Record<WaitlistFeatureId, IWaitlistTilePlacement> = {
     spot: "left-[16.06%] top-[16.06%]",
     label: "bottom-[calc(100%+8px)] left-0 text-left desk:bottom-[calc(100%+12px)]",
     badge: "-left-[9px] desk:-left-3",
+    enter: "[--tw-animation-delay:180ms]",
   },
   [WaitlistFeatureId.Heat]: {
     spot: "left-[83.94%] top-[83.94%]",
     label: "top-[calc(100%+8px)] right-0 text-right desk:top-[calc(100%+12px)]",
     badge: "-right-[9px] desk:-right-3",
+    enter: "[--tw-animation-delay:600ms]",
   },
 };
 
@@ -59,8 +63,10 @@ export function WaitlistOrbitTile({ feature, onOpen }: WaitlistOrbitTileProps) {
       aria-label={feature.cardLabel}
       onClick={handleClick}
       className={cn(
-        "group absolute z-2 size-12 -translate-x-1/2 -translate-y-1/2 cursor-pointer p-0 text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink desk:size-[72px]",
-        placement.spot
+        "group absolute z-2 size-12 -translate-x-1/2 -translate-y-1/2 cursor-pointer p-0 text-brand-ink transition-transform duration-150 ease-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-ink active:scale-[0.97] motion-reduce:transition-none desk:size-[72px]",
+        "animate-in fill-mode-backwards animation-duration-300 fade-in zoom-in-90 motion-reduce:animate-none",
+        placement.spot,
+        placement.enter
       )}
     >
       <span
@@ -73,8 +79,16 @@ export function WaitlistOrbitTile({ feature, onOpen }: WaitlistOrbitTileProps) {
         <br />
         {feature.labelLines[1]}
       </span>
-      <span className="absolute inset-0 flex items-center justify-center border border-brand-ink/45 bg-white transition-colors duration-150 group-hover:border-brand-ink">
+      {/* The white ring clears the dotted circle off the square's corners. */}
+      <span className="absolute inset-0 flex items-center justify-center border border-brand-ink/45 bg-white ring-6 ring-white transition-colors duration-150 group-hover:border-brand-ink">
         {TILE_FACE[feature.id]}
+        {/* Ink stamp, as on the joined button: wipes in from the left carrying the same icon in mist. */}
+        <span
+          aria-hidden
+          className="absolute -inset-px flex items-center justify-center bg-brand-ink text-brand-mist transition-[clip-path] duration-200 ease-brand [clip-path:inset(0_100%_0_0)] group-hover:[clip-path:inset(0)] group-focus-visible:[clip-path:inset(0)] motion-reduce:transition-none"
+        >
+          {TILE_FACE[feature.id]}
+        </span>
         <span
           aria-hidden
           className={cn(
