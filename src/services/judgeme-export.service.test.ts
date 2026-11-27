@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type { SampleDatabase } from "@/db/database";
-import { sampleFeedback } from "@/db/schema";
+import { sampleFeedback, type SampleRequestStatus } from "@/db/schema";
 
 import { makeTestDb } from "../../test/sample-db";
 import { NOW, sampleValues, seedValues } from "../../test/sample-fixtures";
@@ -23,11 +23,16 @@ afterEach(async () => {
   await close();
 });
 
-async function reviewed(email: string, shareConsent: "yes" | "no", options: { isTest?: boolean } = {}) {
+async function reviewed(
+  email: string,
+  shareConsent: "yes" | "no",
+  options: { isTest?: boolean; status?: SampleRequestStatus } = {}
+) {
   const claim = await SampleRequestService.claim(db, "b01", sampleValues({ email, firstName: email.split("@")[0] }), NOW, options);
   if (claim.kind !== "claimed") throw new Error(claim.kind);
   const request = await SampleRequestService.markPaid(db, claim.request.id, NOW);
   if (request === null) throw new Error("not paid");
+  await SampleRequestService.setStatus(db, request.id, options.status ?? "delivered");
   return SampleFeedbackService.saveReview(db, request.id, { rating: 5, review: `From ${email}`, shareConsent }, email, NOW);
 }
 
@@ -45,6 +50,16 @@ describe("JudgeMeExportService.load", () => {
     const rows = await JudgeMeExportService.load(db);
 
     expect(rows.map((row) => row.feedback.id).sort()).toEqual([shared.id, notice.id].sort());
+  });
+
+  test("drops reviews from a box that was never sent", async () => {
+    const shipped = await reviewed("fajar@example.com", "yes", { status: "shipped" });
+    await reviewed("gita@example.com", "yes", { status: "paid" });
+    await reviewed("hana@example.com", "yes", { status: "awaiting_confirmation" });
+
+    const rows = await JudgeMeExportService.load(db);
+
+    expect(rows.map((row) => row.feedback.id)).toEqual([shipped.id]);
   });
 
   test("includes in-person samplers who chose to share", async () => {

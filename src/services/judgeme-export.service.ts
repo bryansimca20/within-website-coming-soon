@@ -68,6 +68,8 @@ export class JudgeMeExportService {
       .where(
         and(
           eq(sampleRequests.isTest, false),
+          // Only a box that left the office proves the author tried WITHIN; seeded boxes are stored as delivered.
+          inArray(sampleRequests.status, ["shipped", "delivered"]),
           inArray(sampleFeedback.shareConsent, ["yes", "notice"]),
           isNotNull(sampleFeedback.rating),
           isNotNull(sampleFeedback.review)
