@@ -47,14 +47,14 @@ describe("MidtransService.buildSnapPayload", () => {
     },
   });
 
-  test("carries the order, amount and the three e-wallet methods", () => {
+  test("carries the order, amount and GoPay as the only method", () => {
     expect(payload).toMatchObject({
       transaction_details: { order_id: "WS-B01-042-AB12CD", gross_amount: 10000 },
       enabled_payments: MIDTRANS_ENABLED_PAYMENTS,
       expiry: { unit: "minutes", duration: 1440 },
       callbacks: { finish: "https://within.id/sample/r/token" },
     });
-    expect(MIDTRANS_ENABLED_PAYMENTS).toEqual(["other_qris", "gopay", "shopeepay"]);
+    expect(MIDTRANS_ENABLED_PAYMENTS).toEqual(["gopay"]);
   });
 
   test("bills one item at the full amount and names the shipping address", () => {

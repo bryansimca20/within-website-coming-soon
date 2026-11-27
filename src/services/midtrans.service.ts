@@ -54,8 +54,12 @@ export enum PaymentSignal {
   Ignore = "ignore",
 }
 
-/** QRIS and the two wallets. Virtual accounts carry a flat fee that is absurd on a courier charge. */
-export const MIDTRANS_ENABLED_PAYMENTS = ["other_qris", "gopay", "shopeepay"] as const;
+/**
+ * GoPay only: on this account it covers the wallet and GoPay QRIS, which any QRIS app can scan, as long as
+ * "Selalu tampilkan QRIS" stays ticked in the dashboard. Generic QRIS (`other_qris`) and ShopeePay are not
+ * activated. Virtual accounts carry a flat fee that is absurd on a courier charge.
+ */
+export const MIDTRANS_ENABLED_PAYMENTS = ["gopay"] as const;
 
 /** A hung provider must not hang a visitor or a webhook. */
 const REQUEST_TIMEOUT_MS = 8_000;
